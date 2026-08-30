@@ -1,12 +1,25 @@
 import jwt from 'jsonwebtoken';
 
-export const generateToken = (res, userId) => {
+export const generateToken = (res, userPayload) => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not configured in environment variables');
   }
 
-  const token = jwt.sign({ userId }, secret, {
+  const payload =
+    typeof userPayload === 'object' && userPayload !== null
+      ? {
+          userId: (userPayload._id || userPayload.id || userPayload.userId).toString(),
+          role: userPayload.role || 'customer',
+          email: userPayload.email,
+          companyName: userPayload.companyName || '',
+        }
+      : {
+          userId: userPayload.toString(),
+          role: 'customer',
+        };
+
+  const token = jwt.sign(payload, secret, {
     expiresIn: '7d',
   });
 

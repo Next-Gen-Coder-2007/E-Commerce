@@ -62,7 +62,7 @@ export const registerUser = async (req, res, next) => {
       companyName: role === 'company' ? (companyName ? companyName.trim() : '') : '',
     });
 
-    generateToken(res, user._id);
+    generateToken(res, user);
 
     return res.status(201).json({
       success: true,
@@ -120,7 +120,7 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    generateToken(res, user._id);
+    generateToken(res, user);
 
     return res.status(200).json({
       success: true,
@@ -203,7 +203,7 @@ export const googleAuth = async (req, res, next) => {
       });
     }
 
-    generateToken(res, user._id);
+    generateToken(res, user);
 
     return res.status(200).json({
       success: true,
