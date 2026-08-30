@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev:auth": "nodemon auth-service/server.js",
-    "start:auth": "node auth-service/server.js"
+    "start:auth": "node auth-service/server.js",
+    "dev:product": "nodemon product-service/server.js",
+    "start:product": "node product-service/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -17,7 +20,8 @@
     "ioredis": "^5.9.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
-    "morgan": "^1.12.0"
+    "morgan": "^1.12.0",
+    "multer": "^2.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
