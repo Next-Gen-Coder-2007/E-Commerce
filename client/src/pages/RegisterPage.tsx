@@ -3,7 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/Input';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
-import { User, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import {
+  User as UserIcon,
+  Building2,
+  Mail,
+  Lock,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+} from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const { register, error: authError, clearError } = useAuth();
@@ -82,7 +93,13 @@ export const RegisterPage: React.FC = () => {
     clearError();
 
     try {
-      await register(formData);
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        role: 'customer',
+      });
       navigate('/', { replace: true });
     } catch (err: any) {
       setServerError(err.message || 'Failed to create account');
@@ -92,29 +109,45 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Create an account
+    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-grid-pattern relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-50/50 to-zinc-50 pointer-events-none" />
+
+      <div className="w-full max-w-md space-y-6 relative z-10">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 text-white shadow-md shadow-zinc-900/10 mb-2">
+            <UserIcon className="w-5 h-5" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
+            Create Customer Account
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500">
-            Get started with your free e-commerce account.
+          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+            Join to browse products, track orders, and experience seamless checkout.
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-xs space-y-6">
-          {/* Server Error Alert */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
+          <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-indigo-600" />
+              <div className="text-[11px] text-zinc-600">
+                Are you a merchant or business seller?
+              </div>
+            </div>
+            <Link
+              to="/business/register"
+              className="text-[11px] font-bold text-indigo-600 hover:underline shrink-0"
+            >
+              Business Sign-up →
+            </Link>
+          </div>
+
           {(serverError || authError) && (
-            <div className="flex items-start gap-3 p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-              <span>{serverError || authError}</span>
+            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{serverError || authError}</span>
             </div>
           )}
 
-          {/* Google Sign-up */}
           <div>
             <GoogleAuthButton
               text="signup_with"
@@ -123,13 +156,12 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div className="relative flex items-center justify-center">
-            <div className="w-full border-t border-gray-200" />
-            <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wider absolute">
+            <div className="w-full border-t border-zinc-200/80" />
+            <span className="bg-white px-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider absolute">
               or register with email
             </span>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <Input
               id="register-name"
@@ -137,11 +169,11 @@ export const RegisterPage: React.FC = () => {
               type="text"
               name="name"
               autoComplete="name"
-              placeholder="Jane Doe"
+              placeholder="e.g. Jane Doe"
               value={formData.name}
               onChange={handleChange}
               error={formErrors.name}
-              icon={<User className="w-4 h-4" />}
+              icon={<UserIcon className="w-4 h-4" />}
               disabled={submitting}
             />
 
@@ -176,8 +208,9 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1"
                 tabIndex={-1}
+                title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -205,23 +238,30 @@ export const RegisterPage: React.FC = () => {
               id="register-submit-btn"
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-xs"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-950 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs active:scale-[0.99] cursor-pointer"
             >
               {submitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                'Create Account'
+                <>
+                  <span>Create Customer Account</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
               )}
             </button>
           </form>
+
+          <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Encrypted with HTTP-only 256-bit JWT authentication</span>
+          </div>
         </div>
 
-        {/* Footer Link */}
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-xs text-zinc-500">
           Already have an account?{' '}
           <Link
             to="/login"
-            className="font-semibold text-gray-900 hover:underline"
+            className="font-semibold text-zinc-950 hover:underline transition-colors"
           >
             Sign in
           </Link>

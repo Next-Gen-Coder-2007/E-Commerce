@@ -6,6 +6,9 @@ import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { BusinessHomePage } from './pages/business/BusinessHomePage';
+import { BusinessLoginPage } from './pages/business/BusinessLoginPage';
+import { BusinessRegisterPage } from './pages/business/BusinessRegisterPage';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 
 const App: React.FC = () => {
@@ -15,7 +18,7 @@ const App: React.FC = () => {
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+          <div className="min-h-screen flex flex-col bg-zinc-50/60 text-zinc-900">
             <Navbar />
             <div className="flex-1">
               <Routes>
@@ -36,6 +39,25 @@ const App: React.FC = () => {
                     </PublicOnlyRoute>
                   }
                 />
+
+                <Route path="/business" element={<BusinessHomePage />} />
+                <Route
+                  path="/business/login"
+                  element={
+                    <PublicOnlyRoute>
+                      <BusinessLoginPage />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/business/register"
+                  element={
+                    <PublicOnlyRoute>
+                      <BusinessRegisterPage />
+                    </PublicOnlyRoute>
+                  }
+                />
+
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </div>
