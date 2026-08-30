@@ -41,8 +41,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ['customer', 'company', 'admin'],
+      default: 'customer',
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      default: '',
     },
   },
   {
@@ -50,7 +55,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving if modified
 userSchema.pre('save', async function () {
   if (!this.isModified('password') || !this.password) {
     return;
@@ -60,7 +64,6 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Compare entered password with hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   if (!this.password) {
     return false;
@@ -68,7 +71,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Remove password and __v when returning JSON
 userSchema.set('toJSON', {
   transform: (doc, ret) => {
     delete ret.password;

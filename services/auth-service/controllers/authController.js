@@ -4,14 +4,9 @@ import { generateToken, clearToken } from '../utils/jwt.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-/**
- * @desc    Register a new user
- * @route   POST /api/auth/register
- * @access  Public
- */
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, confirmPassword } = req.body;
+    const { name, email, password, confirmPassword, role = 'customer', companyName } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -34,9 +29,23 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    const allowedRoles = ['customer', 'company'];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role selection. Only customer or company accounts can be created.',
+      });
+    }
+
+    if (role === 'company' && (!companyName || !companyName.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a company / business name for company accounts',
+      });
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if user exists
     const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({
@@ -45,14 +54,14 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Create user
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password,
+      role: role || 'customer',
+      companyName: role === 'company' ? (companyName ? companyName.trim() : '') : '',
     });
 
-    // Generate JWT and set HTTP-only cookie
     generateToken(res, user._id);
 
     return res.status(201).json({
@@ -63,6 +72,7 @@ export const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyName: user.companyName,
         avatar: user.avatar,
         createdAt: user.createdAt,
       },
@@ -72,11 +82,6 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Authenticate user & get token
- * @route   POST /api/auth/login
- * @access  Public
- */
 export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -90,7 +95,6 @@ export const loginUser = async (req, res, next) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Find user with password included
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
@@ -116,7 +120,6 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    // Generate JWT and set HTTP-only cookie
     generateToken(res, user._id);
 
     return res.status(200).json({
@@ -127,6 +130,7 @@ export const loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyName: user.companyName,
         avatar: user.avatar,
         createdAt: user.createdAt,
       },
@@ -136,11 +140,6 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Authenticate or register via Google OAuth
- * @route   POST /api/auth/google
- * @access  Public
- */
 export const googleAuth = async (req, res, next) => {
   try {
     const { credential } = req.body;
@@ -154,7 +153,6 @@ export const googleAuth = async (req, res, next) => {
 
     let payload;
 
-    // Verify token with Google
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const ticket = await googleClient.verifyIdToken({
@@ -201,11 +199,10 @@ export const googleAuth = async (req, res, next) => {
         email: normalizedEmail,
         googleId,
         avatar: picture || '',
-        role: 'user',
+        role: 'customer',
       });
     }
 
-    // Generate JWT and set HTTP-only cookie
     generateToken(res, user._id);
 
     return res.status(200).json({
@@ -216,6 +213,7 @@ export const googleAuth = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyName: user.companyName,
         avatar: user.avatar,
         createdAt: user.createdAt,
       },
@@ -225,11 +223,6 @@ export const googleAuth = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Logout user & clear cookie
- * @route   POST /api/auth/logout
- * @access  Public
- */
 export const logoutUser = async (req, res) => {
   clearToken(res);
   return res.status(200).json({
@@ -238,11 +231,6 @@ export const logoutUser = async (req, res) => {
   });
 };
 
-/**
- * @desc    Get current user profile (session restore)
- * @route   GET /api/auth/me
- * @access  Private
- */
 export const getMe = async (req, res) => {
   return res.status(200).json({
     success: true,

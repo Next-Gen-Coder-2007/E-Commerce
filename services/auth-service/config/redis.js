@@ -10,7 +10,7 @@ try {
     maxRetriesPerRequest: 1,
     retryStrategy(times) {
       if (times > 3) {
-        return null; // Stop retrying after 3 attempts if offline in dev
+        return null;
       }
       return Math.min(times * 500, 2000);
     },
@@ -28,7 +28,6 @@ try {
 
   redisClient.on('error', (err) => {
     isRedisConnected = false;
-    // Log once as warning in development without throwing fatal error
     if (process.env.NODE_ENV !== 'test') {
       console.warn(`[Auth Service] Redis status: ${err.message}`);
     }
@@ -38,7 +37,6 @@ try {
     isRedisConnected = false;
   });
 
-  // Attempt non-blocking connection
   redisClient.connect().catch(() => {
     isRedisConnected = false;
   });
@@ -46,15 +44,8 @@ try {
   console.warn(`[Auth Service] Could not initialize Redis client: ${error.message}`);
 }
 
-/**
- * Checks if Redis is currently connected and responsive.
- * @returns {boolean}
- */
 export const isRedisReady = () => isRedisConnected && redisClient && redisClient.status === 'ready';
 
-/**
- * Returns the active Redis instance.
- */
 export const getRedisClient = () => redisClient;
 
 export default redisClient;

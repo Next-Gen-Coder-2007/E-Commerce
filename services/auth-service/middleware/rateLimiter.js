@@ -1,9 +1,7 @@
 import redisClient, { isRedisReady } from '../config/redis.js';
 
-// In-memory fallback map if Redis is temporarily unreachable
 const inMemoryStore = new Map();
 
-// Periodic cleanup of expired in-memory keys
 setInterval(() => {
   const now = Date.now();
   for (const [key, record] of inMemoryStore.entries()) {
@@ -13,14 +11,6 @@ setInterval(() => {
   }
 }, 60000).unref();
 
-/**
- * Creates a rate limiter middleware backed by Redis with in-memory fallback.
- * @param {Object} options
- * @param {number} options.windowMs - Time window in milliseconds (default: 15 mins)
- * @param {number} options.max - Max requests allowed per window (default: 10)
- * @param {string} options.message - Error message when rate limit is exceeded
- * @param {string} options.keyPrefix - Prefix for Redis keys
- */
 export const createRateLimiter = ({
   windowMs = 15 * 60 * 1000,
   max = 10,
@@ -30,7 +20,6 @@ export const createRateLimiter = ({
   const windowSeconds = Math.ceil(windowMs / 1000);
 
   return async (req, res, next) => {
-    // Determine client IP (support proxy headers from Gateway)
     const clientIp =
       req.headers['x-forwarded-for']?.split(',')[0].trim() ||
       req.socket.remoteAddress ||
@@ -67,7 +56,6 @@ export const createRateLimiter = ({
       console.warn(`[RateLimiter] Redis error: ${redisError.message}. Using fallback store.`);
     }
 
-    // In-memory fallback
     const now = Date.now();
     let record = inMemoryStore.get(key);
 
@@ -95,9 +83,6 @@ export const createRateLimiter = ({
   };
 };
 
-/**
- * Pre-configured rate limiter for sensitive authentication endpoints (10 requests / 15 min)
- */
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,

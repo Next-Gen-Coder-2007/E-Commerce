@@ -1,18 +1,12 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-/**
- * Middleware to protect routes by verifying JWT in HTTP-only cookie or Authorization header.
- */
 export const protect = async (req, res, next) => {
   let token;
 
-  // 1. Check HTTP-only cookie first
   if (req.cookies && req.cookies.jwt) {
     token = req.cookies.jwt;
-  }
-  // 2. Fallback to Authorization Bearer header
-  else if (
+  } else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer ')
   ) {
@@ -46,4 +40,24 @@ export const protect = async (req, res, next) => {
       message: 'Not authorized, token is invalid or expired',
     });
   }
+};
+
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized, please authenticate first',
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `User role '${req.user.role}' is not authorized to access this resource`,
+      });
+    }
+
+    next();
+  };
 };
