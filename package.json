@@ -2,8 +2,10 @@
   "name": "e-commerce",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "server": "npm run dev --prefix server",
+    "gateway": "npm run dev --prefix gateway",
+    "auth-service": "npm run dev:auth --prefix services",
     "client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client"
   }
