@@ -32,7 +32,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
   }, []);
 
-  // Restore session from HTTP-only cookie on mount
   const refreshUser = useCallback(async () => {
     try {
       const data = await getMeApi();
@@ -102,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
     } catch (err: any) {
       setError(err.message || 'Logout failed');
-      // Even if API fails, clear client user state
       setUser(null);
     } finally {
       setLoading(false);

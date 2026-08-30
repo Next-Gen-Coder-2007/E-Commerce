@@ -1,8 +1,11 @@
+export type UserRole = 'customer' | 'company' | 'admin';
+
 export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: UserRole;
+  companyName?: string;
   avatar?: string;
   googleId?: string;
   createdAt?: string;
@@ -14,6 +17,8 @@ export interface RegisterInput {
   email: string;
   password: string;
   confirmPassword?: string;
+  role?: 'customer' | 'company';
+  companyName?: string;
 }
 
 export interface LoginInput {

@@ -9,7 +9,6 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Response interceptor for unified error extracting
 api.interceptors.response.use(
   (response) => response,
   (error) => {
