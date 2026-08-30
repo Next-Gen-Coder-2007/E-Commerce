@@ -87,9 +87,13 @@ E-Commerce/
 │   │   ├── context/
 │   │   │   └── AuthContext.tsx           # Authentication state & session restore
 │   │   ├── pages/
-│   │   │   ├── HomePage.tsx              # Minimal home / profile overview
-│   │   │   ├── LoginPage.tsx             # Email/password & Google sign-in
-│   │   │   └── RegisterPage.tsx          # Account registration form
+│   │   │   ├── business/
+│   │   │   │   ├── BusinessHomePage.tsx     # Merchant workspace & business hub (/business)
+│   │   │   │   ├── BusinessLoginPage.tsx    # Merchant authentication (/business/login)
+│   │   │   │   └── BusinessRegisterPage.tsx # Merchant registration (/business/register)
+│   │   │   ├── HomePage.tsx                 # Retail home & consumer dashboard (/)
+│   │   │   ├── LoginPage.tsx                # Customer sign-in (/login)
+│   │   │   └── RegisterPage.tsx             # Customer registration (/register)
 │   │   ├── services/
 │   │   │   ├── api.ts                    # Axios instance pointing to Gateway
 │   │   │   └── authService.ts            # Auth API client functions
@@ -104,10 +108,22 @@ E-Commerce/
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
-├── gateway/                              # API Gateway Microservice
+├── gateway/                              # Modular API Gateway
+│   ├── config/
+│   │   ├── redis.js                      # Redis client for gateway rate limiting
+│   │   └── services.js                   # Microservices registry & instance clusters
+│   ├── middleware/
+│   │   ├── authGateway.js                # Token checking & user header injection
+│   │   ├── loadBalancer.js               # Multi-instance round-robin load balancer
+│   │   ├── rateLimiter.js                # Gateway-level rate limiter (global + auth)
+│   │   ├── logging.js                    # Correlation ID tracking (x-correlation-id)
+│   │   └── errorMiddleware.js            # Gateway-level 404 & error handlers
+│   ├── routes/
+│   │   ├── proxyHandler.js               # Dynamic reverse proxy middleware
+│   │   └── index.js                      # Routing registry & health endpoints
 │   ├── .env / .env.example
 │   ├── package.json
-│   └── server.js                         # Proxy routing, CORS, and health checks
+│   └── server.js                         # Gateway orchestration entry point
 ├── services/                             # Shared Microservices Root
 │   ├── auth-service/                     # Authentication Microservice
 │   │   ├── config/
@@ -137,11 +153,11 @@ E-Commerce/
 
 The authentication system is self-contained within the Auth Service and exposes endpoints through the Gateway:
 
-* **User Registration**: Validates name, email format, password complexity (minimum 6 characters), and password confirmation matching. Hashes passwords using bcrypt with salt factor 10.
+* **User Registration**: Supports both **Customer** (buyer) and **Company** (seller / merchant) account types. Validates contact person name, company name (for company accounts), email format, password complexity (minimum 6 characters), and password matching. Hashes passwords using bcrypt with salt factor 10. Direct registration of the `admin` role is restricted.
 * **Email/Password Login**: Compares credentials against bcrypt hashes and issues a signed JWT stored inside a secure HTTP-only cookie.
-* **Google OAuth 2.0**: Validates Google ID tokens on the backend using `google-auth-library`, finding existing accounts by verified email or provisioning new user profiles.
+* **Google OAuth 2.0**: Validates Google ID tokens on the backend using `google-auth-library`, finding existing accounts by verified email or provisioning new user profiles (defaulting to customer role).
 * **Session Restoration (`/api/auth/me`)**: Restores user identity on client load by extracting and verifying the JWT from incoming HTTP-only cookies.
-* **Protected Routes**: Express middleware (`protect`) verifies token validity and attaches the sanitized user instance to request objects.
+* **Protected Routes & RBAC**: Express middleware (`protect` and `authorize`) verifies token validity and enforces Role-Based Access Control (`customer`, `company`, `admin`).
 * **Logout**: Clears the authentication cookie with an immediate expiration header.
 * **Rate Limiting**: Protects sensitive endpoints (`/register`, `/login`, `/google`) with Redis atomic counters (10 requests per 15-minute sliding window) and returns standard `429 Too Many Requests` responses with `Retry-After` headers.
 
@@ -158,8 +174,8 @@ sequenceDiagram
     participant DB as MongoDB Atlas
 
     Note over User,DB: Registration / Login Flow
-    User->>Client: Submit Credentials
-    Client->>Gateway: POST /api/auth/login
+    User->>Client: Submit Credentials & Role (Customer / Company)
+    Client->>Gateway: POST /api/auth/login or /api/auth/register
     Gateway->>Auth: Proxy Request
     Auth->>Redis: Check Rate Limit (INCR / EXPIRE)
     Redis-->>Auth: Rate Limit OK (Count <= 10)
@@ -185,8 +201,13 @@ sequenceDiagram
 
 The architecture enforces strict decoupling between services:
 
-* **API Gateway**: Acts as the single public entry point for all frontend traffic. Manages CORS, preflight negotiations, client IP forwarding, cookie domain rewriting, and reverse proxy delegation.
-* **Auth Service**: Holds exclusive ownership of user accounts, credential storage, password hashing algorithms, and token generation. No other service interacts directly with authentication datastores.
+* **Modular API Gateway**:
+  * **Auth Token Inspection & RBAC**: Verifies incoming HTTP-only JWT cookies or bearer headers, injects authenticated user headers (`x-user-id`, `x-user-role`, `x-user-email`, `x-user-company`) for downstream services, and blocks unauthorized requests before reaching services.
+  * **Dynamic Multi-Instance Load Balancing**: Round-robin load balancer distributing traffic across one or more configured microservice instances.
+  * **Distributed Rate Limiting**: Multi-tiered rate limiters backed by Redis atomic counters protecting both global traffic (300 req/min) and sensitive authentication endpoints (30 req/15min).
+  * **Correlation ID Tracing**: Injects unique `x-correlation-id` headers for distributed request tracing across microservices.
+  * **Security & Reverse Proxy**: Enforces Helmet security headers, credentialed CORS policies, and reverse proxy routing.
+* **Auth Service**: Holds exclusive ownership of user accounts, credential storage, password hashing algorithms, and token generation.
 * **Data Ownership**: MongoDB access for user profiles is strictly isolated within the Auth Service.
 * **Incremental Evolution**: Future services (`product-service`, `cart-service`, `order-service`, `payment-service`, `notification-service`) will be provisioned as independent services and registered with the Gateway.
 
@@ -204,7 +225,8 @@ MongoDB Atlas Cluster
         ├── password: String (bcrypt hash, optional if googleId present)
         ├── googleId: String (sparse, indexed)
         ├── avatar: String
-        ├── role: String (enum: ['user', 'admin'], default: 'user')
+        ├── role: String (enum: ['customer', 'company', 'admin'], default: 'customer')
+        ├── companyName: String (optional, trimmed)
         ├── createdAt: Date
         └── updatedAt: Date
 ```
