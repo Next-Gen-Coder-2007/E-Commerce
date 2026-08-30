@@ -23,7 +23,10 @@ export const BusinessLoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const from = (location.state as any)?.from?.pathname || '/business';
+  const from =
+    (location.state as any)?.from?.pathname?.startsWith('/business')
+      ? (location.state as any).from.pathname
+      : '/business';
 
   const validate = () => {
     const errors: { email?: string; password?: string } = {};

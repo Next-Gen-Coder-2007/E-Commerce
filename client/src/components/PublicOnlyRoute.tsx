@@ -10,12 +10,15 @@ export const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (user) {
+    if (user.role === 'company') {
+      return <Navigate to="/business" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
