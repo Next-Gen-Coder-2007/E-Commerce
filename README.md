@@ -125,7 +125,7 @@ E-Commerce/
 │   ├── package.json
 │   └── server.js                         # Gateway orchestration entry point
 ├── services/                             # Shared Microservices Root
-│   ├── auth-service/                     # Authentication Microservice
+│   ├── auth-service/                     # Authentication Microservice (Port 5001)
 │   │   ├── config/
 │   │   │   ├── db.js                     # MongoDB connection manager
 │   │   │   └── redis.js                  # Redis client with fallback handling
@@ -144,6 +144,20 @@ E-Commerce/
 │   │   ├── .env / .env.example
 │   │   ├── package.json
 │   │   └── server.js                     # Auth Service entry point
+│   ├── product-service/                  # Product Catalog & Inventory Microservice (Port 5002)
+│   │   ├── config/
+│   │   │   └── db.js                     # MongoDB connection manager
+│   │   ├── controllers/
+│   │   │   └── productController.js      # Catalog search, filter, company CRUD, stats
+│   │   ├── middleware/
+│   │   │   └── authCheck.js              # Gateway context header verification
+│   │   ├── models/
+│   │   │   └── Product.js                # Product schema (stock, category, companyId)
+│   │   ├── routes/
+│   │   │   └── productRoutes.js          # Catalog & merchant CRUD routes
+│   │   ├── .env / .env.example
+│   │   ├── package.json
+│   │   └── server.js                     # Product Service entry point
 │   └── package.json                      # Shared microservices dependencies
 ├── package.json                          # Root repository orchestration scripts
 └── README.md

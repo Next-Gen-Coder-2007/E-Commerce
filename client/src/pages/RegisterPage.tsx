@@ -5,13 +5,11 @@ import { Input } from '../components/Input';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import {
   User as UserIcon,
-  Building2,
   Mail,
   Lock,
   AlertCircle,
   Eye,
   EyeOff,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
@@ -126,20 +124,6 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
-          <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-indigo-600" />
-              <div className="text-[11px] text-zinc-600">
-                Are you a merchant or business seller?
-              </div>
-            </div>
-            <Link
-              to="/business/register"
-              className="text-[11px] font-bold text-indigo-600 hover:underline shrink-0"
-            >
-              Business Sign-up →
-            </Link>
-          </div>
 
           {(serverError || authError) && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
