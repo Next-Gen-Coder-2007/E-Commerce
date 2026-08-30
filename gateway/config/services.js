@@ -17,6 +17,16 @@ export const serviceRegistry = {
     stripPrefix: false,
     requireAuth: false,
   },
+  products: {
+    name: 'Product Service',
+    routePrefix: '/api/products',
+    instances: parseInstances(
+      process.env.PRODUCT_SERVICE_URLS,
+      process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002'
+    ),
+    stripPrefix: false,
+    requireAuth: false,
+  },
 };
 
 export default serviceRegistry;

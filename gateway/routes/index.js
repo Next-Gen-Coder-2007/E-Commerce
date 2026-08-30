@@ -45,4 +45,13 @@ router.use(
   })
 );
 
+router.use(
+  '/products',
+  createMicroserviceProxy({
+    serviceKey: 'products',
+    serviceName: serviceRegistry.products.name,
+    instances: serviceRegistry.products.instances,
+  })
+);
+
 export default router;
