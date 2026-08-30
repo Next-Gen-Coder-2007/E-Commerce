@@ -1,0 +1,48 @@
+import express from 'express';
+import serviceRegistry from '../config/services.js';
+import { isRedisReady } from '../config/redis.js';
+import { createMicroserviceProxy } from './proxyHandler.js';
+import { authGatewayRateLimiter } from '../middleware/rateLimiter.js';
+
+const router = express.Router();
+
+router.get('/health', (req, res) => {
+  const serviceStatuses = Object.entries(serviceRegistry).reduce(
+    (acc, [key, svc]) => {
+      acc[key] = {
+        name: svc.name,
+        route: svc.routePrefix,
+        instances: svc.instances,
+      };
+      return acc;
+    },
+    {}
+  );
+
+  res.status(200).json({
+    service: 'api-gateway',
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    redisRateLimiter: isRedisReady() ? 'connected' : 'offline/fallback',
+    registeredServices: serviceStatuses,
+  });
+});
+
+router.get('/gateway/services', (req, res) => {
+  res.status(200).json({
+    success: true,
+    services: serviceRegistry,
+  });
+});
+
+router.use(
+  '/auth',
+  authGatewayRateLimiter,
+  createMicroserviceProxy({
+    serviceKey: 'auth',
+    serviceName: serviceRegistry.auth.name,
+    instances: serviceRegistry.auth.instances,
+  })
+);
+
+export default router;
