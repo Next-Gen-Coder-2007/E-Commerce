@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   Star,
   Building2,
@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Plus,
   Minus,
+  ExternalLink,
 } from 'lucide-react';
 import { getProductsApi } from '../services/productService';
 import { useCart } from '../context/CartContext';
@@ -82,17 +83,20 @@ const CATEGORY_CARDS = [
 
 export const HomePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const search = searchParams.get('search') || '';
   const activeCategory = searchParams.get('category') || 'all';
+  const sort = (searchParams.get('sort') as 'newest' | 'price_asc' | 'price_desc' | 'popular') || 'newest';
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sort, setSort] = useState<'newest' | 'price_asc' | 'price_desc' | 'rating'>('newest');
-  const [totalCount, setTotalCount] = useState(0);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalQuantity, setModalQuantity] = useState(1);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -448,7 +452,7 @@ export const HomePage: React.FC = () => {
             {products.map((product) => (
               <div
                 key={product._id}
-                onClick={() => setSelectedProduct(product)}
+                onClick={() => navigate(`/product/${product._id}`)}
                 className="group bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-2xs hover:shadow-lg hover:border-zinc-300 transition-all duration-200 flex flex-col justify-between cursor-pointer"
               >
                 <div className="space-y-3">
@@ -505,12 +509,11 @@ export const HomePage: React.FC = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedProduct(product);
-                        setModalQuantity(1);
+                        navigate(`/product/${product._id}`);
                       }}
                       className="px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
                     >
-                      View
+                      Details
                     </button>
                     <button
                       type="button"
@@ -809,6 +812,17 @@ export const HomePage: React.FC = () => {
                       : `Add to Cart • $${(selectedProduct.price * modalQuantity).toFixed(2)}`}
                   </span>
                 </button>
+
+                <div className="pt-2 text-center">
+                  <Link
+                    to={`/product/${selectedProduct._id}`}
+                    onClick={() => setSelectedProduct(null)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  >
+                    <span>View Dedicated Product Page</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
