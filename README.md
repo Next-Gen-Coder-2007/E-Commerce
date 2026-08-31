@@ -25,19 +25,26 @@ flowchart TD
         Gateway["Express API Gateway\nReverse Proxy + CORS + Cookies"]
     end
 
-    subgraph ServiceLayer["Service Layer (Port 5001)"]
-        AuthService["Auth Service\nExpress + Mongoose + JWT"]
+    subgraph ServiceLayer["Service Layer"]
+        AuthService["Auth Service (Port 5001)\nExpress + Mongoose + JWT"]
+        ProductService["Product Service (Port 5002)\nExpress + Mongoose + Multer"]
+        CartService["Cart Service (Port 5003)\nExpress + Mongoose + Redis"]
     end
 
     subgraph DataLayer["Persistence & Caching"]
-        MongoDB[("MongoDB Atlas\nUser Store")]
-        Redis[("Redis\nRate Limiting")]
+        MongoDB[("MongoDB Atlas\nStores Users, Products, Carts")]
+        Redis[("Redis\nRate Limiting & Cart Cache")]
     end
 
-    Client -- "HTTP /api/auth/*\n(Credentials: include)" --> Gateway
-    Gateway -- "Reverse Proxy\n(Header & Cookie Forwarding)" --> AuthService
+    Client -- "HTTP /api/*\n(Credentials: include)" --> Gateway
+    Gateway -- "Reverse Proxy /api/auth" --> AuthService
+    Gateway -- "Reverse Proxy /api/products" --> ProductService
+    Gateway -- "Reverse Proxy /api/cart" --> CartService
     AuthService --> MongoDB
     AuthService -.-> Redis
+    ProductService --> MongoDB
+    CartService --> MongoDB
+    CartService -.-> Redis
 ```
 
 ## Technology Stack
@@ -79,27 +86,33 @@ E-Commerce/
 ├── client/                               # Frontend Single Page Application
 │   ├── src/
 │   │   ├── components/                   # Reusable UI components & route guards
+│   │   │   ├── CartDrawer.tsx            # Slide-over interactive shopping cart drawer
 │   │   │   ├── GoogleAuthButton.tsx
 │   │   │   ├── Input.tsx
-│   │   │   ├── Navbar.tsx
+│   │   │   ├── Navbar.tsx                # Global navigation & live cart item badge
 │   │   │   ├── ProtectedRoute.tsx
 │   │   │   └── PublicOnlyRoute.tsx
 │   │   ├── context/
-│   │   │   └── AuthContext.tsx           # Authentication state & session restore
+│   │   │   ├── AuthContext.tsx           # Authentication state & session restore
+│   │   │   └── CartContext.tsx           # Cart state, actions, & guest cart merging
 │   │   ├── pages/
 │   │   │   ├── business/
 │   │   │   │   ├── BusinessHomePage.tsx     # Merchant workspace & business hub (/business)
 │   │   │   │   ├── BusinessLoginPage.tsx    # Merchant authentication (/business/login)
 │   │   │   │   └── BusinessRegisterPage.tsx # Merchant registration (/business/register)
-│   │   │   ├── HomePage.tsx                 # Retail home & consumer dashboard (/)
+│   │   │   ├── HomePage.tsx                 # Retail home & consumer catalog (/)
 │   │   │   ├── LoginPage.tsx                # Customer sign-in (/login)
 │   │   │   └── RegisterPage.tsx             # Customer registration (/register)
 │   │   ├── services/
 │   │   │   ├── api.ts                    # Axios instance pointing to Gateway
-│   │   │   └── authService.ts            # Auth API client functions
+│   │   │   ├── authService.ts            # Auth API client functions
+│   │   │   ├── cartService.ts            # Cart API client functions & guest ID tracking
+│   │   │   └── productService.ts         # Product API client functions
 │   │   ├── types/
-│   │   │   └── auth.ts                   # TypeScript interfaces and types
-│   │   ├── App.tsx                       # Router configuration & providers
+│   │   │   ├── auth.ts                   # Auth interfaces and types
+│   │   │   ├── cart.ts                   # Cart and CartItem TypeScript definitions
+│   │   │   └── product.ts                # Product TypeScript definitions
+│   │   ├── App.tsx                       # Router configuration & CartProvider
 │   │   ├── index.css                     # Tailwind CSS entry
 │   │   └── main.tsx                      # Application bootstrap
 │   ├── .env / .env.example
@@ -146,9 +159,10 @@ E-Commerce/
 │   │   └── server.js                     # Auth Service entry point
 │   ├── product-service/                  # Product Catalog & Inventory Microservice (Port 5002)
 │   │   ├── config/
-│   │   │   └── db.js                     # MongoDB connection manager
+│   │   │   ├── db.js                     # MongoDB connection manager
+│   │   │   └── cloudinary.js             # Cloudinary asset storage config
 │   │   ├── controllers/
-│   │   │   └── productController.js      # Catalog search, filter, company CRUD, stats
+│   │   │   └── productController.js      # Catalog search, filter, company CRUD, image upload
 │   │   ├── middleware/
 │   │   │   └── authCheck.js              # Gateway context header verification
 │   │   ├── models/
@@ -158,6 +172,22 @@ E-Commerce/
 │   │   ├── .env / .env.example
 │   │   ├── package.json
 │   │   └── server.js                     # Product Service entry point
+│   ├── cart-service/                     # Shopping Cart Microservice (Port 5003)
+│   │   ├── config/
+│   │   │   ├── db.js                     # MongoDB connection manager
+│   │   │   └── redis.js                  # Redis client for cart caching
+│   │   ├── controllers/
+│   │   │   └── cartController.js         # Cart CRUD, item steppers, guest merging
+│   │   ├── middleware/
+│   │   │   ├── authCheck.js              # Identity & guest session extractor
+│   │   │   └── errorMiddleware.js        # Global error & 404 handlers
+│   │   ├── models/
+│   │   │   └── Cart.js                   # Cart schema & automatic subtotal calculation
+│   │   ├── routes/
+│   │   │   └── cartRoutes.js             # Cart endpoints (/api/cart/*)
+│   │   ├── .env / .env.example
+│   │   ├── package.json
+│   │   └── server.js                     # Cart Service entry point
 │   └── package.json                      # Shared microservices dependencies
 ├── package.json                          # Root repository orchestration scripts
 └── README.md
@@ -320,10 +350,15 @@ Copy the example environment files and configure your credentials:
 ```bash
 cp gateway/.env.example gateway/.env
 cp services/auth-service/.env.example services/auth-service/.env
+cp services/product-service/.env.example services/product-service/.env
+cp services/cart-service/.env.example services/cart-service/.env
 cp client/.env.example client/.env
 ```
 
-Ensure `MONGO_URI` in `services/auth-service/.env` contains your valid MongoDB Atlas connection string.
+Each microservice connects to its own dedicated database within the same MongoDB Atlas cluster:
+- **Auth Service**: `ecommerce_auth`
+- **Product Service**: `ecommerce_products`
+- **Cart Service**: `ecommerce_cart`
 
 ### 3. Starting the Services
 
@@ -333,10 +368,16 @@ Start each service in separate terminal sessions, or run the following root scri
 # Terminal 1: Start Auth Microservice (Port 5001)
 npm run auth-service
 
-# Terminal 2: Start API Gateway (Port 5000)
+# Terminal 2: Start Product Microservice (Port 5002)
+npm run product-service
+
+# Terminal 3: Start Shopping Cart Microservice (Port 5003)
+npm run cart-service
+
+# Terminal 4: Start API Gateway (Port 5000)
 npm run gateway
 
-# Terminal 3: Start React Client (Port 5173)
+# Terminal 5: Start React Client (Port 5173)
 npm run client
 ```
 
@@ -350,22 +391,22 @@ Open `http://localhost:5173` in your browser to access the application.
 * **Sanitized Responses**: Mongoose schema serialization hooks automatically delete the `password` hash and internal `__v` metadata before returning user JSON objects.
 * **Strict CORS Policies**: The API Gateway allows credentialed requests strictly from the configured `CLIENT_URL`.
 * **Security Headers**: The API Gateway incorporates Helmet middleware for header protection.
-* **Decoupled Internal Network**: The Auth Service runs on an internal port and is designed not to be exposed directly to public client traffic.
+* **Decoupled Internal Network**: Services run on internal ports (5001, 5002, 5003) and are accessed exclusively through the API Gateway (Port 5000).
 
 ## Development Roadmap
 
 ```mermaid
 flowchart LR
-    Auth["1. Auth Service\n(Completed)"] --> Product["2. Product Service\n(Planned)"]
-    Product --> Cart["3. Cart Service\n(Planned)"]
+    Auth["1. Auth Service\n(Completed)"] --> Product["2. Product Service\n(Completed)"]
+    Product --> Cart["3. Cart Service\n(Completed)"]
     Cart --> Order["4. Order Service\n(Planned)"]
     Order --> Payment["5. Payment Service\n(Planned)"]
     Payment --> Notification["6. Notification Service\n(Planned)"]
 ```
 
 * **Phase 1 (Completed)**: API Gateway, Auth Service, MongoDB Atlas, Redis rate limiting, React client with full authentication lifecycle.
-* **Phase 2 (Planned)**: Product Catalog Service with search, filtering, categories, and inventory tracking.
-* **Phase 3 (Planned)**: Shopping Cart Service with session-persisted cart state.
+* **Phase 2 (Completed)**: Product Catalog & Merchant Inventory Service with search, category filtering, stock tracking, and Cloudinary media uploads.
+* **Phase 3 (Completed)**: Shopping Cart Microservice with dual guest/user sessions, automatic cart merging, Redis caching, and interactive React Cart Drawer.
 * **Phase 4 (Planned)**: Order Management Service with order lifecycles and address management.
 * **Phase 5 (Planned)**: Payment Gateway Service supporting Stripe/PayPal webhooks and transaction records.
 * **Phase 6 (Planned)**: Asynchronous Notification Service for transactional emails and event-driven updates.

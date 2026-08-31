@@ -951,80 +951,89 @@ export const BusinessHomePage: React.FC = () => {
                 />
 
                 {!formData.image ? (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) {
-                        const fakeEvent = {
-                          target: { files: [file] },
-                        } as any;
-                        handleImageFileUpload(fakeEvent);
-                      }
-                    }}
-                    className="group border-2 border-dashed border-zinc-200 hover:border-zinc-950 rounded-2xl p-6 text-center bg-zinc-50/60 hover:bg-zinc-100/60 transition-all cursor-pointer space-y-2"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center mx-auto text-zinc-600 group-hover:scale-105 transition-transform">
-                      {uploadingImage ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-zinc-700" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-zinc-900">
-                        {uploadingImage
-                          ? 'Uploading image to Cloudinary...'
-                          : 'Click to upload or drag & drop'}
+                  <div className="space-y-2.5">
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) {
+                          const fakeEvent = {
+                            target: { files: [file] },
+                          } as any;
+                          handleImageFileUpload(fakeEvent);
+                        }
+                      }}
+                      className="group border-2 border-dashed border-zinc-200 hover:border-zinc-950 rounded-2xl p-6 text-center bg-zinc-50/60 hover:bg-zinc-100/60 transition-all cursor-pointer space-y-2"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center mx-auto text-zinc-600 group-hover:scale-105 transition-transform">
+                        {uploadingImage ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
+                        ) : (
+                          <Upload className="w-5 h-5 text-zinc-700" />
+                        )}
                       </div>
-                      <div className="text-[11px] text-zinc-500 mt-0.5">
-                        PNG, JPG, WEBP up to 500KB
+                      <div>
+                        <div className="text-xs font-semibold text-zinc-900">
+                          {uploadingImage
+                            ? 'Uploading image to Cloudinary...'
+                            : 'Click to upload or drag & drop'}
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-0.5">
+                          PNG, JPG, WEBP up to 500KB
+                        </div>
                       </div>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-zinc-200" />
+                      <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">or direct web link</span>
+                      <div className="flex-1 h-px bg-zinc-200" />
+                    </div>
+
+                    <input
+                      type="url"
+                      placeholder="Paste direct image URL (https://...)"
+                      value={formData.image}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                    />
                   </div>
                 ) : (
-                  <div className="relative aspect-video rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-200 group">
-                    <img
-                      src={formData.image}
-                      alt="Product preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
-                      <div className="text-[10px] font-mono text-white truncate max-w-[70%]">
-                        {formData.image}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-zinc-950 text-[11px] font-bold shadow-xs cursor-pointer"
-                        >
-                          Replace
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, image: '' })}
-                          className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-xs cursor-pointer"
-                        >
-                          Remove
-                        </button>
+                  <div className="space-y-2">
+                    <div className="relative aspect-video rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-200 group">
+                      <img
+                        src={formData.image}
+                        alt="Product preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-zinc-950/80 px-2.5 py-1 rounded-lg backdrop-blur-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          Image Attached
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-zinc-950 text-[11px] font-bold shadow-xs cursor-pointer"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, image: '' })}
+                            className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-xs cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
-
-                <div className="pt-1">
-                  <input
-                    type="url"
-                    placeholder="Or paste direct image URL (https://...)"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-                  />
-                </div>
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-zinc-200/80">
