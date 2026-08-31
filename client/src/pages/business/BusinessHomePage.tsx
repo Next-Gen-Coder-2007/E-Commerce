@@ -127,8 +127,8 @@ export const BusinessHomePage: React.FC = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setModalError('Image size exceeds 10MB limit');
+    if (file.size > 500 * 1024) {
+      setModalError('Image size exceeds 500KB limit. Please choose a smaller image.');
       return;
     }
 
@@ -980,7 +980,7 @@ export const BusinessHomePage: React.FC = () => {
                           : 'Click to upload or drag & drop'}
                       </div>
                       <div className="text-[11px] text-zinc-500 mt-0.5">
-                        PNG, JPG, WEBP up to 10MB
+                        PNG, JPG, WEBP up to 500KB
                       </div>
                     </div>
                   </div>

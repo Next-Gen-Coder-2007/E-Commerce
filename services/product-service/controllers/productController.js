@@ -345,6 +345,14 @@ export const uploadImage = async (req, res) => {
       });
     }
 
+    const MAX_IMAGE_SIZE = 500 * 1024; // 500 KB
+    if (fileBuffer.length > MAX_IMAGE_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image size exceeds 500KB limit',
+      });
+    }
+
     const preset = process.env.CLOUDINARY_UPLOAD_PRESET;
     const uploadOptions = preset
       ? { upload_preset: preset, folder: 'novacommerce/products' }
