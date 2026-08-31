@@ -27,6 +27,16 @@ export const serviceRegistry = {
     stripPrefix: false,
     requireAuth: false,
   },
+  cart: {
+    name: 'Cart Service',
+    routePrefix: '/api/cart',
+    instances: parseInstances(
+      process.env.CART_SERVICE_URLS,
+      process.env.CART_SERVICE_URL || 'http://localhost:5003'
+    ),
+    stripPrefix: false,
+    requireAuth: false,
+  },
 };
 
 export default serviceRegistry;

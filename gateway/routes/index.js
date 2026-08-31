@@ -54,4 +54,13 @@ router.use(
   })
 );
 
+router.use(
+  '/cart',
+  createMicroserviceProxy({
+    serviceKey: 'cart',
+    serviceName: serviceRegistry.cart.name,
+    instances: serviceRegistry.cart.instances,
+  })
+);
+
 export default router;
