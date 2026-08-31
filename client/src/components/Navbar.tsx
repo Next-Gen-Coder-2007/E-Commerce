@@ -8,6 +8,7 @@ import {
   Sparkles,
   Search,
   X,
+  Building2,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -130,6 +131,15 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
+                <Link
+                  to="/business"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors"
+                  title="Merchant & Seller Portal"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Merchant Portal</span>
+                </Link>
+
                 <Link
                   to="/login"
                   className="px-3.5 py-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors"

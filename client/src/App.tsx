@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
+import { BusinessNavbar } from './components/business/BusinessNavbar';
 import { CartDrawer } from './components/CartDrawer';
 import { HomePage } from './pages/HomePage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
@@ -17,10 +18,12 @@ import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isBusiness = location.pathname.startsWith('/business');
+  const isBusinessAuth = location.pathname === '/business/login' || location.pathname === '/business/register';
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50/60 text-zinc-900">
       {!isBusiness && <Navbar />}
+      {isBusinessAuth && <BusinessNavbar />}
       <CartDrawer />
       <div className="flex-1">
         <Routes>

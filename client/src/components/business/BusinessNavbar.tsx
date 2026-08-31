@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   Building2,
   LogOut,
   Store,
   PlusCircle,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
@@ -13,16 +14,20 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
 }) => {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
     navigate('/business/login');
   };
 
+  const isLoginPage = location.pathname === '/business/login';
+  const isRegisterPage = location.pathname === '/business/register';
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-zinc-200/80 shadow-xs">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-zinc-200/80 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link to="/business" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl bg-zinc-950 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
               <Building2 className="w-5 h-5" />
@@ -32,12 +37,12 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
                 <span className="text-base font-extrabold text-zinc-950 tracking-tight">
                   NovaCommerce
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-                  Seller Central
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-900 text-white shadow-xs">
+                  Merchant Hub
                 </span>
               </div>
               <span className="text-[10px] text-zinc-400 font-medium tracking-tight">
-                Enterprise Merchant Studio
+                Seller Central & Inventory Portal
               </span>
             </div>
           </Link>
@@ -69,6 +74,14 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
                 </button>
               )}
 
+              <Link
+                to="/business"
+                className="hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 border border-zinc-200/80 transition-colors"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+
               <div className="flex items-center gap-2 p-1 sm:pr-3 sm:pl-1 rounded-xl bg-zinc-50 border border-zinc-200/80">
                 <div className="w-7 h-7 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
                   <Building2 className="w-3.5 h-3.5" />
@@ -97,13 +110,21 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
             <div className="flex items-center gap-2">
               <Link
                 to="/business/login"
-                className="px-3.5 py-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 rounded-lg transition-colors"
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  isLoginPage
+                    ? 'bg-zinc-100 text-zinc-950 font-bold'
+                    : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                }`}
               >
-                Sign In
+                Merchant Sign In
               </Link>
               <Link
                 to="/business/register"
-                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 rounded-lg shadow-xs"
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg shadow-xs transition-transform active:scale-[0.98] ${
+                  isRegisterPage
+                    ? 'bg-zinc-950 text-white ring-2 ring-zinc-950/20'
+                    : 'text-white bg-zinc-950 hover:bg-zinc-800'
+                }`}
               >
                 Register Business
               </Link>

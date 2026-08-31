@@ -119,22 +119,20 @@ export const BusinessRegisterPage: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-50/50 to-zinc-50 pointer-events-none" />
 
       <div className="w-full max-w-lg space-y-6 relative z-10">
+        {/* Top Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20 mb-2">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <span>Merchant Onboarding</span>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-950 text-white shadow-md shadow-zinc-950/10 mb-2">
+            <Building2 className="w-5 h-5" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
-            Register your Business
+            Register Merchant Entity
           </h1>
           <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-            Set up your company workspace to start listing products, managing inventory, and fulfilling customer orders.
+            Set up your company store to list verified products, manage catalog inventory, and fulfill customer orders.
           </p>
         </div>
 
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-indigo-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
           {(serverError || authError) && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -149,11 +147,11 @@ export const BusinessRegisterPage: React.FC = () => {
               type="text"
               name="companyName"
               autoComplete="organization"
-              placeholder="e.g. Acme Global Logistics Ltd"
+              placeholder="e.g. Apex Electronics Ltd"
               value={formData.companyName}
               onChange={handleChange}
               error={formErrors.companyName}
-              icon={<Building2 className="w-4 h-4 text-indigo-500" />}
+              icon={<Building2 className="w-4 h-4 text-zinc-400" />}
               disabled={submitting}
             />
 
@@ -163,11 +161,11 @@ export const BusinessRegisterPage: React.FC = () => {
               type="text"
               name="name"
               autoComplete="name"
-              placeholder="e.g. Johnathan Smith"
+              placeholder="e.g. Alexander Mitchell"
               value={formData.name}
               onChange={handleChange}
               error={formErrors.name}
-              icon={<UserIcon className="w-4 h-4 text-indigo-500" />}
+              icon={<UserIcon className="w-4 h-4 text-zinc-400" />}
               disabled={submitting}
             />
 
@@ -177,11 +175,11 @@ export const BusinessRegisterPage: React.FC = () => {
               type="email"
               name="email"
               autoComplete="email"
-              placeholder="orders@acmecorp.com"
+              placeholder="orders@apexcorp.com"
               value={formData.email}
               onChange={handleChange}
               error={formErrors.email}
-              icon={<Mail className="w-4 h-4 text-indigo-500" />}
+              icon={<Mail className="w-4 h-4 text-zinc-400" />}
               disabled={submitting}
             />
 
@@ -197,13 +195,13 @@ export const BusinessRegisterPage: React.FC = () => {
                   value={formData.password}
                   onChange={handleChange}
                   error={formErrors.password}
-                  icon={<Lock className="w-4 h-4 text-indigo-500" />}
+                  icon={<Lock className="w-4 h-4 text-zinc-400" />}
                   disabled={submitting}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1"
+                  className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1 cursor-pointer"
                   tabIndex={-1}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -225,7 +223,7 @@ export const BusinessRegisterPage: React.FC = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 error={formErrors.confirmPassword}
-                icon={<Lock className="w-4 h-4 text-indigo-500" />}
+                icon={<Lock className="w-4 h-4 text-zinc-400" />}
                 disabled={submitting}
               />
             </div>
@@ -234,7 +232,7 @@ export const BusinessRegisterPage: React.FC = () => {
               id="business-register-submit-btn"
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs active:scale-[0.99] cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-950 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs active:scale-[0.99] cursor-pointer"
             >
               {submitting ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -249,14 +247,14 @@ export const BusinessRegisterPage: React.FC = () => {
 
           <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500">
             <div className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Dedicated Merchant Route Point</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" />
+              <span>RBAC Entity Isolation</span>
             </div>
             <Link
               to="/business/login"
-              className="font-semibold text-indigo-600 hover:underline"
+              className="font-semibold text-zinc-950 hover:underline"
             >
-              Sign In to Business
+              Sign In to Existing Business
             </Link>
           </div>
         </div>
