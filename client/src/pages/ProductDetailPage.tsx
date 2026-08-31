@@ -154,11 +154,11 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Derived mock data for enhanced Amazon-style experience
+  // Derived data
   const listPrice = (product.price * 1.18).toFixed(2);
   const discountPercent = Math.round(((Number(listPrice) - product.price) / Number(listPrice)) * 100);
-  const rating = 4.8;
-  const reviewCount = 142;
+  const rating = product.rating || 0;
+  const reviewCount = product.numReviews || 0;
 
   return (
     <div className="min-h-screen bg-zinc-50/50 pb-20">
@@ -276,16 +276,24 @@ export const ProductDetailPage: React.FC = () => {
                     <Star
                       key={i}
                       className={`w-4 h-4 ${
-                        i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-zinc-200'
+                        rating > 0 && i < Math.floor(rating)
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-zinc-200'
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-xs font-bold text-zinc-900">{rating}</span>
+                <span className="text-xs font-bold text-zinc-900">
+                  {rating > 0 ? rating.toFixed(1) : '0.0'}
+                </span>
                 <span className="text-xs text-zinc-400">|</span>
-                <a href="#reviews" className="text-xs text-indigo-600 hover:underline font-medium">
-                  {reviewCount} ratings
-                </a>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('reviews')}
+                  className="text-xs text-indigo-600 hover:underline font-medium cursor-pointer"
+                >
+                  {reviewCount > 0 ? `${reviewCount} ratings` : 'No ratings yet'}
+                </button>
               </div>
             </div>
 
@@ -512,93 +520,52 @@ export const ProductDetailPage: React.FC = () => {
                   <span className="text-zinc-500">Inventory Status</span>
                   <span className="col-span-2 text-emerald-700 font-bold">{product.stock} Units Ready to Ship</span>
                 </div>
-                <div className="grid grid-cols-3 p-3.5 bg-zinc-50 font-medium">
-                  <span className="text-zinc-500">Cloudinary Asset</span>
-                  <span className="col-span-2 text-indigo-600 truncate">{product.image}</span>
-                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'reviews' && (
-            <div id="reviews" className="space-y-8 max-w-4xl">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center border-b border-zinc-200/80 pb-8">
-                <div className="md:col-span-4 space-y-2 text-center md:text-left">
-                  <div className="text-5xl font-extrabold text-zinc-950">{rating}</div>
-                  <div className="flex items-center justify-center md:justify-start gap-1 text-amber-400">
+            <div id="reviews" className="space-y-6 max-w-3xl">
+              <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-950">Customer Reviews</h3>
+                  <p className="text-xs text-zinc-500">Verified buyer ratings and feedback</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-amber-400">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-zinc-200'
+                        }`}
+                      />
                     ))}
                   </div>
-                  <p className="text-xs text-zinc-500">Based on {reviewCount} verified ratings</p>
-                </div>
-
-                <div className="md:col-span-8 space-y-2">
-                  {[
-                    { stars: 5, pct: 78 },
-                    { stars: 4, pct: 15 },
-                    { stars: 3, pct: 4 },
-                    { stars: 2, pct: 2 },
-                    { stars: 1, pct: 1 },
-                  ].map((row) => (
-                    <div key={row.stars} className="flex items-center gap-3 text-xs">
-                      <span className="w-12 text-zinc-600 font-medium">{row.stars} star</span>
-                      <div className="flex-1 h-2 rounded-full bg-zinc-100 overflow-hidden">
-                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${row.pct}%` }} />
-                      </div>
-                      <span className="w-8 text-right text-zinc-400">{row.pct}%</span>
-                    </div>
-                  ))}
+                  <span className="text-xs font-bold text-zinc-900">
+                    {rating > 0 ? `${rating.toFixed(1)} / 5.0` : '0.0 / 5.0'}
+                  </span>
                 </div>
               </div>
 
-              {/* Sample Reviews */}
-              <div className="space-y-6">
-                <h4 className="text-sm font-bold text-zinc-950">Top Customer Feedbacks</h4>
-                {[
-                  {
-                    author: 'Alexander M.',
-                    date: 'August 24, 2026',
-                    stars: 5,
-                    title: 'Exceeded all expectations! Fast delivery.',
-                    comment:
-                      'The item matched the product specifications exactly. Shipping arrived within 24 hours in pristine packaging. Highly recommend this merchant.',
-                  },
-                  {
-                    author: 'Sarah Jenkins',
-                    date: 'August 18, 2026',
-                    stars: 5,
-                    title: 'High quality build, smooth shopping experience',
-                    comment:
-                      'Seamless checkout and quick cart update. The product quality is top notch for this price point.',
-                  },
-                ].map((rev, i) => (
-                  <div key={i} className="p-5 rounded-2xl bg-zinc-50/70 border border-zinc-200/80 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-zinc-950 text-white text-xs font-bold flex items-center justify-center">
-                          {rev.author[0]}
-                        </div>
-                        <span className="text-xs font-bold text-zinc-900">{rev.author}</span>
-                        <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md font-medium border border-emerald-100">
-                          Verified Purchase
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-zinc-400">{rev.date}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-amber-400">
-                      {Array.from({ length: rev.stars }).map((_, j) => (
-                        <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <h5 className="text-xs font-bold text-zinc-900">{rev.title}</h5>
-                    <p className="text-xs text-zinc-600 leading-relaxed">{rev.comment}</p>
-                    <div className="pt-1 flex items-center gap-1 text-[11px] text-zinc-400">
-                      <ThumbsUp className="w-3.5 h-3.5" /> 18 people found this helpful
-                    </div>
+              {reviewCount === 0 ? (
+                <div className="p-8 rounded-2xl bg-zinc-50 border border-zinc-200/80 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center mx-auto text-amber-500">
+                    <Star className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-zinc-950">No Customer Reviews Yet</h4>
+                    <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1">
+                      Be the first verified customer to purchase and leave feedback for this product.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2">
+                  <span className="text-xs font-bold text-zinc-900">{reviewCount} Verified Ratings</span>
+                  <p className="text-xs text-zinc-600">Average customer rating is {rating.toFixed(1)} out of 5 stars.</p>
+                </div>
+              )}
             </div>
           )}
 
