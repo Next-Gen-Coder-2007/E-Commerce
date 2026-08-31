@@ -62,7 +62,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const handleAuthChangeAndLoad = async () => {
-      const currentUserId = user?._id || user?.id;
+      const currentUserId = user?._id;
       const prevUserId = prevUserIdRef.current;
 
       if (prevUserId === null && currentUserId) {

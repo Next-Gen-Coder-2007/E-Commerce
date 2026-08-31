@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   Star,
@@ -21,23 +21,95 @@ import {
   RotateCcw,
   ShieldCheck,
   Lock,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { getProductsApi } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import type { Product } from '../types/product';
+
+const BANNERS = [
+  {
+    id: 1,
+    title: 'The Future of Connectivity',
+    subtitle: 'Next-Gen Audio, Ultra-Light Workstations & Computing Essentials',
+    category: 'electronics',
+    badge: 'FLAGSHIP TECH 2026',
+    image: '/banners/tech_banner.jpg',
+    cta: 'Explore Tech Catalog',
+    accentColor: 'from-zinc-950/95 via-zinc-900/70 to-transparent',
+  },
+  {
+    id: 2,
+    title: 'Modern Luxe & Streetwear',
+    subtitle: 'Curated Autumn Cashmere, Minimalist Outerwear & Designer Footwear',
+    category: 'fashion',
+    badge: 'DESIGNER COLLECTION',
+    image: '/banners/fashion_banner.jpg',
+    cta: 'Shop Designer Fashion',
+    accentColor: 'from-zinc-950/95 via-stone-900/70 to-transparent',
+  },
+  {
+    id: 3,
+    title: 'Architectural Smart Living',
+    subtitle: 'Scandinavian Craftsmanship, Ambient Lighting & Minimalist Decor',
+    category: 'home',
+    badge: 'HOME & LIVING',
+    image: '/banners/home_banner.jpg',
+    cta: 'Discover Home Essentials',
+    accentColor: 'from-zinc-950/95 via-zinc-900/70 to-transparent',
+  },
+];
+
+const HOME_CATEGORY_SECTIONS = [
+  {
+    id: 'electronics',
+    title: 'Next-Gen Electronics & Computing',
+    subtitle: 'High-performance audio, ultra-light laptops, and smart wearable gadgets',
+  },
+  {
+    id: 'fashion',
+    title: 'Modern Luxe & Streetwear',
+    subtitle: 'Designer knitwear, minimalist outerwear, and premium seasonal styles',
+  },
+  {
+    id: 'home',
+    title: 'Smart Living & Ambient Decor',
+    subtitle: 'Minimalist lighting, interior furniture, and modern kitchen essentials',
+  },
+  {
+    id: 'beauty',
+    title: 'Clean Beauty & Skincare',
+    subtitle: 'Pure botanicals, restorative formulas, and organic self-care essentials',
+  },
+  {
+    id: 'sports',
+    title: 'Sports & Active Lifestyle',
+    subtitle: 'Athletic wear, performance training gear, and fitness accessories',
+  },
+  {
+    id: 'books',
+    title: 'Books & Media',
+    subtitle: 'Bestselling novels, educational literature, and audiobooks',
+  },
+];
 
 export const HomePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const search = searchParams.get('search') || '';
-  const activeCategory = searchParams.get('category') || 'all';
-  const sort = (searchParams.get('sort') as 'newest' | 'price_asc' | 'price_desc' | 'popular') || 'newest';
+  const categoryParam = searchParams.get('category');
+  const activeCategory = categoryParam || 'all';
+  const sort = (searchParams.get('sort') as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'oldest') || 'newest';
 
   const [products, setProducts] = useState<Product[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalQuantity, setModalQuantity] = useState(1);
@@ -48,51 +120,26 @@ export const HomePage: React.FC = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getProductsApi({
-        search: search.trim() || undefined,
-        category: activeCategory !== 'all' ? activeCategory : undefined,
-        sort,
-        limit: 24,
-      });
-      setProducts(data.products || []);
-      setTotalCount(data.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load products');
-    } finally {
-      setLoading(false);
-    }
-  }, [search, activeCategory, sort]);
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!bannerRef.current) return;
+    const rect = bannerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 20;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 20;
+    setMousePos({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setMousePos({ x: 0, y: 0 });
+  };
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const handleCategorySelect = (cat: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (cat === 'all') {
-      params.delete('category');
-    } else {
-      params.set('category', cat);
-    }
-    setSearchParams(params);
-  };
-
-  const handleClearFilters = () => {
-    setSearchParams(new URLSearchParams());
-  };
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail) {
-      setNewsletterSuccess(true);
-      setNewsletterEmail('');
-      setTimeout(() => setNewsletterSuccess(false), 4000);
-    }
-  };
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % BANNERS.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, []);
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 5,
@@ -116,439 +163,721 @@ export const HomePage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-zinc-50/60 text-zinc-900 flex flex-col font-sans">
-      {!search && activeCategory === 'all' && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-4 lg:space-y-6">
-          {/* Row 1: Two 50% Width Hero Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-            {/* Row 1 Card 1: Electronics */}
-            <div
-              onClick={() => handleCategorySelect('electronics')}
-              className="group relative min-h-[300px] sm:min-h-[360px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
-            >
-              <img
-                src="/banners/tech_banner.jpg"
-                alt="Tech Collection"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              <div className="relative z-10 space-y-2.5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-xs">
-                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>TRENDING IN TECH</span>
-                  <span className="w-1 h-1 rounded-full bg-white/40" />
-                  <span className="text-amber-300">UP TO 35% OFF</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow">
-                  Next-Gen Audio & Computing
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
-                  Noise-cancelling flagship audio, ultra-light workstations, and wearable telemetry.
-                </p>
-                <div className="pt-2">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
-                    <span>Explore Tech Catalog</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </div>
-              </div>
-            </div>
+  // IntersectionObserver for ultra-smooth scroll-triggered entrance animations
+  useEffect(() => {
+    const elements = document.querySelectorAll('.reveal-on-scroll');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.08,
+        rootMargin: '0px 0px -40px 0px',
+      }
+    );
 
-            {/* Row 1 Card 2: Luxury Fashion */}
-            <div
-              onClick={() => handleCategorySelect('fashion')}
-              className="group relative min-h-[300px] sm:min-h-[360px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
-            >
-              <img
-                src="/banners/fashion_banner.jpg"
-                alt="Designer Fashion"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              <div className="relative z-10 space-y-2.5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
-                  <span>AUTUMN LUXE EDIT</span>
-                  <span className="w-1 h-1 rounded-full bg-white/40" />
-                  <span className="text-indigo-200">NEW ARRIVALS</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow">
-                  Modern Luxe & Streetwear Styles
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
-                  Curated cashmere knitwear, minimalist outerwear, and luxury designer footwear.
-                </p>
-                <div className="pt-2">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
-                    <span>Shop Designer Fashion</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </div>
-              </div>
-            </div>
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [products, activeCategory, search]);
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const isHome = !search.trim() && categoryParam === null;
+      const data = await getProductsApi({
+        search: search.trim() || undefined,
+        category: activeCategory !== 'all' ? activeCategory : undefined,
+        sort,
+        limit: isHome ? 60 : 48,
+      });
+      setProducts(data.products || []);
+      setTotalCount(data.total || 0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, activeCategory, categoryParam, sort]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleCategorySelect = (cat: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('category', cat);
+    setSearchParams(params);
+  };
+
+  const handleSortChange = (newSort: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (newSort === 'newest') {
+      params.delete('sort');
+    } else {
+      params.set('sort', newSort);
+    }
+    setSearchParams(params);
+  };
+
+  const handleClearFilters = () => {
+    const params = new URLSearchParams();
+    params.set('category', 'all');
+    setSearchParams(params);
+  };
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newsletterEmail) {
+      setNewsletterSuccess(true);
+      setNewsletterEmail('');
+      setTimeout(() => setNewsletterSuccess(false), 4000);
+    }
+  };
+
+  const renderProductCard = (product: Product, idx: number) => (
+    <div
+      key={product._id}
+      onClick={() => navigate(`/product/${product._id}`)}
+      className="reveal-on-scroll group bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-2xs hover:shadow-lg hover:border-zinc-300 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+      style={{ transitionDelay: `${(idx % 4) * 75}ms` }}
+    >
+      <div className="space-y-3">
+        <div className="relative aspect-square rounded-xl bg-zinc-100 overflow-hidden">
+          <img
+            src={product.image}
+            alt={product.title}
+            className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-300"
+            loading="lazy"
+          />
+          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-xs text-[10px] font-bold uppercase tracking-wider text-zinc-800 shadow-2xs">
+            {product.category}
+          </span>
+          {product.stock <= 5 && product.stock > 0 && (
+            <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-bold shadow-2xs">
+              Only {product.stock} left
+            </span>
+          )}
+          {product.stock === 0 && (
+            <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-rose-600/90 text-white text-[10px] font-bold shadow-2xs">
+              Out of stock
+            </span>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center gap-1 text-zinc-400 text-[11px] mb-1">
+            <Building2 className="w-3 h-3 text-zinc-500" />
+            <span className="truncate font-medium text-zinc-600">
+              {product.companyName}
+            </span>
           </div>
 
-          {/* Row 2: Three Cards (3 cols | 6 cols | 3 cols in 12-col grid) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch">
-            {/* Row 2 Card 1: Home & Living (Left ~ 25%) */}
-            <div
-              onClick={() => handleCategorySelect('home')}
-              className="md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6"
-            >
-              <img
-                src="/banners/home_banner.jpg"
-                alt="Home & Living"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              <div className="relative z-10 space-y-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-emerald-300 border border-white/20">
-                  <span>SMART LIVING</span>
-                </span>
-                <h4 className="text-lg sm:text-xl font-bold text-white leading-snug drop-shadow">
-                  Minimalist Home & Ambient Decor
-                </h4>
-                <p className="text-[11px] text-zinc-300 font-medium">From $29.99</p>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-emerald-300 transition-colors pt-1">
-                  <span>Shop Home</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </span>
+          <h2 className="text-sm font-bold text-zinc-900 group-hover:text-zinc-700 transition-colors line-clamp-2 leading-snug">
+            {product.title}
+          </h2>
+        </div>
+      </div>
+
+      <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-base font-extrabold text-zinc-950">
+            ${product.price.toFixed(2)}
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span>{product.rating}</span>
+            <span className="text-zinc-400">({product.numReviews})</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/product/${product._id}`);
+            }}
+            className="px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            disabled={product.stock === 0 || addingId === product._id}
+            onClick={async (e) => {
+              e.stopPropagation();
+              setAddingId(product._id);
+              await addToCart({
+                productId: product._id,
+                title: product.title,
+                price: product.price,
+                image: product.image,
+                category: product.category,
+                companyName: product.companyName,
+                stock: product.stock,
+                quantity: 1,
+              }, true);
+              setAddingId(null);
+            }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-40 rounded-lg transition-all active:scale-95 shadow-2xs cursor-pointer"
+            title="Quick Add to Cart"
+          >
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Add</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const isSearchOrFilterMode = Boolean(search || categoryParam !== null);
+  const activeBanner = BANNERS[currentSlide] || BANNERS[0];
+
+  return (
+    <div className="min-h-screen bg-zinc-50/60 text-zinc-900 flex flex-col font-sans">
+      {!isSearchOrFilterMode && (
+        <>
+          {/* Section 1: Interactive Hero Banner Carousel */}
+          <section
+            ref={bannerRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative w-full overflow-hidden bg-zinc-950 text-white min-h-[460px] sm:min-h-[520px] flex items-center justify-center select-none"
+          >
+            {BANNERS.map((banner, index) => {
+              const isActive = index === currentSlide;
+              return (
+                <div
+                  key={banner.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out will-change-transform scale-105"
+                    style={{
+                      backgroundImage: `url(${banner.image})`,
+                      transform: isActive
+                        ? `scale(1.06) translate(${mousePos.x * 0.4}px, ${mousePos.y * 0.4}px)`
+                        : 'scale(1.0)',
+                    }}
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-r ${banner.accentColor}`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                </div>
+              );
+            })}
+
+            <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-16">
+              <div
+                className="max-w-2xl space-y-4 transition-transform duration-500 will-change-transform"
+                style={{
+                  transform: `translate(${mousePos.x * -0.5}px, ${mousePos.y * -0.5}px)`,
+                }}
+              >
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/10 backdrop-blur-md text-white border border-white/15 shadow-sm">
+                  <Flame className="w-3.5 h-3.5 text-zinc-300" />
+                  <span>{activeBanner.badge}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span className="text-[11px] text-zinc-300 font-mono">SEASON 2026</span>
+                </div>
+
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                  {activeBanner.title}
+                </h1>
+
+                <p className="text-sm sm:text-base text-zinc-300 font-medium max-w-lg leading-relaxed drop-shadow">
+                  {activeBanner.subtitle}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCategorySelect(activeBanner.category)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-extrabold text-zinc-950 bg-white hover:bg-zinc-100 shadow-xl transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <span>{activeBanner.cta}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Row 2 Card 2: Flash Deals Hub (Center Wide ~ 50%) */}
-            <div
-              onClick={() => handleCategorySelect('all')}
-              className="md:col-span-12 lg:col-span-6 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentSlide((prev) => (prev === 0 ? BANNERS.length - 1 : prev - 1))
+              }
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-zinc-950/50 hover:bg-zinc-900/90 text-white backdrop-blur-md border border-white/15 transition-all cursor-pointer hidden sm:flex items-center justify-center"
+              title="Previous slide"
             >
-              <img
-                src="/banners/flash_deals_banner.jpg"
-                alt="Flash Marketplace Sale"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              <div className="relative z-10 space-y-2.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-zinc-950 shadow-xs">
-                    <Zap className="w-3.5 h-3.5 fill-zinc-950" />
-                    <span>FLASH SALE HUB</span>
-                  </span>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-zinc-900/80 text-amber-300 border border-amber-500/30 backdrop-blur-md">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>
-                      {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.minutes).padStart(2, '0')}m : {String(timeLeft.seconds).padStart(2, '0')}s
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % BANNERS.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-zinc-950/50 hover:bg-zinc-900/90 text-white backdrop-blur-md border border-white/15 transition-all cursor-pointer hidden sm:flex items-center justify-center"
+              title="Next slide"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+              {BANNERS.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    i === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
+                  }`}
+                  title={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section 2: Bento Grid Showcase (Reveal on scroll) */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-6">
+            <div className="reveal-on-scroll flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-zinc-950 tracking-tight">
+                  Featured Departments & Flash Sale
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  Explore curated collections and limited-time marketplace deals
+                </p>
+              </div>
+            </div>
+
+            {/* Row 1: Two 50% Width Hero Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+              {/* Row 1 Card 1: Electronics */}
+              <div
+                onClick={() => handleCategorySelect('electronics')}
+                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+              >
+                <img
+                  src="/banners/tech_banner.jpg"
+                  alt="Tech Collection"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-75"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                <div className="relative z-10 space-y-2.5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 backdrop-blur-md text-white border border-white/15 shadow-xs">
+                    <Flame className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>TRENDING IN TECH</span>
+                    <span className="w-1 h-1 rounded-full bg-white/40" />
+                    <span className="text-zinc-300">UP TO 35% OFF</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+                    Next-Gen Audio & Computing
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
+                    Noise-cancelling flagship audio, ultra-light workstations, and wearable telemetry.
+                  </p>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-zinc-300 transition-colors">
+                      <span>Explore Tech Catalog</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </div>
+              </div>
 
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow">
-                  Limited-Time Marketplace Bundles
-                </h3>
-                <p className="text-xs text-zinc-300 max-w-md">
-                  Unlock up to 50% discount on flagship gadgets, verified timepieces, and accessories.
-                </p>
+              {/* Row 1 Card 2: Luxury Fashion */}
+              <div
+                onClick={() => handleCategorySelect('fashion')}
+                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+                style={{ transitionDelay: '120ms' }}
+              >
+                <img
+                  src="/banners/fashion_banner.jpg"
+                  alt="Designer Fashion"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-75"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                <div className="relative z-10 space-y-2.5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 backdrop-blur-md text-white border border-white/15 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>AUTUMN LUXE EDIT</span>
+                    <span className="w-1 h-1 rounded-full bg-white/40" />
+                    <span className="text-zinc-300">NEW ARRIVALS</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+                    Modern Luxe & Streetwear Styles
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
+                    Curated cashmere knitwear, minimalist outerwear, and luxury designer footwear.
+                  </p>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-zinc-300 transition-colors">
+                      <span>Shop Designer Fashion</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                <div className="pt-1">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
-                    <span>Explore Flash Deals</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            {/* Row 2: Three Cards (3 cols | 6 cols | 3 cols in 12-col grid) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch">
+              {/* Row 2 Card 1: Home & Living (Left ~ 25%) */}
+              <div
+                onClick={() => handleCategorySelect('home')}
+                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
+                style={{ transitionDelay: '100ms' }}
+              >
+                <img
+                  src="/banners/home_banner.jpg"
+                  alt="Home & Living"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-70"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                <div className="relative z-10 space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/15">
+                    <span>SMART LIVING</span>
+                  </span>
+                  <h4 className="text-lg font-bold text-white leading-snug">
+                    Minimalist Home & Ambient Decor
+                  </h4>
+                  <p className="text-[11px] text-zinc-300 font-medium">From $29.99</p>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-zinc-300 transition-colors pt-1">
+                    <span>Shop Home</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 2 Card 2: Flash Deals Hub (Center Wide ~ 50%) */}
+              <div
+                onClick={() => handleCategorySelect('all')}
+                className="reveal-on-scroll md:col-span-12 lg:col-span-6 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+                style={{ transitionDelay: '200ms' }}
+              >
+                <img
+                  src="/banners/flash_deals_banner.jpg"
+                  alt="Flash Marketplace Sale"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-75"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                <div className="relative z-10 space-y-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white text-zinc-950 shadow-xs">
+                      <Zap className="w-3.5 h-3.5 fill-zinc-950" />
+                      <span>FLASH SALE HUB</span>
+                    </span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-zinc-900/80 text-zinc-200 border border-zinc-700 backdrop-blur-md">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>
+                        {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.minutes).padStart(2, '0')}m : {String(timeLeft.seconds).padStart(2, '0')}s
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Limited-Time Marketplace Bundles
+                  </h3>
+                  <p className="text-xs text-zinc-300 max-w-md">
+                    Unlock up to 50% discount on flagship gadgets, verified timepieces, and accessories.
+                  </p>
+
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-2 text-xs font-bold text-zinc-200 group-hover:text-white transition-colors">
+                      <span>Explore Flash Deals</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2 Card 3: Beauty & Skincare (Right ~ 25%) */}
+              <div
+                onClick={() => handleCategorySelect('beauty')}
+                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
+                style={{ transitionDelay: '300ms' }}
+              >
+                <img
+                  src="/banners/beauty_banner.jpg"
+                  alt="Organic Beauty"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-70"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                <div className="relative z-10 space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/15">
+                    <span>PURE BOTANICALS</span>
+                  </span>
+                  <h4 className="text-lg font-bold text-white leading-snug">
+                    Clean Beauty & Skincare
+                  </h4>
+                  <p className="text-[11px] text-zinc-300 font-medium">100% Organic Extracts</p>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-zinc-300 transition-colors pt-1">
+                    <span>Discover Beauty</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Row 2 Card 3: Beauty & Skincare (Right ~ 25%) */}
-            <div
-              onClick={() => handleCategorySelect('beauty')}
-              className="md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6"
-            >
-              <img
-                src="/banners/beauty_banner.jpg"
-                alt="Organic Beauty"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              <div className="relative z-10 space-y-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-pink-300 border border-white/20">
-                  <span>PURE BOTANICALS</span>
-                </span>
-                <h4 className="text-lg sm:text-xl font-bold text-white leading-snug drop-shadow">
-                  Clean Beauty & Skincare
-                </h4>
-                <p className="text-[11px] text-zinc-300 font-medium">100% Organic Extracts</p>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-pink-300 transition-colors pt-1">
-                  <span>Discover Beauty</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </span>
+            {/* Trust Features Strip */}
+            <div className="reveal-on-scroll grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+              <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-zinc-950">Free Express Delivery</div>
+                  <div className="text-[11px] text-zinc-500">On all orders over $50</div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Trust Features Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <Truck className="w-5 h-5" />
+              <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-zinc-950">30-Day Easy Returns</div>
+                  <div className="text-[11px] text-zinc-500">Hassle-free refund policy</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-zinc-950">Free Express Delivery</div>
-                <div className="text-[11px] text-zinc-500">On all orders over $50</div>
-              </div>
-            </div>
 
-            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <RotateCcw className="w-5 h-5" />
+              <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-zinc-950">Buyer Protection</div>
+                  <div className="text-[11px] text-zinc-500">Verified seller guarantee</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-zinc-950">30-Day Easy Returns</div>
-                <div className="text-[11px] text-zinc-500">Hassle-free refund policy</div>
-              </div>
-            </div>
 
-            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-zinc-950">Buyer Protection</div>
-                <div className="text-[11px] text-zinc-500">Verified seller guarantee</div>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-zinc-950">256-Bit SSL Security</div>
-                <div className="text-[11px] text-zinc-500">End-to-end encryption</div>
+              <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-800 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-zinc-950">256-Bit SSL Security</div>
+                  <div className="text-[11px] text-zinc-500">End-to-end encryption</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 flex-1 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200/80">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
-                {search
-                  ? `Search results for "${search}"`
-                  : activeCategory === 'all'
-                  ? 'All Marketplace Products'
-                  : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
-              </h2>
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
-                {totalCount} items
-              </span>
-            </div>
-            {(search || activeCategory !== 'all') && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-zinc-500">Active filters:</span>
-                {search && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200">
-                    <span>Keyword: {search}</span>
-                  </span>
-                )}
-                {activeCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200 capitalize">
-                    <span>Category: {activeCategory}</span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="text-xs text-rose-600 hover:underline font-semibold ml-2 cursor-pointer"
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <div className="relative">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as any)}
-                className="appearance-none pl-8 pr-8 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-800 shadow-2xs focus:outline-none focus:border-zinc-900 cursor-pointer"
-              >
-                <option value="newest">Sort: Newest Arrivals</option>
-                <option value="price_asc">Sort: Price (Low to High)</option>
-                <option value="price_desc">Sort: Price (High to Low)</option>
-                <option value="rating">Sort: Top Rated</option>
-              </select>
-              <ArrowUpDown className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-4 scrollbar-none">
-          {['all', 'electronics', 'fashion', 'home', 'beauty', 'sports'].map((cat) => {
-            const isActive = activeCategory === cat;
-            const label = cat === 'all' ? 'All Products' : cat.charAt(0).toUpperCase() + cat.slice(1);
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => handleCategorySelect(cat)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-zinc-950 text-white shadow-xs'
-                    : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 flex-1 w-full space-y-12">
         {error && (
-          <div className="p-4 my-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
+          <div className="p-4 my-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
             {error}
           </div>
         )}
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3 animate-pulse"
-              >
-                <div className="w-full aspect-square bg-zinc-100 rounded-xl" />
-                <div className="h-4 bg-zinc-100 rounded-md w-3/4" />
-                <div className="h-3 bg-zinc-100 rounded-md w-1/2" />
-                <div className="flex justify-between items-center pt-2">
-                  <div className="h-5 bg-zinc-100 rounded-md w-16" />
-                  <div className="h-8 bg-zinc-100 rounded-lg w-20" />
+        {isSearchOrFilterMode ? (
+          /* Search & Filtered Catalog View */
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200/80">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                    {search
+                      ? `Search results for "${search}"`
+                      : activeCategory === 'all'
+                      ? 'All Products'
+                      : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Collection`}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                    {totalCount} items
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-zinc-500">Active filters:</span>
+                  {search && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-xs font-medium border border-zinc-200">
+                      <span>Keyword: {search}</span>
+                    </span>
+                  )}
+                  {activeCategory !== 'all' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-xs font-medium border border-zinc-200 capitalize">
+                      <span>Category: {activeCategory}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-xs font-medium border border-zinc-200">
+                      <span>Category: All</span>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="text-xs text-rose-600 hover:underline font-semibold ml-2 cursor-pointer"
+                  >
+                    Clear filters
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-2xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-8">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
-              <Package className="w-6 h-6" />
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <div className="relative">
+                  <select
+                    value={sort}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="appearance-none pl-8 pr-8 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-800 shadow-2xs focus:outline-none focus:border-zinc-900 cursor-pointer"
+                  >
+                    <option value="newest">Sort: Newest Arrivals</option>
+                    <option value="price_asc">Sort: Price (Low to High)</option>
+                    <option value="price_desc">Sort: Price (High to Low)</option>
+                    <option value="rating">Sort: Top Rated</option>
+                  </select>
+                  <ArrowUpDown className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                </div>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-zinc-900">
-              No products found
-            </h3>
-            <p className="text-xs text-zinc-500">
-              {search || activeCategory !== 'all'
-                ? 'Try adjusting your search query or selecting a different category pill.'
-                : 'No products are currently available in the marketplace catalog.'}
-            </p>
-            {(search || activeCategory !== 'all') && (
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="px-4 py-2 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
-              >
-                Reset Search Filters
-              </button>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {['all', 'electronics', 'fashion', 'home', 'beauty', 'sports', 'books'].map((cat) => {
+                const isActive = activeCategory === cat;
+                const label = cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1);
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => handleCategorySelect(cat)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-zinc-950 text-white shadow-xs'
+                        : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3 animate-pulse"
+                  >
+                    <div className="w-full aspect-square bg-zinc-100 rounded-xl" />
+                    <div className="h-4 bg-zinc-100 rounded-md w-3/4" />
+                    <div className="h-3 bg-zinc-100 rounded-md w-1/2" />
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="h-5 bg-zinc-100 rounded-md w-16" />
+                      <div className="h-8 bg-zinc-100 rounded-lg w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="py-16 text-center bg-white rounded-2xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-8">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
+                  <Package className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-zinc-900">
+                  No matching products found
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Try adjusting your search query or selecting a different category filter.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="px-4 py-2 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+                >
+                  Reset Search Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-4">
+                {products.map((product, idx) => renderProductCard(product, idx))}
+              </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-6">
-            {products.map((product) => (
-              <div
-                key={product._id}
-                onClick={() => navigate(`/product/${product._id}`)}
-                className="group bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-2xs hover:shadow-lg hover:border-zinc-300 transition-all duration-200 flex flex-col justify-between cursor-pointer"
-              >
-                <div className="space-y-3">
-                  <div className="relative aspect-square rounded-xl bg-zinc-100 overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-xs text-[10px] font-bold uppercase tracking-wider text-zinc-800 shadow-2xs">
-                      {product.category}
-                    </span>
-                    {product.stock <= 5 && product.stock > 0 && (
-                      <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-bold shadow-2xs">
-                        Only {product.stock} left
-                      </span>
-                    )}
-                    {product.stock === 0 && (
-                      <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-rose-600/90 text-white text-[10px] font-bold shadow-2xs">
-                        Out of stock
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1 text-zinc-400 text-[11px] mb-1">
-                      <Building2 className="w-3 h-3 text-indigo-500" />
-                      <span className="truncate font-medium text-zinc-600">
-                        {product.companyName}
-                      </span>
-                    </div>
-
-                    <h2 className="text-sm font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
-                      {product.title}
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
-                  <div>
-                    <div className="text-base font-extrabold text-zinc-950">
-                      ${product.price.toFixed(2)}
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span>{product.rating}</span>
-                      <span className="text-zinc-400">({product.numReviews})</span>
+          /* Home Page: Curated 4-Product Category Showcases (2x2 / 4-card grid per category) */
+          <div className="space-y-12">
+            {loading ? (
+              <div className="space-y-8">
+                {[1, 2].map((group) => (
+                  <div key={group} className="space-y-4">
+                    <div className="h-6 bg-zinc-100 rounded-md w-48 animate-pulse" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3 animate-pulse"
+                        >
+                          <div className="w-full aspect-square bg-zinc-100 rounded-xl" />
+                          <div className="h-4 bg-zinc-100 rounded-md w-3/4" />
+                          <div className="h-3 bg-zinc-100 rounded-md w-1/2" />
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/product/${product._id}`);
-                      }}
-                      className="px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
-                    >
-                      Details
-                    </button>
-                    <button
-                      type="button"
-                      disabled={product.stock === 0 || addingId === product._id}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        setAddingId(product._id);
-                        await addToCart({
-                          productId: product._id,
-                          title: product.title,
-                          price: product.price,
-                          image: product.image,
-                          category: product.category,
-                          companyName: product.companyName,
-                          stock: product.stock,
-                          quantity: 1,
-                        }, true);
-                        setAddingId(null);
-                      }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-40 rounded-lg transition-all active:scale-95 shadow-2xs cursor-pointer"
-                      title="Quick Add to Cart"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Add</span>
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <>
+                {HOME_CATEGORY_SECTIONS.map((cat) => {
+                  const catProducts = products
+                    .filter((p) => p.category?.toLowerCase() === cat.id)
+                    .slice(0, 4);
+
+                  if (catProducts.length === 0) return null;
+
+                  return (
+                    <section key={cat.id} className="space-y-4">
+                      <div className="reveal-on-scroll flex items-end justify-between border-b border-zinc-200/80 pb-3">
+                        <div>
+                          <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                            {cat.title}
+                          </h2>
+                          <p className="text-xs text-zinc-500">
+                            {cat.subtitle}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCategorySelect(cat.id)}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 hover:text-zinc-600 transition-colors cursor-pointer group"
+                        >
+                          <span>See more in {cat.title.split(' ')[0]}</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+                        {catProducts.map((product, idx) => renderProductCard(product, idx))}
+                      </div>
+                    </section>
+                  );
+                })}
+
+                {/* If total products is 0 or all categories are empty */}
+                {products.length === 0 && (
+                  <div className="py-16 text-center bg-white rounded-2xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-8">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
+                      <Package className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-900">
+                      Catalog is currently refreshing
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      Our merchants are actively updating product listings. Check back soon!
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </main>
@@ -618,6 +947,15 @@ export const HomePage: React.FC = () => {
                     className="hover:text-zinc-950 transition-colors cursor-pointer"
                   >
                     Sports & Outdoors
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleCategorySelect('books')}
+                    className="hover:text-zinc-950 transition-colors cursor-pointer"
+                  >
+                    Books & Media
                   </button>
                 </li>
               </ul>
