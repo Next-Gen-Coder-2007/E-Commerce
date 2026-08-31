@@ -13,8 +13,11 @@ import {
   ChevronRight,
   Flame,
   ArrowRight,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { getProductsApi } from '../services/productService';
+import { useCart } from '../context/CartContext';
 import type { Product } from '../types/product';
 
 const BANNERS = [
@@ -91,6 +94,10 @@ export const HomePage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalQuantity, setModalQuantity] = useState(1);
+  const [addingId, setAddingId] = useState<string | null>(null);
+
+  const { addToCart } = useCart();
 
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
@@ -481,7 +488,7 @@ export const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between">
+                <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
                   <div>
                     <div className="text-base font-extrabold text-zinc-950">
                       ${product.price.toFixed(2)}
@@ -493,16 +500,43 @@ export const HomePage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedProduct(product);
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-zinc-900 hover:text-white rounded-lg transition-colors cursor-pointer"
-                  >
-                    <span>View</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProduct(product);
+                        setModalQuantity(1);
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
+                    >
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      disabled={product.stock === 0 || addingId === product._id}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setAddingId(product._id);
+                        await addToCart({
+                          productId: product._id,
+                          title: product.title,
+                          price: product.price,
+                          image: product.image,
+                          category: product.category,
+                          companyName: product.companyName,
+                          stock: product.stock,
+                          quantity: 1,
+                        }, true);
+                        setAddingId(null);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-40 rounded-lg transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Quick Add to Cart"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Add</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -719,12 +753,61 @@ export const HomePage: React.FC = () => {
                   )}
                 </div>
 
+                {selectedProduct.stock > 0 && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-medium text-zinc-600">Quantity</span>
+                    <div className="flex items-center border border-zinc-200 rounded-xl bg-zinc-50 overflow-hidden">
+                      <button
+                        type="button"
+                        disabled={modalQuantity <= 1}
+                        onClick={() => setModalQuantity((q) => Math.max(1, q - 1))}
+                        className="p-1.5 text-zinc-600 hover:bg-zinc-200 disabled:opacity-30 transition-colors cursor-pointer"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="px-3 text-xs font-bold font-mono text-zinc-950">
+                        {modalQuantity}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={modalQuantity >= selectedProduct.stock}
+                        onClick={() => setModalQuantity((q) => Math.min(selectedProduct.stock, q + 1))}
+                        className="p-1.5 text-zinc-600 hover:bg-zinc-200 disabled:opacity-30 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-colors shadow-xs cursor-pointer"
+                  disabled={selectedProduct.stock === 0 || addingId === selectedProduct._id}
+                  onClick={async () => {
+                    setAddingId(selectedProduct._id);
+                    await addToCart({
+                      productId: selectedProduct._id,
+                      title: selectedProduct.title,
+                      price: selectedProduct.price,
+                      image: selectedProduct.image,
+                      category: selectedProduct.category,
+                      companyName: selectedProduct.companyName,
+                      stock: selectedProduct.stock,
+                      quantity: modalQuantity,
+                    }, true);
+                    setAddingId(null);
+                    setSelectedProduct(null);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Cart</span>
+                  <span>
+                    {selectedProduct.stock === 0
+                      ? 'Out of Stock'
+                      : addingId === selectedProduct._id
+                      ? 'Adding to Cart...'
+                      : `Add to Cart • $${(selectedProduct.price * modalQuantity).toFixed(2)}`}
+                  </span>
                 </button>
               </div>
             </div>

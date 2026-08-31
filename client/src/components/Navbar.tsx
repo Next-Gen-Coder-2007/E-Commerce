@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import {
   ShoppingBag,
   LogOut,
@@ -11,6 +12,7 @@ import {
 
 export const Navbar: React.FC = () => {
   const { user, loading, logout } = useAuth();
+  const { totalItems, openCart } = useCart();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -144,14 +146,19 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
-            <Link
-              to="/"
-              className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-colors relative"
-              title="Shopping Bag"
+            <button
+              type="button"
+              onClick={openCart}
+              className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-all relative cursor-pointer group"
+              title="Shopping Cart"
             >
-              <ShoppingBag className="w-4.5 h-4.5" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-zinc-900"></span>
-            </Link>
+              <ShoppingBag className="w-5 h-5 group-hover:scale-105 transition-transform" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-950 text-white font-mono text-[10px] font-black flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-50">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 

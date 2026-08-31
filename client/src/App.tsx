@@ -2,7 +2,9 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
+import { CartDrawer } from './components/CartDrawer';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -18,6 +20,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50/60 text-zinc-900">
       {!isBusiness && <Navbar />}
+      <CartDrawer />
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -69,9 +72,11 @@ const App: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <CartProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </CartProvider>
       </AuthProvider>
     </GoogleOAuthProvider>
   );
