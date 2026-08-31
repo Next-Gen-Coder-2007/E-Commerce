@@ -22,7 +22,7 @@ flowchart TD
     Client["React Frontend (Port 5173)\nTypeScript + Vite + Tailwind CSS"]
     
     subgraph GatewayLayer["API Gateway Layer (Port 5000)"]
-        Gateway["Express API Gateway\nReverse Proxy + CORS + Cookies"]
+        Gateway["Express API Gateway\nReverse Proxy + CORS + Cookies + Load Balancing"]
     end
 
     subgraph ServiceLayer["Service Layer"]
@@ -31,19 +31,21 @@ flowchart TD
         CartService["Cart Service (Port 5003)\nExpress + Mongoose + Redis"]
     end
 
-    subgraph DataLayer["Persistence & Caching"]
-        MongoDB[("MongoDB Atlas\nStores Users, Products, Carts")]
-        Redis[("Redis\nRate Limiting & Cart Cache")]
+    subgraph DataLayer["Persistence & Caching (Same Cluster, Isolated Databases)"]
+        AuthDB[("MongoDB: auth\nStores Users & RBAC")]
+        ProductDB[("MongoDB: products\nStores Product Catalog & Stock")]
+        CartDB[("MongoDB: cart\nStores Shopping Carts & Sessions")]
+        Redis[("Upstash Redis (TLS)\nRate Limiting & Cart Cache")]
     end
 
     Client -- "HTTP /api/*\n(Credentials: include)" --> Gateway
     Gateway -- "Reverse Proxy /api/auth" --> AuthService
     Gateway -- "Reverse Proxy /api/products" --> ProductService
     Gateway -- "Reverse Proxy /api/cart" --> CartService
-    AuthService --> MongoDB
+    AuthService --> AuthDB
     AuthService -.-> Redis
-    ProductService --> MongoDB
-    CartService --> MongoDB
+    ProductService --> ProductDB
+    CartService --> CartDB
     CartService -.-> Redis
 ```
 
@@ -255,27 +257,65 @@ The architecture enforces strict decoupling between services:
 * **Data Ownership**: MongoDB access for user profiles is strictly isolated within the Auth Service.
 * **Incremental Evolution**: Future services (`product-service`, `cart-service`, `order-service`, `payment-service`, `notification-service`) will be provisioned as independent services and registered with the Gateway.
 
-## Database Architecture
+## Database Architecture (Database-per-Service Pattern)
 
-The platform uses MongoDB Atlas for document storage.
+The platform implements the **Database-per-Service** microservices pattern using a single MongoDB Atlas cluster partitioned into isolated logical databases for strict data encapsulation. No service has direct read or write access to another service's database.
 
 ```text
-MongoDB Atlas Cluster
-└── ecommerce
-    └── users
+MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
+├── auth (Auth Microservice Database)
+│   └── users
+│       ├── _id: ObjectId
+│       ├── name: String
+│       ├── email: String (unique, indexed)
+│       ├── password: String (bcrypt hash, optional if googleId present)
+│       ├── googleId: String (sparse, indexed)
+│       ├── avatar: String
+│       ├── role: String (enum: ['customer', 'company', 'admin'], default: 'customer')
+│       ├── companyName: String (optional, merchant entity name)
+│       ├── createdAt: Date
+│       └── updatedAt: Date
+│
+├── products (Product Catalog & Inventory Database)
+│   └── products
+│       ├── _id: ObjectId
+│       ├── title: String (indexed for text search)
+│       ├── description: String
+│       ├── price: Number
+│       ├── category: String (enum: electronics, fashion, home, beauty, etc.)
+│       ├── image: String (Cloudinary CDN URL)
+│       ├── stock: Number
+│       ├── companyId: ObjectId (indexed, reference to merchant)
+│       ├── companyName: String
+│       ├── rating: Number (default: 4.8)
+│       ├── numReviews: Number (default: 0)
+│       ├── createdAt: Date
+│       └── updatedAt: Date
+│
+└── cart (Shopping Cart Database)
+    └── carts
         ├── _id: ObjectId
-        ├── name: String
-        ├── email: String (unique, indexed)
-        ├── password: String (bcrypt hash, optional if googleId present)
-        ├── googleId: String (sparse, indexed)
-        ├── avatar: String
-        ├── role: String (enum: ['customer', 'company', 'admin'], default: 'customer')
-        ├── companyName: String (optional, trimmed)
+        ├── userId: ObjectId (optional, indexed)
+        ├── guestId: String (optional, indexed)
+        ├── items: Array
+        │   ├── productId: ObjectId
+        │   ├── title: String
+        │   ├── price: Number
+        │   ├── image: String
+        │   ├── category: String
+        │   ├── companyName: String
+        │   ├── stock: Number
+        │   └── quantity: Number
+        ├── totalItems: Number
+        ├── totalPrice: Number
         ├── createdAt: Date
         └── updatedAt: Date
 ```
 
-In the current stage, all services connect to the same cluster using logical database and collection boundaries. Physical cluster segregation is not required at this stage of development.
+### Microservice Isolation Rules
+1. **Dedicated Database Connections**: Each service connects with its own connection string specifying its targeted database (`/auth`, `/products`, or `/cart`) or via the `MONGO_DB_NAME` environment variable.
+2. **Zero Cross-Database Joins**: Cross-domain data communication occurs exclusively through the API Gateway via authenticated HTTP headers (`x-user-id`, `x-user-role`, `x-user-company`) or payload attributes.
+3. **Independent Schema Evolution**: Any schema migration, indexing, or scaling applied to one domain (e.g. adding product inventory fields) has zero blast radius on user auth or cart storage.
 
 ## API Specification
 
@@ -290,6 +330,16 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 | `POST` | `/auth/google` | Authenticate or register using Google OAuth ID token | No | Yes (10/15m) |
 | `POST` | `/auth/logout` | Invalidate session and clear HTTP-only cookie | No | No |
 | `GET` | `/auth/me` | Retrieve authenticated user profile from JWT cookie | Yes | No |
+| `GET` | `/products` | Query product catalog with search, category & sort | No | No |
+| `GET` | `/products/:id` | Get dedicated product details by ID | No | No |
+| `POST` | `/products` | Create merchant product with Cloudinary image | Company/Admin | No |
+| `PUT` | `/products/:id` | Update owned merchant product listing | Company/Admin | No |
+| `DELETE` | `/products/:id` | Delete owned merchant product listing | Company/Admin | No |
+| `GET` | `/cart` | Get active cart items (guest or authenticated) | Optional | No |
+| `POST` | `/cart/items` | Add or increment item in shopping cart | Optional | No |
+| `PUT` | `/cart/items/:id` | Update shopping cart item quantity | Optional | No |
+| `DELETE` | `/cart/items/:id` | Remove specific item from cart | Optional | No |
+| `DELETE` | `/cart` | Clear entire shopping cart | Optional | No |
 
 ## Environment Variables
 
@@ -301,16 +351,42 @@ PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 AUTH_SERVICE_URL=http://localhost:5001
+PRODUCT_SERVICE_URL=http://localhost:5002
+CART_SERVICE_URL=http://localhost:5003
+REDIS_URL=rediss://default:YOUR_PASSWORD@YOUR_ENDPOINT.upstash.io:6379
 ```
 
 ### Auth Service (`services/auth-service/.env`)
 ```env
 PORT=5001
 NODE_ENV=development
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/ecommerce?retryWrites=true&w=majority
-REDIS_URL=redis://localhost:6379
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/auth?retryWrites=true&w=majority
+MONGO_DB_NAME=auth
+REDIS_URL=rediss://default:YOUR_PASSWORD@YOUR_ENDPOINT.upstash.io:6379
 JWT_SECRET=ecommerce_super_secret_jwt_key_2026_change_in_production
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GATEWAY_URL=http://localhost:5000
+```
+
+### Product Service (`services/product-service/.env`)
+```env
+PORT=5002
+NODE_ENV=development
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/products?retryWrites=true&w=majority
+MONGO_DB_NAME=products
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+GATEWAY_URL=http://localhost:5000
+```
+
+### Cart Service (`services/cart-service/.env`)
+```env
+PORT=5003
+NODE_ENV=development
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/cart?retryWrites=true&w=majority
+MONGO_DB_NAME=cart
+REDIS_URL=rediss://default:YOUR_PASSWORD@YOUR_ENDPOINT.upstash.io:6379
 GATEWAY_URL=http://localhost:5000
 ```
 
@@ -326,7 +402,7 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 * Node.js (v18.0.0 or higher)
 * npm (v9.0.0 or higher)
 * MongoDB Atlas connection string (or local MongoDB instance)
-* Redis server (optional; in-memory fallback activates automatically if Redis is unavailable)
+* Upstash Redis connection string (or local Redis instance)
 
 ### 1. Installation
 
@@ -336,7 +412,7 @@ Install dependencies across all components:
 # Install Gateway dependencies
 cd gateway && npm install && cd ..
 
-# Install shared Microservices dependencies (auth-service and future services)
+# Install shared Microservices dependencies
 cd services && npm install && cd ..
 
 # Install Client dependencies
@@ -356,9 +432,9 @@ cp client/.env.example client/.env
 ```
 
 Each microservice connects to its own dedicated database within the same MongoDB Atlas cluster:
-- **Auth Service**: `ecommerce_auth`
-- **Product Service**: `ecommerce_products`
-- **Cart Service**: `ecommerce_cart`
+- **Auth Service**: `auth`
+- **Product Service**: `products`
+- **Cart Service**: `cart`
 
 ### 3. Starting the Services
 
