@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
   Star,
@@ -14,70 +14,17 @@ import {
   Plus,
   Minus,
   ExternalLink,
+  Sparkles,
+  Zap,
+  Clock,
+  Truck,
+  RotateCcw,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import { getProductsApi } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import type { Product } from '../types/product';
-
-const BANNERS = [
-  {
-    id: 1,
-    title: 'The Future of Connectivity',
-    subtitle: 'Next-Gen Audio & Computing Essentials',
-    category: 'electronics',
-    badge: 'Flagship Tech 2026',
-    image: '/banners/tech_banner.jpg',
-    cta: 'Explore Tech Catalog',
-    accentColor: 'from-violet-600/80 via-indigo-900/60 to-transparent',
-  },
-  {
-    id: 2,
-    title: 'Modern Luxe & Streetwear',
-    subtitle: 'Curated Autumn Cashmere & Outerwear',
-    category: 'fashion',
-    badge: 'Designer Collection',
-    image: '/banners/fashion_banner.jpg',
-    cta: 'Shop Designer Fashion',
-    accentColor: 'from-amber-950/80 via-zinc-900/60 to-transparent',
-  },
-  {
-    id: 3,
-    title: 'Architectural Smart Living',
-    subtitle: 'Minimalist Scandinavian Craftsmanship & Ambient Audio',
-    category: 'home',
-    badge: 'Home & Living',
-    image: '/banners/home_banner.jpg',
-    cta: 'Discover Home Essentials',
-    accentColor: 'from-emerald-950/80 via-stone-900/60 to-transparent',
-  },
-];
-
-const CATEGORY_CARDS = [
-  {
-    id: 'electronics',
-    title: 'Electronics',
-    tagline: 'Audio, Laptops & Gear',
-    image: '/banners/tech_banner.jpg',
-  },
-  {
-    id: 'fashion',
-    title: 'Fashion & Apparel',
-    tagline: 'Luxury Outerwear & Shoes',
-    image: '/banners/fashion_banner.jpg',
-  },
-  {
-    id: 'home',
-    title: 'Home & Living',
-    tagline: 'Minimalist Living Spaces',
-    image: '/banners/home_banner.jpg',
-  },
-  {
-    id: 'beauty',
-    title: 'Beauty & Skincare',
-    tagline: 'Botanical Essentials',
-    image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&q=80',
-  },
-];
 
 export const HomePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,9 +39,6 @@ export const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalQuantity, setModalQuantity] = useState(1);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -103,27 +47,6 @@ export const HomePage: React.FC = () => {
 
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
-
-  const bannerRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!bannerRef.current) return;
-    const rect = bannerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 20;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 20;
-    setMousePos({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePos({ x: 0, y: 0 });
-  };
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % BANNERS.length);
-    }, 6500);
-    return () => clearInterval(timer);
-  }, []);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
