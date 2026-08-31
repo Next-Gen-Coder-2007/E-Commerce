@@ -44,24 +44,6 @@ const extractUserContext = async (req) => {
     }
   }
 
-  if (user && user.userId) {
-    if (!user.role || user.role === 'customer') {
-      try {
-        if (mongoose.connection.readyState === 1) {
-          const dbUser = await mongoose.connection
-            .collection('users')
-            .findOne({ _id: new mongoose.Types.ObjectId(user.userId) });
-
-          if (dbUser) {
-            user.role = dbUser.role || user.role || 'customer';
-            user.email = dbUser.email || user.email;
-            user.companyName = dbUser.companyName || user.companyName || '';
-          }
-        }
-      } catch (dbErr) {}
-    }
-  }
-
   return user;
 };
 

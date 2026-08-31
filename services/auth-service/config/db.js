@@ -9,8 +9,11 @@ const connectDB = async () => {
       process.exit(1);
     }
 
-    const conn = await mongoose.connect(mongoURI);
-    console.log(`[Auth Service] MongoDB Connected: ${conn.connection.host}`);
+    const dbName = process.env.MONGO_DB_NAME || 'auth';
+    const conn = await mongoose.connect(mongoURI, {
+      dbName,
+    });
+    console.log(`[Auth Service] MongoDB Connected to database "${conn.connection.name}" on host: ${conn.connection.host}`);
   } catch (error) {
     console.error(`[Auth Service] MongoDB Connection Error: ${error.message}`);
     process.exit(1);
