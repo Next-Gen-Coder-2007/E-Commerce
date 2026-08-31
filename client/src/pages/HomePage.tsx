@@ -9,8 +9,6 @@ import {
   ArrowUpDown,
   CheckCircle2,
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   Flame,
   ArrowRight,
   Plus,
@@ -173,153 +171,238 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  const activeBanner = BANNERS[currentSlide];
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 5,
+    minutes: 42,
+    seconds: 18,
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return { hours: 5, minutes: 59, seconds: 59 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-50/60 text-zinc-900 flex flex-col font-sans">
       {!search && activeCategory === 'all' && (
-        <section
-          ref={bannerRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="relative w-full overflow-hidden bg-zinc-950 text-white min-h-[460px] sm:min-h-[520px] flex items-center justify-center select-none"
-        >
-          {BANNERS.map((banner, index) => {
-            const isActive = index === currentSlide;
-            return (
-              <div
-                key={banner.id}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                  isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                }`}
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out will-change-transform scale-105"
-                  style={{
-                    backgroundImage: `url(${banner.image})`,
-                    transform: isActive
-                      ? `scale(1.06) translate(${mousePos.x * 0.4}px, ${mousePos.y * 0.4}px)`
-                      : 'scale(1.0)',
-                  }}
-                />
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r ${banner.accentColor}`}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-              </div>
-            );
-          })}
-
-          <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-4 lg:space-y-6">
+          {/* Row 1: Two 50% Width Hero Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            {/* Row 1 Card 1: Electronics */}
             <div
-              className="max-w-2xl space-y-4 transition-transform duration-500 will-change-transform"
-              style={{
-                transform: `translate(${mousePos.x * -0.6}px, ${mousePos.y * -0.6}px)`,
-              }}
+              onClick={() => handleCategorySelect('electronics')}
+              className="group relative min-h-[300px] sm:min-h-[360px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/10 backdrop-blur-md text-white border border-white/20 shadow-lg animate-in fade-in duration-300">
-                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>{activeBanner.badge}</span>
-                <span className="w-1 h-1 rounded-full bg-white/40" />
-                <span className="text-[11px] text-zinc-300 font-mono">FLASH DEALS 2026</span>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight drop-shadow-md">
-                {activeBanner.title}
-              </h1>
-
-              <p className="text-sm sm:text-lg text-zinc-200 font-medium max-w-lg leading-relaxed drop-shadow">
-                {activeBanner.subtitle}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleCategorySelect(activeBanner.category)}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-extrabold text-zinc-950 bg-white hover:bg-zinc-100 shadow-xl transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <span>{activeBanner.cta}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              setCurrentSlide((prev) => (prev === 0 ? BANNERS.length - 1 : prev - 1))
-            }
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-white backdrop-blur-md border border-white/10 transition-all cursor-pointer hidden sm:flex items-center justify-center"
-            title="Previous slide"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentSlide((prev) => (prev + 1) % BANNERS.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-white backdrop-blur-md border border-white/10 transition-all cursor-pointer hidden sm:flex items-center justify-center"
-            title="Next slide"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
-            {BANNERS.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setCurrentSlide(i)}
-                className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  i === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
-                }`}
-                title={`Go to slide ${i + 1}`}
+              <img
+                src="/banners/tech_banner.jpg"
+                alt="Tech Collection"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
               />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {!search && activeCategory === 'all' && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-extrabold text-zinc-950 tracking-tight">
-                Curated Collections
-              </h2>
-              <p className="text-xs text-zinc-500">
-                Explore top departments across our marketplace catalog
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {CATEGORY_CARDS.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => handleCategorySelect(card.id)}
-                className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer shadow-2xs hover:shadow-lg transition-all duration-300 border border-zinc-200/80"
-              >
-                <img
-                  src={card.image}
-                  alt={card.title}
-                  className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
-                    Collection
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              <div className="relative z-10 space-y-2.5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-xs">
+                  <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>TRENDING IN TECH</span>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span className="text-amber-300">UP TO 35% OFF</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow">
+                  Next-Gen Audio & Computing
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
+                  Noise-cancelling flagship audio, ultra-light workstations, and wearable telemetry.
+                </p>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                    <span>Explore Tech Catalog</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
-                  <h3 className="text-sm font-bold leading-tight drop-shadow">
-                    {card.title}
-                  </h3>
-                  <p className="text-[11px] text-zinc-300 mt-0.5 line-clamp-1">
-                    {card.tagline}
-                  </p>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Row 1 Card 2: Luxury Fashion */}
+            <div
+              onClick={() => handleCategorySelect('fashion')}
+              className="group relative min-h-[300px] sm:min-h-[360px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+            >
+              <img
+                src="/banners/fashion_banner.jpg"
+                alt="Designer Fashion"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              <div className="relative z-10 space-y-2.5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+                  <span>AUTUMN LUXE EDIT</span>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span className="text-indigo-200">NEW ARRIVALS</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow">
+                  Modern Luxe & Streetwear Styles
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-300 max-w-md line-clamp-2">
+                  Curated cashmere knitwear, minimalist outerwear, and luxury designer footwear.
+                </p>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                    <span>Shop Designer Fashion</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Three Cards (3 cols | 6 cols | 3 cols in 12-col grid) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch">
+            {/* Row 2 Card 1: Home & Living (Left ~ 25%) */}
+            <div
+              onClick={() => handleCategorySelect('home')}
+              className="md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6"
+            >
+              <img
+                src="/banners/home_banner.jpg"
+                alt="Home & Living"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              <div className="relative z-10 space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-emerald-300 border border-white/20">
+                  <span>SMART LIVING</span>
+                </span>
+                <h4 className="text-lg sm:text-xl font-bold text-white leading-snug drop-shadow">
+                  Minimalist Home & Ambient Decor
+                </h4>
+                <p className="text-[11px] text-zinc-300 font-medium">From $29.99</p>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-emerald-300 transition-colors pt-1">
+                  <span>Shop Home</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+            </div>
+
+            {/* Row 2 Card 2: Flash Deals Hub (Center Wide ~ 50%) */}
+            <div
+              onClick={() => handleCategorySelect('all')}
+              className="md:col-span-12 lg:col-span-6 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+            >
+              <img
+                src="/banners/flash_deals_banner.jpg"
+                alt="Flash Marketplace Sale"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              <div className="relative z-10 space-y-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-zinc-950 shadow-xs">
+                    <Zap className="w-3.5 h-3.5 fill-zinc-950" />
+                    <span>FLASH SALE HUB</span>
+                  </span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-zinc-900/80 text-amber-300 border border-amber-500/30 backdrop-blur-md">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>
+                      {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.minutes).padStart(2, '0')}m : {String(timeLeft.seconds).padStart(2, '0')}s
+                    </span>
+                  </div>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow">
+                  Limited-Time Marketplace Bundles
+                </h3>
+                <p className="text-xs text-zinc-300 max-w-md">
+                  Unlock up to 50% discount on flagship gadgets, verified timepieces, and accessories.
+                </p>
+
+                <div className="pt-1">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
+                    <span>Explore Flash Deals</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2 Card 3: Beauty & Skincare (Right ~ 25%) */}
+            <div
+              onClick={() => handleCategorySelect('beauty')}
+              className="md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col justify-end p-6"
+            >
+              <img
+                src="/banners/beauty_banner.jpg"
+                alt="Organic Beauty"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              <div className="relative z-10 space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-pink-300 border border-white/20">
+                  <span>PURE BOTANICALS</span>
+                </span>
+                <h4 className="text-lg sm:text-xl font-bold text-white leading-snug drop-shadow">
+                  Clean Beauty & Skincare
+                </h4>
+                <p className="text-[11px] text-zinc-300 font-medium">100% Organic Extracts</p>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-pink-300 transition-colors pt-1">
+                  <span>Discover Beauty</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Features Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-zinc-950">Free Express Delivery</div>
+                <div className="text-[11px] text-zinc-500">On all orders over $50</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-zinc-950">30-Day Easy Returns</div>
+                <div className="text-[11px] text-zinc-500">Hassle-free refund policy</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-zinc-950">Buyer Protection</div>
+                <div className="text-[11px] text-zinc-500">Verified seller guarantee</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-zinc-950">256-Bit SSL Security</div>
+                <div className="text-[11px] text-zinc-500">End-to-end encryption</div>
+              </div>
+            </div>
           </div>
         </section>
       )}

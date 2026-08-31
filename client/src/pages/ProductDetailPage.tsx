@@ -10,15 +10,12 @@ import {
   ChevronRight,
   ArrowLeft,
   Building2,
-  Package,
   ShoppingCart,
   Zap,
   AlertCircle,
   CheckCircle2,
   Heart,
-  Info,
   Lock,
-  ThumbsUp,
   Layers,
   Sparkles,
   ExternalLink,
@@ -85,7 +82,16 @@ export const ProductDetailPage: React.FC = () => {
     if (!product || product.stock <= 0) return;
     setAddingToCart(true);
     try {
-      await addToCart(product._id, quantity);
+      await addToCart({
+        productId: product._id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        companyName: product.companyName,
+        stock: product.stock,
+        quantity,
+      });
     } finally {
       setAddingToCart(false);
     }
@@ -95,7 +101,19 @@ export const ProductDetailPage: React.FC = () => {
     if (!product || product.stock <= 0) return;
     setBuyingNow(true);
     try {
-      await addToCart(product._id, quantity);
+      await addToCart(
+        {
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          companyName: product.companyName,
+          stock: product.stock,
+          quantity,
+        },
+        true
+      );
     } finally {
       setBuyingNow(false);
     }
