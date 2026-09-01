@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/Input';
@@ -28,13 +28,34 @@ export const BusinessLoginPage: React.FC = () => {
       ? (location.state as any).from.pathname
       : '/business';
 
+  // Automatically clear errors whenever navigating to or from this page
+  useEffect(() => {
+    setServerError(null);
+    clearError();
+    return () => {
+      setServerError(null);
+      clearError();
+    };
+  }, [location.pathname, clearError]);
+
+  // Auto-dismiss errors after 5 seconds
+  useEffect(() => {
+    if (serverError || authError) {
+      const timer = setTimeout(() => {
+        setServerError(null);
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [serverError, authError, clearError]);
+
   const validate = () => {
     const errors: { email?: string; password?: string } = {};
 
     if (!formData.email.trim()) {
-      errors.email = 'Company business email is required';
+      errors.email = 'Business email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
+      errors.email = 'Please enter a valid business email address';
     }
 
     if (!formData.password) {
@@ -51,7 +72,7 @@ export const BusinessLoginPage: React.FC = () => {
     if (formErrors[name as keyof typeof formErrors]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-    if (serverError) {
+    if (serverError || authError) {
       setServerError(null);
       clearError();
     }
@@ -66,10 +87,10 @@ export const BusinessLoginPage: React.FC = () => {
     clearError();
 
     try {
-      await login(formData);
+      await login({ ...formData, portal: 'business' });
       navigate(from, { replace: true });
     } catch (err: any) {
-      setServerError(err.message || 'Invalid business credentials');
+      setServerError(err.message || 'Invalid email or password. Please check your credentials.');
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +103,7 @@ export const BusinessLoginPage: React.FC = () => {
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Top Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-950 text-white shadow-md shadow-zinc-950/10 mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 text-white shadow-md shadow-zinc-900/10 mb-2">
             <Building2 className="w-5 h-5" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-950">

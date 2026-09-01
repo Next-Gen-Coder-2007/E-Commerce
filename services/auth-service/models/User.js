@@ -49,6 +49,108 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    savedAddresses: [
+      {
+        label: {
+          type: String,
+          default: 'Home',
+          trim: true,
+        },
+        fullName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        phone: {
+          type: String,
+          required: [true, 'Contact phone number is required'],
+          trim: true,
+        },
+        addressLine1: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        addressLine2: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        city: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        state: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        postalCode: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        country: {
+          type: String,
+          default: 'United States',
+          trim: true,
+        },
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+    businessDetails: {
+      taxId: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      supportEmail: {
+        type: String,
+        default: '',
+        trim: true,
+        lowercase: true,
+      },
+      supportPhone: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      website: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      storeDescription: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      businessAddress: {
+        addressLine1: { type: String, default: '', trim: true },
+        addressLine2: { type: String, default: '', trim: true },
+        city: { type: String, default: '', trim: true },
+        state: { type: String, default: '', trim: true },
+        postalCode: { type: String, default: '', trim: true },
+        country: { type: String, default: 'United States', trim: true },
+      },
+      bankDetails: {
+        accountHolderName: { type: String, default: '', trim: true },
+        bankName: { type: String, default: '', trim: true },
+        accountNumber: { type: String, default: '', trim: true },
+        routingNumber: { type: String, default: '', trim: true },
+        swiftCode: { type: String, default: '', trim: true },
+        currency: { type: String, default: 'USD', trim: true },
+      },
+    },
   },
   {
     timestamps: true,

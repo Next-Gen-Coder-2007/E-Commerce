@@ -4,6 +4,20 @@ import { generateToken, clearToken } from '../utils/jwt.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const sanitizeUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  phone: user.phone || '',
+  role: user.role,
+  companyName: user.companyName || '',
+  avatar: user.avatar || '',
+  savedAddresses: user.savedAddresses || [],
+  businessDetails: user.businessDetails || {},
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
 export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, confirmPassword, role = 'customer', companyName } = req.body;
@@ -48,9 +62,16 @@ export const registerUser = async (req, res, next) => {
 
     const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
+      if (userExists.role === 'company') {
+        return res.status(400).json({
+          success: false,
+          message:
+            'This email is already registered as a merchant/business account. Please sign in at the Merchant Portal.',
+        });
+      }
       return res.status(400).json({
         success: false,
-        message: 'An account with this email already exists',
+        message: 'An account with this email already exists. Please sign in.',
       });
     }
 
@@ -67,15 +88,7 @@ export const registerUser = async (req, res, next) => {
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        companyName: user.companyName,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
@@ -84,7 +97,7 @@ export const registerUser = async (req, res, next) => {
 
 export const loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, portal = 'customer' } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -101,6 +114,24 @@ export const loginUser = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
+      });
+    }
+
+    if (portal === 'customer' && user.role === 'company') {
+      clearToken(res);
+      return res.status(403).json({
+        success: false,
+        message:
+          'This email is registered as a business/merchant account and cannot be logged in from the customer portal. Please sign in at the Merchant Portal.',
+      });
+    }
+
+    if (portal === 'business' && user.role === 'customer') {
+      clearToken(res);
+      return res.status(403).json({
+        success: false,
+        message:
+          'This email is registered as a customer account and cannot be logged in from the merchant portal. Please sign in at the Customer Store.',
       });
     }
 
@@ -125,15 +156,7 @@ export const loginUser = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Login successful',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        companyName: user.companyName,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
@@ -142,7 +165,7 @@ export const loginUser = async (req, res, next) => {
 
 export const googleAuth = async (req, res, next) => {
   try {
-    const { credential } = req.body;
+    const { credential, portal = 'customer' } = req.body;
 
     if (!credential) {
       return res.status(400).json({
@@ -181,6 +204,24 @@ export const googleAuth = async (req, res, next) => {
     let user = await User.findOne({ email: normalizedEmail });
 
     if (user) {
+      if (portal === 'customer' && user.role === 'company') {
+        clearToken(res);
+        return res.status(403).json({
+          success: false,
+          message:
+            'This email is registered as a business/merchant account and cannot be logged in from the customer portal. Please sign in at the Merchant Portal.',
+        });
+      }
+
+      if (portal === 'business' && user.role === 'customer') {
+        clearToken(res);
+        return res.status(403).json({
+          success: false,
+          message:
+            'This email is registered as a customer account and cannot be logged in from the merchant portal. Please sign in at the Customer Store.',
+        });
+      }
+
       let updated = false;
       if (!user.googleId) {
         user.googleId = googleId;
@@ -194,6 +235,15 @@ export const googleAuth = async (req, res, next) => {
         await user.save();
       }
     } else {
+      if (portal === 'business') {
+        clearToken(res);
+        return res.status(404).json({
+          success: false,
+          message:
+            'No registered merchant account found with this Google email. Please register your business entity first.',
+        });
+      }
+
       user = await User.create({
         name: name || 'Google User',
         email: normalizedEmail,
@@ -208,15 +258,7 @@ export const googleAuth = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Google authentication successful',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        companyName: user.companyName,
-        avatar: user.avatar,
-        createdAt: user.createdAt,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     next(error);
@@ -232,8 +274,334 @@ export const logoutUser = async (req, res) => {
 };
 
 export const getMe = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    user: req.user,
-  });
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user profile',
+    });
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const { name, phone, avatar } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (name) user.name = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+    if (avatar !== undefined) user.avatar = avatar;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateBusinessDetails = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const {
+      companyName,
+      taxId,
+      supportEmail,
+      supportPhone,
+      website,
+      storeDescription,
+      businessAddress,
+      bankDetails,
+    } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Merchant user not found',
+      });
+    }
+
+    if (user.role !== 'company' && user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only registered business accounts can update business details',
+      });
+    }
+
+    if (companyName) {
+      user.companyName = companyName.trim();
+    }
+
+    if (!user.businessDetails) {
+      user.businessDetails = {};
+    }
+
+    if (taxId !== undefined) user.businessDetails.taxId = taxId.trim();
+    if (supportEmail !== undefined) user.businessDetails.supportEmail = supportEmail.trim();
+    if (supportPhone !== undefined) user.businessDetails.supportPhone = supportPhone.trim();
+    if (website !== undefined) user.businessDetails.website = website.trim();
+    if (storeDescription !== undefined) user.businessDetails.storeDescription = storeDescription.trim();
+
+    if (businessAddress) {
+      user.businessDetails.businessAddress = {
+        ...user.businessDetails.businessAddress,
+        ...businessAddress,
+      };
+    }
+
+    if (bankDetails) {
+      user.businessDetails.bankDetails = {
+        ...user.businessDetails.bankDetails,
+        ...bankDetails,
+      };
+    }
+
+    user.markModified('businessDetails');
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Business account and payout details updated successfully',
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addSavedAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const {
+      label = 'Home',
+      fullName,
+      phone,
+      addressLine1,
+      addressLine2 = '',
+      city,
+      state,
+      postalCode,
+      country = 'United States',
+      isDefault = false,
+    } = req.body;
+
+    if (!fullName || !phone || !addressLine1 || !city || !state || !postalCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide full name, contact phone number, street address, city, state, and postal code',
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (!user.savedAddresses) {
+      user.savedAddresses = [];
+    }
+
+    const setAsDefault = isDefault || user.savedAddresses.length === 0;
+
+    if (setAsDefault) {
+      user.savedAddresses.forEach((addr) => {
+        addr.isDefault = false;
+      });
+    }
+
+    user.savedAddresses.push({
+      label: label.trim(),
+      fullName: fullName.trim(),
+      phone: phone.trim(),
+      addressLine1: addressLine1.trim(),
+      addressLine2: (addressLine2 || '').trim(),
+      city: city.trim(),
+      state: state.trim(),
+      postalCode: postalCode.trim(),
+      country: (country || 'United States').trim(),
+      isDefault: setAsDefault,
+    });
+
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Address saved to profile successfully',
+      savedAddresses: user.savedAddresses,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateSavedAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+    const {
+      label,
+      fullName,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+      country,
+      isDefault,
+    } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const addrIndex = user.savedAddresses.findIndex(
+      (a) => a._id.toString() === addressId.toString()
+    );
+
+    if (addrIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Address not found in address book',
+      });
+    }
+
+    if (fullName) user.savedAddresses[addrIndex].fullName = fullName.trim();
+    if (phone) user.savedAddresses[addrIndex].phone = phone.trim();
+    if (label) user.savedAddresses[addrIndex].label = label.trim();
+    if (addressLine1) user.savedAddresses[addrIndex].addressLine1 = addressLine1.trim();
+    if (addressLine2 !== undefined) user.savedAddresses[addrIndex].addressLine2 = addressLine2.trim();
+    if (city) user.savedAddresses[addrIndex].city = city.trim();
+    if (state) user.savedAddresses[addrIndex].state = state.trim();
+    if (postalCode) user.savedAddresses[addrIndex].postalCode = postalCode.trim();
+    if (country) user.savedAddresses[addrIndex].country = country.trim();
+
+    if (isDefault) {
+      user.savedAddresses.forEach((a) => {
+        a.isDefault = false;
+      });
+      user.savedAddresses[addrIndex].isDefault = true;
+    }
+
+    user.markModified('savedAddresses');
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Address updated successfully',
+      savedAddresses: user.savedAddresses,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSavedAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    user.savedAddresses = user.savedAddresses.filter(
+      (addr) => addr._id.toString() !== addressId.toString()
+    );
+
+    if (user.savedAddresses.length > 0 && !user.savedAddresses.some((a) => a.isDefault)) {
+      user.savedAddresses[0].isDefault = true;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Address removed successfully',
+      savedAddresses: user.savedAddresses,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const setDefaultAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    const { addressId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    let found = false;
+    user.savedAddresses.forEach((addr) => {
+      if (addr._id.toString() === addressId.toString()) {
+        addr.isDefault = true;
+        found = true;
+      } else {
+        addr.isDefault = false;
+      }
+    });
+
+    if (!found) {
+      return res.status(404).json({
+        success: false,
+        message: 'Address not found in address book',
+      });
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Default address updated successfully',
+      savedAddresses: user.savedAddresses,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
 };

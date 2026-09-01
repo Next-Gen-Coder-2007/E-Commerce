@@ -4,12 +4,16 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from 'react';
 import type {
   User,
   RegisterInput,
   LoginInput,
   AuthContextType,
+  SavedAddress,
+  UpdateProfileInput,
+  UpdateBusinessDetailsInput,
 } from '../types/auth';
 import {
   registerApi,
@@ -17,6 +21,12 @@ import {
   googleLoginApi,
   logoutApi,
   getMeApi,
+  updateProfileApi,
+  updateBusinessDetailsApi,
+  addSavedAddressApi,
+  updateSavedAddressApi,
+  deleteSavedAddressApi,
+  setDefaultAddressApi,
 } from '../services/authService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,9 +37,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearError = useCallback(() => {
+    if (errorTimerRef.current) {
+      clearTimeout(errorTimerRef.current);
+      errorTimerRef.current = null;
+    }
     setError(null);
+  }, []);
+
+  const setTimedError = useCallback((msg: string) => {
+    if (errorTimerRef.current) {
+      clearTimeout(errorTimerRef.current);
+    }
+    setError(msg);
+    errorTimerRef.current = setTimeout(() => {
+      setError(null);
+      errorTimerRef.current = null;
+    }, 5000);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -53,12 +79,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const register = async (input: RegisterInput) => {
     setLoading(true);
-    setError(null);
+    clearError();
     try {
       const data = await registerApi(input);
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      const msg = err.message || 'Registration failed';
+      setTimedError(msg);
       throw err;
     } finally {
       setLoading(false);
@@ -67,26 +94,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (input: LoginInput) => {
     setLoading(true);
-    setError(null);
+    clearError();
     try {
       const data = await loginApi(input);
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      const msg = err.message || 'Invalid email or password';
+      setTimedError(msg);
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const googleLogin = async (credential: string) => {
+  const googleLogin = async (credential: string, portal: 'customer' | 'business' = 'customer') => {
     setLoading(true);
-    setError(null);
+    clearError();
     try {
-      const data = await googleLoginApi(credential);
+      const data = await googleLoginApi(credential, portal);
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || 'Google authentication failed');
+      const msg = err.message || 'Google authentication failed';
+      setTimedError(msg);
       throw err;
     } finally {
       setLoading(false);
@@ -95,15 +124,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     setLoading(true);
-    setError(null);
+    clearError();
     try {
       await logoutApi();
       setUser(null);
     } catch (err: any) {
-      setError(err.message || 'Logout failed');
       setUser(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateProfile = async (input: UpdateProfileInput): Promise<boolean> => {
+    try {
+      const res = await updateProfileApi(input);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to update profile');
+      return false;
+    }
+  };
+
+  const updateBusinessDetails = async (input: UpdateBusinessDetailsInput): Promise<boolean> => {
+    try {
+      const res = await updateBusinessDetailsApi(input);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to update business details');
+      return false;
+    }
+  };
+
+  const addSavedAddress = async (address: SavedAddress): Promise<boolean> => {
+    try {
+      const res = await addSavedAddressApi(address);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to save address');
+      return false;
+    }
+  };
+
+  const updateSavedAddress = async (addressId: string, address: SavedAddress): Promise<boolean> => {
+    try {
+      const res = await updateSavedAddressApi(addressId, address);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to update address');
+      return false;
+    }
+  };
+
+  const deleteSavedAddress = async (addressId: string): Promise<boolean> => {
+    try {
+      const res = await deleteSavedAddressApi(addressId);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to delete address');
+      return false;
+    }
+  };
+
+  const setDefaultAddress = async (addressId: string): Promise<boolean> => {
+    try {
+      const res = await setDefaultAddressApi(addressId);
+      if (res.success && res.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      setTimedError(err.message || 'Failed to set default address');
+      return false;
     }
   };
 
@@ -119,6 +231,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         logout,
         clearError,
         refreshUser,
+        updateProfile,
+        updateBusinessDetails,
+        addSavedAddress,
+        updateSavedAddress,
+        deleteSavedAddress,
+        setDefaultAddress,
       }}
     >
       {children}

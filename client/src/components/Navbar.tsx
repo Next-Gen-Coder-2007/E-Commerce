@@ -9,6 +9,8 @@ import {
   Search,
   X,
   Building2,
+  Package,
+  MapPin,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -98,18 +100,32 @@ export const Navbar: React.FC = () => {
               <div className="h-8 w-24 bg-zinc-100 animate-pulse rounded-lg" />
             ) : user ? (
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 p-1 sm:pr-3 sm:pl-1 rounded-xl bg-zinc-50 border border-zinc-200/80">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-7 h-7 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs">
-                      {user.name?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                  )}
+                <Link
+                  to="/profile"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors shadow-2xs"
+                  title="Manage Account & Addresses"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-zinc-700" />
+                  <span>Addresses & Account</span>
+                </Link>
+
+                <Link
+                  to="/orders"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors shadow-2xs"
+                  title="My Orders & Shipments"
+                >
+                  <Package className="w-3.5 h-3.5 text-zinc-700" />
+                  <span>My Orders</span>
+                </Link>
+
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 p-1 sm:pr-3 sm:pl-1 rounded-xl bg-zinc-50 border border-zinc-200/80 hover:bg-zinc-100/80 transition-colors"
+                  title="Account Settings"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-extrabold text-xs shrink-0 select-none shadow-xs">
+                    {user.name ? user.name.trim().charAt(0).toUpperCase() : 'U'}
+                  </div>
                   <div className="hidden sm:flex flex-col text-left">
                     <span className="text-xs font-semibold text-zinc-900 leading-tight truncate max-w-[110px]">
                       {user.name}
@@ -118,7 +134,7 @@ export const Navbar: React.FC = () => {
                       {user.role}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 <button
                   type="button"

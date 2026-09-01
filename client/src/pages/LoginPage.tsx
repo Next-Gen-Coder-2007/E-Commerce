@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/Input';
@@ -24,7 +24,34 @@ export const LoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const from =
+    redirectParam ||
+    (location.state as any)?.from?.pathname ||
+    (location.state as any)?.from ||
+    '/';
+
+  // Automatically clear errors whenever navigating to or from this page
+  useEffect(() => {
+    setServerError(null);
+    clearError();
+    return () => {
+      setServerError(null);
+      clearError();
+    };
+  }, [location.pathname, clearError]);
+
+  // Auto-dismiss errors after 5 seconds
+  useEffect(() => {
+    if (serverError) {
+      const timer = setTimeout(() => {
+        setServerError(null);
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [serverError, clearError]);
 
   const validate = () => {
     const errors: { email?: string; password?: string } = {};
@@ -64,10 +91,10 @@ export const LoginPage: React.FC = () => {
     clearError();
 
     try {
-      await login(formData);
+      await login({ ...formData, portal: 'customer' });
       navigate(from, { replace: true });
     } catch (err: any) {
-      setServerError(err.message || 'Invalid email or password');
+      setServerError(err.message || 'Invalid email or password. Please check your credentials.');
     } finally {
       setSubmitting(false);
     }
@@ -91,7 +118,6 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
-
           {(serverError || authError) && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -102,6 +128,8 @@ export const LoginPage: React.FC = () => {
           <div>
             <GoogleAuthButton
               text="signin_with"
+              portal="customer"
+              onSuccess={() => navigate(from, { replace: true })}
               onError={(msg) => setServerError(msg)}
             />
           </div>
@@ -145,7 +173,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1"
+                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1 cursor-pointer"
                 tabIndex={-1}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -183,7 +211,7 @@ export const LoginPage: React.FC = () => {
         <p className="text-center text-xs text-zinc-500">
           Don&apos;t have an account?{' '}
           <Link
-            to="/register"
+            to={`/register${from && from !== '/' ? `?redirect=${encodeURIComponent(from)}` : ''}`}
             className="font-semibold text-zinc-950 hover:underline transition-colors"
           >
             Create an account

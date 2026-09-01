@@ -4,11 +4,15 @@ import { useAuth } from '../context/AuthContext';
 
 interface GoogleAuthButtonProps {
   text?: 'signin_with' | 'signup_with' | 'continue_with';
+  portal?: 'customer' | 'business';
+  onSuccess?: () => void;
   onError?: (message: string) => void;
 }
 
 export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   text = 'continue_with',
+  portal = 'customer',
+  onSuccess,
   onError,
 }) => {
   const { googleLogin } = useAuth();
@@ -17,7 +21,8 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       if (credentialResponse.credential) {
-        await googleLogin(credentialResponse.credential);
+        await googleLogin(credentialResponse.credential, portal);
+        onSuccess?.();
       } else {
         onError?.('Failed to obtain Google credential');
       }
@@ -40,7 +45,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
               'Google OAuth requires VITE_GOOGLE_CLIENT_ID in client/.env and GOOGLE_CLIENT_ID in server/.env'
             )
           }
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors shadow-xs"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors shadow-xs cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path

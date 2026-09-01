@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/Input';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
@@ -15,8 +15,17 @@ import {
 } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
-  const { register, error: authError, clearError } = useAuth();
+  const { register, clearError } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const from =
+    redirectParam ||
+    (location.state as any)?.from?.pathname ||
+    (location.state as any)?.from ||
+    '/';
 
   const [formData, setFormData] = useState({
     name: '',
@@ -35,6 +44,27 @@ export const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Automatically clear errors whenever navigating to or from this page
+  useEffect(() => {
+    setServerError(null);
+    clearError();
+    return () => {
+      setServerError(null);
+      clearError();
+    };
+  }, [location.pathname, clearError]);
+
+  // Auto-dismiss errors after 5 seconds
+  useEffect(() => {
+    if (serverError) {
+      const timer = setTimeout(() => {
+        setServerError(null);
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [serverError, clearError]);
 
   const validate = () => {
     const errors: {
@@ -98,9 +128,9 @@ export const RegisterPage: React.FC = () => {
         confirmPassword: formData.confirmPassword,
         role: 'customer',
       });
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     } catch (err: any) {
-      setServerError(err.message || 'Failed to create account');
+      setServerError(err.message || 'Failed to create customer account');
     } finally {
       setSubmitting(false);
     }
@@ -124,17 +154,18 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
-
-          {(serverError || authError) && (
+          {serverError && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{serverError || authError}</span>
+              <span className="leading-relaxed">{serverError}</span>
             </div>
           )}
 
           <div>
             <GoogleAuthButton
               text="signup_with"
+              portal="customer"
+              onSuccess={() => navigate(from, { replace: true })}
               onError={(msg) => setServerError(msg)}
             />
           </div>
@@ -192,7 +223,7 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1"
+                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1 cursor-pointer"
                 tabIndex={-1}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -244,7 +275,7 @@ export const RegisterPage: React.FC = () => {
         <p className="text-center text-xs text-zinc-500">
           Already have an account?{' '}
           <Link
-            to="/login"
+            to={`/login${from && from !== '/' ? `?redirect=${encodeURIComponent(from)}` : ''}`}
             className="font-semibold text-zinc-950 hover:underline transition-colors"
           >
             Sign in

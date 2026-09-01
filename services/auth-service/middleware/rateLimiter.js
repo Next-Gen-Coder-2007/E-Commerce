@@ -83,9 +83,11 @@ export const createRateLimiter = ({
   };
 };
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 500 : 15,
   message: 'Too many authentication attempts from this IP. Please try again after 15 minutes.',
   keyPrefix: 'rl:auth',
 });
