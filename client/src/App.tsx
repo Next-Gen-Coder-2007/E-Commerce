@@ -6,6 +6,7 @@ import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { BusinessNavbar } from './components/business/BusinessNavbar';
 import { CartDrawer } from './components/CartDrawer';
+import { BusinessRestrictedModal } from './components/BusinessRestrictedModal';
 import { HomePage } from './pages/HomePage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { LoginPage } from './pages/LoginPage';
@@ -17,6 +18,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { CompanyStorePage } from './pages/CompanyStorePage';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -30,10 +32,13 @@ const AppContent: React.FC = () => {
       {!isBusiness && <Navbar />}
       {isBusinessAuth && <BusinessNavbar />}
       <CartDrawer />
+      <BusinessRestrictedModal />
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/store/:companyIdentifier" element={<CompanyStorePage />} />
+          <Route path="/company/:companyIdentifier" element={<CompanyStorePage />} />
           <Route
             path="/profile"
             element={
