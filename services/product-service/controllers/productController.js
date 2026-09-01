@@ -1,7 +1,53 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+import Review from '../models/Review.js';
 import StorefrontConfig from '../models/StorefrontConfig.js';
 import cloudinary from '../config/cloudinary.js';
+
+// Helper to calculate rating and review counts dynamically from the Review collection
+export const attachCalculatedRatings = async (products) => {
+  if (!products) return products;
+  const isArray = Array.isArray(products);
+  const prodList = isArray ? products : [products];
+  if (prodList.length === 0) return products;
+
+  const prodIds = prodList
+    .map((p) => (p._id ? new mongoose.Types.ObjectId(p._id) : null))
+    .filter(Boolean);
+
+  if (prodIds.length === 0) return products;
+
+  const reviewStats = await Review.aggregate([
+    { $match: { productId: { $in: prodIds }, status: 'published' } },
+    {
+      $group: {
+        _id: '$productId',
+        avgRating: { $avg: '$rating' },
+        numReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const statsMap = new Map();
+  reviewStats.forEach((st) => {
+    statsMap.set(st._id.toString(), {
+      rating: Math.round(st.avgRating * 10) / 10,
+      numReviews: st.numReviews,
+    });
+  });
+
+  const enriched = prodList.map((p) => {
+    const doc = p.toObject ? p.toObject() : { ...p };
+    const stat = statsMap.get(doc._id.toString());
+    return {
+      ...doc,
+      rating: stat ? stat.rating : 0,
+      numReviews: stat ? stat.numReviews : 0,
+    };
+  });
+
+  return isArray ? enriched : enriched[0];
+};
 
 export const getProducts = async (req, res, next) => {
   try {
@@ -67,17 +113,19 @@ export const getProducts = async (req, res, next) => {
     const skip = (pageNum - 1) * limitNum;
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort(sortOption).skip(skip).limit(limitNum),
+      Product.find(query).sort(sortOption).skip(skip).limit(limitNum).lean(),
       Product.countDocuments(query),
     ]);
 
+    const enrichedProducts = await attachCalculatedRatings(products);
+
     res.status(200).json({
       success: true,
-      count: products.length,
+      count: enrichedProducts.length,
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum) || 1,
-      products,
+      products: enrichedProducts,
     });
   } catch (error) {
     next(error);
@@ -131,24 +179,29 @@ export const getCompanyStorefront = async (req, res, next) => {
       isPublished: true,
     });
 
-    // Rating and review aggregations
-    const statsAggregation = await Product.aggregate([
-      { $match: { companyId: resolvedCompanyId, isPublished: true } },
-      {
-        $group: {
-          _id: null,
-          totalProducts: { $sum: 1 },
-          avgRating: { $avg: '$rating' },
-          totalReviews: { $sum: '$numReviews' },
-        },
-      },
-    ]);
+    // Calculate company rating and total reviews dynamically from the Review collection
+    const companyProductIds = await Product.find({ companyId: resolvedCompanyId, isPublished: true }).distinct('_id');
+    
+    let totalReviews = 0;
+    let avgRating = 0;
 
-    const stats = statsAggregation[0] || {
-      totalProducts: 0,
-      avgRating: 0,
-      totalReviews: 0,
-    };
+    if (companyProductIds.length > 0) {
+      const companyReviewStats = await Review.aggregate([
+        { $match: { productId: { $in: companyProductIds }, status: 'published' } },
+        {
+          $group: {
+            _id: null,
+            avgRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      if (companyReviewStats.length > 0 && companyReviewStats[0].totalReviews > 0) {
+        totalReviews = companyReviewStats[0].totalReviews;
+        avgRating = Math.round(companyReviewStats[0].avgRating * 10) / 10;
+      }
+    }
 
     // Build filter query for products
     const productQuery = {
@@ -195,18 +248,20 @@ export const getCompanyStorefront = async (req, res, next) => {
     const skip = (pageNum - 1) * limitNum;
 
     const [products, total] = await Promise.all([
-      Product.find(productQuery).sort(sortOption).skip(skip).limit(limitNum),
+      Product.find(productQuery).sort(sortOption).skip(skip).limit(limitNum).lean(),
       Product.countDocuments(productQuery),
     ]);
+
+    const enrichedProducts = await attachCalculatedRatings(products);
 
     res.status(200).json({
       success: true,
       store: {
         companyId: resolvedCompanyId,
         companyName: resolvedCompanyName,
-        totalProducts: stats.totalProducts,
-        rating: stats.avgRating ? Number(stats.avgRating.toFixed(1)) : 0,
-        numReviews: stats.totalReviews || 0,
+        totalProducts: companyProductIds.length,
+        rating: avgRating,
+        numReviews: totalReviews,
         categories: categories.sort(),
         bannerImage: storefrontConfig?.bannerImage || '',
         tagline: storefrontConfig?.tagline || 'Official Brand Storefront',
@@ -220,11 +275,11 @@ export const getCompanyStorefront = async (req, res, next) => {
           endsAt: null,
         },
       },
-      count: products.length,
+      count: enrichedProducts.length,
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum) || 1,
-      products,
+      products: enrichedProducts,
     });
   } catch (error) {
     next(error);
@@ -242,7 +297,7 @@ export const getProductById = async (req, res, next) => {
       });
     }
 
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -251,9 +306,11 @@ export const getProductById = async (req, res, next) => {
       });
     }
 
+    const enrichedProduct = await attachCalculatedRatings(product);
+
     res.status(200).json({
       success: true,
-      product,
+      product: enrichedProduct,
     });
   } catch (error) {
     next(error);
@@ -284,6 +341,8 @@ export const createProduct = async (req, res, next) => {
       category,
       stock,
       image,
+      images,
+      specifications,
     } = req.body;
 
     if (!title || !description || price === undefined || !category || stock === undefined) {
@@ -303,6 +362,46 @@ export const createProduct = async (req, res, next) => {
       numericOriginal = Number((numericPrice / (1 - numericDiscount / 100)).toFixed(2));
     }
 
+    // Process images array (up to 10 photos)
+    let processedImages = [];
+    if (Array.isArray(images)) {
+      processedImages = images
+        .filter((img) => typeof img === 'string' && img.trim().length > 0)
+        .slice(0, 10)
+        .map((img) => img.trim());
+    } else if (image && typeof image === 'string' && image.trim().length > 0) {
+      processedImages = [image.trim()];
+    }
+
+    const primaryImage =
+      processedImages.length > 0
+        ? processedImages[0]
+        : (image && image.trim()) ||
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80';
+
+    if (processedImages.length === 0) {
+      processedImages = [primaryImage];
+    }
+
+    // Process specifications key-value pairs
+    let processedSpecs = [];
+    if (Array.isArray(specifications)) {
+      processedSpecs = specifications
+        .filter(
+          (spec) =>
+            spec &&
+            typeof spec.key === 'string' &&
+            spec.key.trim().length > 0
+        )
+        .map((spec) => ({
+          key: spec.key.trim(),
+          value:
+            typeof spec.value === 'string'
+              ? spec.value.trim()
+              : String(spec.value || '').trim(),
+        }));
+    }
+
     const product = await Product.create({
       title: title.trim(),
       description: description.trim(),
@@ -312,10 +411,9 @@ export const createProduct = async (req, res, next) => {
       isFlashSale: Boolean(isFlashSale),
       category: category.trim().toLowerCase(),
       stock: Number(stock),
-      image:
-        image && image.trim()
-          ? image.trim()
-          : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
+      image: primaryImage,
+      images: processedImages,
+      specifications: processedSpecs,
       companyId: req.user.userId,
       companyName: req.user.companyName || 'Verified Merchant',
       isPublished: true,
@@ -353,17 +451,19 @@ export const getMyCompanyProducts = async (req, res, next) => {
     const skip = (pageNum - 1) * limitNum;
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
       Product.countDocuments(query),
     ]);
 
+    const enrichedProducts = await attachCalculatedRatings(products);
+
     res.status(200).json({
       success: true,
-      count: products.length,
+      count: enrichedProducts.length,
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum) || 1,
-      products,
+      products: enrichedProducts,
     });
   } catch (error) {
     next(error);
@@ -410,6 +510,8 @@ export const updateProduct = async (req, res, next) => {
       category,
       stock,
       image,
+      images,
+      specifications,
       isPublished,
     } = req.body;
 
@@ -421,13 +523,52 @@ export const updateProduct = async (req, res, next) => {
     if (isFlashSale !== undefined) product.isFlashSale = Boolean(isFlashSale);
     if (category !== undefined) product.category = category.trim().toLowerCase();
     if (stock !== undefined) product.stock = Number(stock);
-    if (image !== undefined) product.image = image.trim();
     if (isPublished !== undefined) product.isPublished = Boolean(isPublished);
+
+    if (images !== undefined && Array.isArray(images)) {
+      const cleanImages = images
+        .filter((img) => typeof img === 'string' && img.trim().length > 0)
+        .slice(0, 10)
+        .map((img) => img.trim());
+      product.images = cleanImages;
+      if (cleanImages.length > 0) {
+        product.image = cleanImages[0];
+      }
+      product.markModified('images');
+    } else if (image !== undefined && image.trim()) {
+      product.image = image.trim();
+      if (!product.images || product.images.length === 0) {
+        product.images = [product.image];
+      } else {
+        product.images[0] = product.image;
+      }
+      product.markModified('images');
+    }
+
+    if (specifications !== undefined && Array.isArray(specifications)) {
+      product.specifications = specifications
+        .filter(
+          (spec) =>
+            spec &&
+            typeof spec.key === 'string' &&
+            spec.key.trim().length > 0
+        )
+        .map((spec) => ({
+          key: spec.key.trim(),
+          value:
+            typeof spec.value === 'string'
+              ? spec.value.trim()
+              : String(spec.value || '').trim(),
+        }));
+      product.markModified('specifications');
+    }
 
     if (product.originalPrice > product.price && !product.discountPercentage) {
       product.discountPercentage = Math.round(
         ((product.originalPrice - product.price) / product.originalPrice) * 100
       );
+    } else if (product.discountPercentage > 0 && (!product.originalPrice || product.originalPrice <= product.price)) {
+      product.originalPrice = Number((product.price / (1 - product.discountPercentage / 100)).toFixed(2));
     }
 
     await product.save();
@@ -436,6 +577,45 @@ export const updateProduct = async (req, res, next) => {
       success: true,
       message: 'Product updated successfully',
       product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const syncProductRating = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { rating, numReviews } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    if (rating !== undefined) {
+      product.rating = Math.max(0, Math.min(5, Number(rating) || 0));
+    }
+    if (numReviews !== undefined) {
+      product.numReviews = Math.max(0, Number(numReviews) || 0);
+    }
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      rating: product.rating,
+      numReviews: product.numReviews,
     });
   } catch (error) {
     next(error);

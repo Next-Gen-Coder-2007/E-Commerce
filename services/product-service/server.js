@@ -13,6 +13,8 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 import connectDB from './config/db.js';
 import productRoutes from './routes/productRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
 
 connectDB();
 
@@ -31,6 +33,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     service: 'product-service',
     status: 'ok',
+    features: ['catalog', 'reviews', 'coupons'],
     timestamp: new Date().toISOString(),
   });
 });
@@ -39,11 +42,20 @@ app.get('/api/products/health', (req, res) => {
   res.status(200).json({
     service: 'product-service',
     status: 'ok',
+    features: ['catalog', 'reviews', 'coupons'],
     timestamp: new Date().toISOString(),
   });
 });
 
+// Mount Routes
+app.use('/api/reviews', reviewRoutes);
+app.use('/reviews', reviewRoutes);
+
+app.use('/api/coupons', couponRoutes);
+app.use('/coupons', couponRoutes);
+
 app.use('/api/products', productRoutes);
+app.use('/products', productRoutes);
 app.use('/', productRoutes);
 
 app.use((req, res) => {
@@ -65,7 +77,7 @@ app.use((err, req, res, next) => {
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`[Product Service] Running on port ${PORT}`);
+    console.log(`[Product Service] Unified Catalog, Reviews & Coupons Running on port ${PORT}`);
   });
 }
 

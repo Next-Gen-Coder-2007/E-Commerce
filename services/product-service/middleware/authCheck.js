@@ -76,7 +76,27 @@ export const requireCompany = async (req, res, next) => {
   if (user.role !== 'company' && user.role !== 'admin') {
     return res.status(403).json({
       success: false,
-      message: 'Forbidden. Only registered company or merchant accounts can manage products.',
+      message: 'Forbidden. Only registered company or merchant accounts can perform this action.',
+    });
+  }
+
+  req.user = user;
+  next();
+};
+
+export const requireCustomer = async (req, res, next) => {
+  const user = await extractUserContext(req);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Please sign in to submit customer feedback.',
+    });
+  }
+
+  if (user.role === 'company') {
+    return res.status(403).json({
+      success: false,
+      message: 'Merchant accounts cannot perform customer shopper actions.',
     });
   }
 

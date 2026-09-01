@@ -14,6 +14,7 @@ import {
   getStorefrontSettings,
   updateStorefrontSettings,
   applyBulkDiscount,
+  syncProductRating,
 } from '../controllers/productController.js';
 import { requireCompany } from '../middleware/authCheck.js';
 
@@ -49,6 +50,7 @@ router.post('/company/bulk-discount', requireCompany, applyBulkDiscount);
 router.get('/company/mine', requireCompany, getMyCompanyProducts);
 router.get('/company/stats', requireCompany, getCompanyStats);
 router.post('/upload-image', requireCompany, handleImageUpload, uploadImage);
+router.put('/:id/rating-sync', syncProductRating);
 
 router.route('/')
   .get(getProducts)

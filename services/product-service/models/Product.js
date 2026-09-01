@@ -50,6 +50,26 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
     },
+    images: {
+      type: [String],
+      default: [],
+      validate: [
+        (val) => !val || val.length <= 10,
+        'Cannot exceed 10 reference photos per product',
+      ],
+    },
+    specifications: [
+      {
+        key: {
+          type: String,
+          trim: true,
+        },
+        value: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
