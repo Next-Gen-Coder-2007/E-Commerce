@@ -24,6 +24,13 @@ import {
   Save,
   Landmark,
   MapPin,
+  Zap,
+  Sparkles,
+  Percent,
+  Store,
+  Flame,
+  ExternalLink,
+  Eye,
 } from 'lucide-react';
 import {
   getMyCompanyProductsApi,
@@ -32,6 +39,9 @@ import {
   deleteProductApi,
   getCompanyStatsApi,
   uploadProductImageApi,
+  getStorefrontSettingsApi,
+  updateStorefrontSettingsApi,
+  applyBulkDiscountApi,
 } from '../../services/productService';
 import {
   getCompanyOrdersApi,
@@ -43,7 +53,7 @@ import type { Order, CompanyOrderStats, OrderStatus } from '../../types/order';
 export const BusinessHomePage: React.FC = () => {
   const { user, loading: authLoading, logout, updateBusinessDetails } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'inventory' | 'orders' | 'profile'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'inventory' | 'orders' | 'storefront' | 'profile'>('products');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<CompanyStats>({
@@ -104,6 +114,30 @@ export const BusinessHomePage: React.FC = () => {
   const [businessSuccessMsg, setBusinessSuccessMsg] = useState<string | null>(null);
   const [businessErrorMsg, setBusinessErrorMsg] = useState<string | null>(null);
 
+  // Storefront & Promotions State
+  const [storefrontForm, setStorefrontForm] = useState({
+    bannerImage: '',
+    tagline: 'Official Brand Storefront',
+    description: '',
+    announcement: '',
+    flashSaleActive: false,
+    flashSaleTitle: '⚡ Limited-Time Store Flash Sale',
+    flashSaleDescription: 'Promotional discounts across verified brand inventory',
+    flashSaleDiscount: 20,
+    flashSaleEndsAt: '',
+  });
+
+  const [bulkDiscountForm, setBulkDiscountForm] = useState({
+    discountPercentage: 20,
+    category: 'all',
+    isFlashSale: false,
+  });
+
+  const [savingStorefront, setSavingStorefront] = useState(false);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+  const [storefrontSuccessMsg, setStorefrontSuccessMsg] = useState<string | null>(null);
+  const [storefrontErrorMsg, setStorefrontErrorMsg] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -113,10 +147,23 @@ export const BusinessHomePage: React.FC = () => {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Quick Product-Level Discount Modal State
+  const [quickDiscountProduct, setQuickDiscountProduct] = useState<Product | null>(null);
+  const [quickDiscountForm, setQuickDiscountForm] = useState({
+    regularPrice: '',
+    discountPercentage: '',
+    salePrice: '',
+    isFlashSale: false,
+  });
+  const [savingQuickDiscount, setSavingQuickDiscount] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
+    originalPrice: '',
+    discountPercentage: '',
+    isFlashSale: false,
     category: 'electronics',
     stock: '',
     image: '',
@@ -170,6 +217,31 @@ export const BusinessHomePage: React.FC = () => {
     }
   }, [user, ordersStatusFilter, ordersSearch]);
 
+  const fetchStorefrontSettings = useCallback(async () => {
+    if (!user || (user.role !== 'company' && user.role !== 'admin')) return;
+    try {
+      const res = await getStorefrontSettingsApi();
+      if (res.success && res.storefront) {
+        const sf = res.storefront;
+        setStorefrontForm({
+          bannerImage: sf.bannerImage || '',
+          tagline: sf.tagline || 'Official Brand Storefront',
+          description: sf.description || '',
+          announcement: sf.announcement || '',
+          flashSaleActive: Boolean(sf.flashSale?.isActive),
+          flashSaleTitle: sf.flashSale?.title || '⚡ Limited-Time Store Flash Sale',
+          flashSaleDescription: sf.flashSale?.description || '',
+          flashSaleDiscount: sf.flashSale?.discountPercentage || 20,
+          flashSaleEndsAt: sf.flashSale?.endsAt
+            ? new Date(sf.flashSale.endsAt).toISOString().split('T')[0]
+            : '',
+        });
+      }
+    } catch (err: any) {
+      console.warn('Failed to load storefront settings:', err);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -177,8 +249,10 @@ export const BusinessHomePage: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'orders') {
       fetchOrders();
+    } else if (activeTab === 'storefront') {
+      fetchStorefrontSettings();
     }
-  }, [activeTab, fetchOrders]);
+  }, [activeTab, fetchOrders, fetchStorefrontSettings]);
 
   useEffect(() => {
     if (user) {
@@ -276,11 +350,185 @@ export const BusinessHomePage: React.FC = () => {
     }
   };
 
+  const handleSaveStorefront = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingStorefront(true);
+    setStorefrontSuccessMsg(null);
+    setStorefrontErrorMsg(null);
+    try {
+      const res = await updateStorefrontSettingsApi({
+        bannerImage: storefrontForm.bannerImage,
+        tagline: storefrontForm.tagline,
+        description: storefrontForm.description,
+        announcement: storefrontForm.announcement,
+        flashSale: {
+          isActive: storefrontForm.flashSaleActive,
+          title: storefrontForm.flashSaleTitle,
+          description: storefrontForm.flashSaleDescription,
+          discountPercentage: Number(storefrontForm.flashSaleDiscount),
+          endsAt: storefrontForm.flashSaleEndsAt ? new Date(storefrontForm.flashSaleEndsAt).toISOString() : null,
+        },
+      });
+
+      if (res.success) {
+        setStorefrontSuccessMsg('Storefront customizations and flash sale settings saved!');
+        setTimeout(() => setStorefrontSuccessMsg(null), 4000);
+      }
+    } catch (err: any) {
+      setStorefrontErrorMsg(err.response?.data?.message || err.message || 'Failed to save storefront settings');
+    } finally {
+      setSavingStorefront(false);
+    }
+  };
+
+  const handleApplyBulkDiscount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApplyingDiscount(true);
+    setStorefrontSuccessMsg(null);
+    setStorefrontErrorMsg(null);
+    try {
+      const res = await applyBulkDiscountApi({
+        discountPercentage: Number(bulkDiscountForm.discountPercentage),
+        category: bulkDiscountForm.category,
+        isFlashSale: bulkDiscountForm.isFlashSale,
+      });
+
+      if (res.success) {
+        setStorefrontSuccessMsg(res.message);
+        setTimeout(() => setStorefrontSuccessMsg(null), 4000);
+        await fetchData();
+      }
+    } catch (err: any) {
+      setStorefrontErrorMsg(err.response?.data?.message || err.message || 'Failed to apply bulk discount');
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
+
+  const handleResetBulkDiscount = async () => {
+    if (!window.confirm('Reset all product prices back to their regular prices?')) return;
+    setApplyingDiscount(true);
+    try {
+      const res = await applyBulkDiscountApi({ reset: true });
+      if (res.success) {
+        setStorefrontSuccessMsg(res.message);
+        setTimeout(() => setStorefrontSuccessMsg(null), 4000);
+        await fetchData();
+      }
+    } catch (err: any) {
+      setStorefrontErrorMsg(err.message || 'Failed to reset discounts');
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
+
+  const handleOpenQuickDiscount = (prod: Product) => {
+    const regPrice = prod.originalPrice && prod.originalPrice > prod.price ? prod.originalPrice : prod.price;
+    const hasDisc = Boolean(prod.originalPrice && prod.originalPrice > prod.price);
+    const discPct = prod.discountPercentage || (hasDisc ? Math.round(((regPrice - prod.price) / regPrice) * 100) : 0);
+
+    setQuickDiscountProduct(prod);
+    setQuickDiscountForm({
+      regularPrice: regPrice.toFixed(2),
+      discountPercentage: hasDisc ? String(discPct) : '',
+      salePrice: prod.price.toFixed(2),
+      isFlashSale: Boolean(prod.isFlashSale),
+    });
+  };
+
+  const handleQuickDiscountPercentageChange = (pctStr: string) => {
+    const regPrice = Number(quickDiscountForm.regularPrice) || (quickDiscountProduct ? (quickDiscountProduct.originalPrice || quickDiscountProduct.price) : 0);
+    const pct = Number(pctStr);
+    if (!pctStr || isNaN(pct) || pct <= 0) {
+      setQuickDiscountForm((prev) => ({
+        ...prev,
+        discountPercentage: pctStr,
+        salePrice: regPrice > 0 ? regPrice.toFixed(2) : prev.salePrice,
+      }));
+      return;
+    }
+    const computedSale = Number((regPrice * (1 - pct / 100)).toFixed(2));
+    setQuickDiscountForm((prev) => ({
+      ...prev,
+      discountPercentage: pctStr,
+      salePrice: computedSale > 0 ? computedSale.toFixed(2) : '0.01',
+    }));
+  };
+
+  const handleQuickDiscountSalePriceChange = (salePriceStr: string) => {
+    const regPrice = Number(quickDiscountForm.regularPrice) || (quickDiscountProduct ? (quickDiscountProduct.originalPrice || quickDiscountProduct.price) : 0);
+    const sale = Number(salePriceStr);
+    if (!salePriceStr || isNaN(sale) || sale >= regPrice || regPrice <= 0) {
+      setQuickDiscountForm((prev) => ({
+        ...prev,
+        salePrice: salePriceStr,
+        discountPercentage: '',
+      }));
+      return;
+    }
+    const computedPct = Math.round(((regPrice - sale) / regPrice) * 100);
+    setQuickDiscountForm((prev) => ({
+      ...prev,
+      salePrice: salePriceStr,
+      discountPercentage: String(computedPct),
+    }));
+  };
+
+  const handleSaveQuickDiscount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickDiscountProduct) return;
+    setSavingQuickDiscount(true);
+    try {
+      const reg = Number(quickDiscountForm.regularPrice);
+      const sale = Number(quickDiscountForm.salePrice);
+      const pct = Number(quickDiscountForm.discountPercentage);
+
+      const hasDiscount = (pct > 0 || (reg > sale)) && sale > 0 && reg > sale;
+
+      await updateProductApi(quickDiscountProduct._id, {
+        price: hasDiscount ? sale : (reg > 0 ? reg : quickDiscountProduct.price),
+        originalPrice: hasDiscount ? reg : 0,
+        discountPercentage: hasDiscount ? (pct > 0 ? pct : Math.round(((reg - sale) / reg) * 100)) : 0,
+        isFlashSale: quickDiscountForm.isFlashSale,
+      });
+
+      setQuickDiscountProduct(null);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update product discount');
+    } finally {
+      setSavingQuickDiscount(false);
+    }
+  };
+
+  const handleRemoveQuickDiscount = async () => {
+    if (!quickDiscountProduct) return;
+    setSavingQuickDiscount(true);
+    try {
+      const reg = Number(quickDiscountForm.regularPrice) || (quickDiscountProduct.originalPrice || quickDiscountProduct.price);
+      await updateProductApi(quickDiscountProduct._id, {
+        price: reg,
+        originalPrice: 0,
+        discountPercentage: 0,
+        isFlashSale: false,
+      });
+      setQuickDiscountProduct(null);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to remove discount');
+    } finally {
+      setSavingQuickDiscount(false);
+    }
+  };
+
   const handleOpenAdd = () => {
     setFormData({
       title: '',
       description: '',
       price: '',
+      originalPrice: '',
+      discountPercentage: '',
+      isFlashSale: false,
       category: 'electronics',
       stock: '',
       image: '',
@@ -295,6 +543,9 @@ export const BusinessHomePage: React.FC = () => {
       title: prod.title,
       description: prod.description,
       price: prod.price.toString(),
+      originalPrice: prod.originalPrice ? prod.originalPrice.toString() : '',
+      discountPercentage: prod.discountPercentage ? prod.discountPercentage.toString() : '',
+      isFlashSale: Boolean(prod.isFlashSale),
       category: prod.category,
       stock: prod.stock.toString(),
       image: prod.image,
@@ -350,6 +601,9 @@ export const BusinessHomePage: React.FC = () => {
           title: formData.title,
           description: formData.description,
           price: Number(formData.price),
+          originalPrice: formData.originalPrice ? Number(formData.originalPrice) : 0,
+          discountPercentage: formData.discountPercentage ? Number(formData.discountPercentage) : 0,
+          isFlashSale: formData.isFlashSale,
           category: formData.category,
           stock: Number(formData.stock),
           image: formData.image || undefined,
@@ -360,6 +614,9 @@ export const BusinessHomePage: React.FC = () => {
           title: formData.title,
           description: formData.description,
           price: Number(formData.price),
+          originalPrice: formData.originalPrice ? Number(formData.originalPrice) : 0,
+          discountPercentage: formData.discountPercentage ? Number(formData.discountPercentage) : 0,
+          isFlashSale: formData.isFlashSale,
           category: formData.category,
           stock: Number(formData.stock),
           image: formData.image || undefined,
@@ -538,6 +795,24 @@ export const BusinessHomePage: React.FC = () => {
 
           <button
             type="button"
+            onClick={() => setActiveTab('storefront')}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              activeTab === 'storefront'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+            }`}
+          >
+            <Store className="w-3.5 h-3.5" />
+            <span>Storefront & Promotions</span>
+            {storefrontForm.flashSaleActive && (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-500 text-white font-extrabold animate-pulse">
+                LIVE SALE
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('profile')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
               activeTab === 'profile'
@@ -700,8 +975,25 @@ export const BusinessHomePage: React.FC = () => {
                         <td className="px-5 py-3.5 capitalize font-medium text-zinc-600">
                           {prod.category}
                         </td>
-                        <td className="px-5 py-3.5 font-bold text-zinc-950">
-                          ${prod.price.toFixed(2)}
+                        <td className="px-5 py-3.5">
+                          <div className="font-bold text-zinc-950">
+                            ${prod.price.toFixed(2)}
+                          </div>
+                          {prod.originalPrice && prod.originalPrice > prod.price ? (
+                            <div className="flex items-center gap-1 text-[10px] mt-0.5">
+                              <span className="line-through text-zinc-400">
+                                ${prod.originalPrice.toFixed(2)}
+                              </span>
+                              <span className="text-rose-600 font-extrabold bg-rose-50 px-1 rounded border border-rose-100">
+                                -{prod.discountPercentage || Math.round(((prod.originalPrice - prod.price) / prod.originalPrice) * 100)}%
+                              </span>
+                            </div>
+                          ) : null}
+                          {prod.isFlashSale && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500 text-white uppercase tracking-wider mt-1">
+                              ⚡ Flash Deal
+                            </span>
+                          )}
                         </td>
                         <td className="px-5 py-3.5">
                           <span
@@ -724,6 +1016,19 @@ export const BusinessHomePage: React.FC = () => {
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenQuickDiscount(prod)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                                prod.originalPrice && prod.originalPrice > prod.price
+                                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs'
+                                  : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200'
+                              }`}
+                              title="Set or update discount for this product"
+                            >
+                              <Percent className="w-3 h-3 text-rose-600" />
+                              <span>{prod.originalPrice && prod.originalPrice > prod.price ? 'Edit Discount' : 'Discount'}</span>
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(prod)}
@@ -1258,6 +1563,450 @@ export const BusinessHomePage: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'storefront' && (
+          <div className="space-y-6">
+            {/* Top Storefront Header Card */}
+            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      <Store className="w-5 h-5" />
+                    </span>
+                    <h3 className="text-base font-extrabold text-zinc-950">
+                      Storefront Customization & Brand Hub
+                    </h3>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Customize your public storefront banner, announcement ribbons, and launch live flash sale promotions.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Link
+                    to={`/store/${encodeURIComponent(user?.companyName || user?.name || 'store')}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition-all shadow-xs active:scale-95"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View Public Store</span>
+                    <ExternalLink className="w-3 h-3 text-zinc-400" />
+                  </Link>
+                </div>
+              </div>
+
+              {storefrontSuccessMsg && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{storefrontSuccessMsg}</span>
+                </div>
+              )}
+
+              {storefrontErrorMsg && (
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{storefrontErrorMsg}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Form Section 1: Storefront Banner & Branding */}
+            <form onSubmit={handleSaveStorefront} className="space-y-6">
+              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-950">
+                        Store Banner & Visual Identity
+                      </h4>
+                      <p className="text-[11px] text-zinc-500">
+                        Custom backdrop image and hero headlines displayed to shoppers
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Banner Preview & Input */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                      Storefront Hero Banner Image URL
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={storefrontForm.bannerImage}
+                        onChange={(e) =>
+                          setStorefrontForm((prev) => ({ ...prev, bannerImage: e.target.value }))
+                        }
+                        placeholder="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1600&q=80"
+                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
+                      />
+                      {storefrontForm.bannerImage && (
+                        <button
+                          type="button"
+                          onClick={() => setStorefrontForm((prev) => ({ ...prev, bannerImage: '' }))}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-500 hover:text-rose-600 bg-zinc-100 hover:bg-zinc-200"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        Or Pick a Curated Banner Preset:
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          {
+                            name: 'Midnight Tech',
+                            url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1600&q=80',
+                          },
+                          {
+                            name: 'Modern Studio',
+                            url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1600&q=80',
+                          },
+                          {
+                            name: 'Luxe Gradient',
+                            url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=80',
+                          },
+                          {
+                            name: 'Minimal Dark',
+                            url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1600&q=80',
+                          },
+                        ].map((preset) => (
+                          <button
+                            key={preset.name}
+                            type="button"
+                            onClick={() =>
+                              setStorefrontForm((prev) => ({ ...prev, bannerImage: preset.url }))
+                            }
+                            className={`p-2 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
+                              storefrontForm.bannerImage === preset.url
+                                ? 'bg-zinc-950 text-white border-zinc-950 shadow-xs'
+                                : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-200'
+                            }`}
+                          >
+                            <span className="block truncate">{preset.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Live Banner Preview Box */}
+                    {storefrontForm.bannerImage && (
+                      <div className="relative h-32 rounded-2xl overflow-hidden border border-zinc-200 mt-2 bg-zinc-950">
+                        <img
+                          src={storefrontForm.bannerImage}
+                          alt="Banner Preview"
+                          className="w-full h-full object-cover opacity-60"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent p-4 flex flex-col justify-end text-white">
+                          <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest">
+                            Live Banner Preview
+                          </span>
+                          <span className="text-base font-extrabold">
+                            {user?.companyName || 'Brand Store'}
+                          </span>
+                          <span className="text-xs text-zinc-300">
+                            {storefrontForm.tagline || 'Official Brand Storefront'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                        Store Tagline / Slogan
+                      </label>
+                      <input
+                        type="text"
+                        value={storefrontForm.tagline}
+                        onChange={(e) =>
+                          setStorefrontForm((prev) => ({ ...prev, tagline: e.target.value }))
+                        }
+                        placeholder="e.g. Flagship Audio & High Performance Wearables"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                        Top Announcement Ribbon Text
+                      </label>
+                      <input
+                        type="text"
+                        value={storefrontForm.announcement}
+                        onChange={(e) =>
+                          setStorefrontForm((prev) => ({ ...prev, announcement: e.target.value }))
+                        }
+                        placeholder="e.g. 🎉 FREE EXPEDITED SHIPPING ON ALL ORDERS THIS WEEKEND!"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                      Store Bio & Merchant Story
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={storefrontForm.description}
+                      onChange={(e) =>
+                        setStorefrontForm((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      placeholder="Tell customers about your brand heritage, warranty terms, and craftsmanship..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Section 2: Flash Sale Campaign Manager */}
+              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+                      <Flame className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-950">
+                        Flash Sale & Promotional Campaign
+                      </h4>
+                      <p className="text-[11px] text-zinc-500">
+                        Launch a high-conversion flash sale with countdown timer on your storefront
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Active Toggle Switch */}
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <span className="text-xs font-bold text-zinc-800">
+                      {storefrontForm.flashSaleActive ? 'Flash Sale ON' : 'Flash Sale OFF'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={storefrontForm.flashSaleActive}
+                      onChange={(e) =>
+                        setStorefrontForm((prev) => ({
+                          ...prev,
+                          flashSaleActive: e.target.checked,
+                        }))
+                      }
+                      className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                {storefrontForm.flashSaleActive && (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-4 animate-in fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <label className="block text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                          Flash Sale Title / Headline
+                        </label>
+                        <input
+                          type="text"
+                          value={storefrontForm.flashSaleTitle}
+                          onChange={(e) =>
+                            setStorefrontForm((prev) => ({
+                              ...prev,
+                              flashSaleTitle: e.target.value,
+                            }))
+                          }
+                          placeholder="⚡ Midnight Super Sale - Up to 40% OFF"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 bg-white text-xs text-zinc-900 focus:outline-none focus:border-amber-500 font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                          Sale Ends At (Countdown)
+                        </label>
+                        <input
+                          type="date"
+                          value={storefrontForm.flashSaleEndsAt}
+                          onChange={(e) =>
+                            setStorefrontForm((prev) => ({
+                              ...prev,
+                              flashSaleEndsAt: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 bg-white text-xs text-zinc-900 focus:outline-none focus:border-amber-500 font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                        Campaign Description
+                      </label>
+                      <input
+                        type="text"
+                        value={storefrontForm.flashSaleDescription}
+                        onChange={(e) =>
+                          setStorefrontForm((prev) => ({
+                            ...prev,
+                            flashSaleDescription: e.target.value,
+                          }))
+                        }
+                        placeholder="Grab verified brand collections at special promotional prices for a limited time!"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 bg-white text-xs text-zinc-900 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingStorefront}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {savingStorefront ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving Customizations...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 text-emerald-400" />
+                        <span>Save Storefront & Flash Sale Settings</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Section 3: Bulk Product Discount & Sale Pricing Tool */}
+            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 border border-rose-100 flex items-center justify-center">
+                    <Percent className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-zinc-950">
+                      Bulk Catalog Discount Tool
+                    </h4>
+                    <p className="text-[11px] text-zinc-500">
+                      Apply instant % discounts across your entire catalog or specific categories
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleApplyBulkDiscount} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                      Discount Percentage (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="90"
+                        value={bulkDiscountForm.discountPercentage}
+                        onChange={(e) =>
+                          setBulkDiscountForm((prev) => ({
+                            ...prev,
+                            discountPercentage: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs font-bold text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
+                        required
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                        % OFF
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                      Target Category
+                    </label>
+                    <select
+                      value={bulkDiscountForm.category}
+                      onChange={(e) =>
+                        setBulkDiscountForm((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 capitalize"
+                    >
+                      <option value="all">All Products in Store</option>
+                      <option value="electronics">Electronics</option>
+                      <option value="fashion">Fashion & Apparel</option>
+                      <option value="home">Home & Living</option>
+                      <option value="beauty">Beauty & Skincare</option>
+                      <option value="sports">Sports & Outdoors</option>
+                      <option value="books">Books & Media</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5 flex flex-col justify-end">
+                    <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs font-bold text-zinc-800 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bulkDiscountForm.isFlashSale}
+                        onChange={(e) =>
+                          setBulkDiscountForm((prev) => ({
+                            ...prev,
+                            isFlashSale: e.target.checked,
+                          }))
+                        }
+                        className="w-4 h-4 accent-amber-500 rounded"
+                      />
+                      <span>Tag as ⚡ Flash Sale Deal</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleResetBulkDiscount}
+                    disabled={applyingDiscount}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-600 hover:text-rose-600 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Reset All Product Discounts
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={applyingDiscount}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    {applyingDiscount ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Applying Discounts...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Apply {bulkDiscountForm.discountPercentage}% Discount to Catalog</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'profile' && (
           <div className="space-y-6">
             {/* Top Identity Cards */}
@@ -1687,6 +2436,225 @@ export const BusinessHomePage: React.FC = () => {
         )}
       </main>
 
+      {/* Quick Individual Product Discount Modal */}
+      {quickDiscountProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setQuickDiscountProduct(null)}
+        >
+          <div
+            className="bg-white border border-zinc-200 max-w-md w-full p-6 sm:p-7 rounded-3xl shadow-2xl space-y-5 text-zinc-900 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-zinc-200/80 pb-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src={quickDiscountProduct.image}
+                  alt={quickDiscountProduct.title}
+                  className="w-12 h-12 rounded-xl object-cover border border-zinc-200 shrink-0"
+                />
+                <div>
+                  <h3 className="text-base font-extrabold text-zinc-950 line-clamp-1">
+                    {quickDiscountProduct.title}
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Update promotional pricing or flash sale status
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickDiscountProduct(null)}
+                className="p-1.5 text-zinc-400 hover:text-zinc-950 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickDiscount} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                  Regular List Price (USD)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={quickDiscountForm.regularPrice}
+                  onChange={(e) => {
+                    const newReg = e.target.value;
+                    const pct = Number(quickDiscountForm.discountPercentage);
+                    let computedSale = quickDiscountForm.salePrice;
+                    if (newReg && pct > 0) {
+                      computedSale = (Number(newReg) * (1 - pct / 100)).toFixed(2);
+                    }
+                    setQuickDiscountForm({
+                      ...quickDiscountForm,
+                      regularPrice: newReg,
+                      salePrice: computedSale,
+                    });
+                  }}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 font-bold focus:outline-none focus:bg-white focus:border-zinc-900"
+                  placeholder="100.00"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Discount (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      placeholder="20"
+                      value={quickDiscountForm.discountPercentage}
+                      onChange={(e) => handleQuickDiscountPercentageChange(e.target.value)}
+                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 pr-7 text-xs text-zinc-900 font-bold focus:outline-none focus:bg-white focus:border-zinc-900"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Sale Price (USD) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="80.00"
+                      value={quickDiscountForm.salePrice}
+                      onChange={(e) => handleQuickDiscountSalePriceChange(e.target.value)}
+                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 pl-6 text-xs text-zinc-900 font-extrabold focus:outline-none focus:bg-white focus:border-zinc-900"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  Quick Discount Presets
+                </label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[10, 15, 20, 25, 30, 50].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => handleQuickDiscountPercentageChange(String(pct))}
+                      className="px-2.5 py-1 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                  {Number(quickDiscountForm.discountPercentage) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const reg = quickDiscountForm.regularPrice || String(quickDiscountProduct.price);
+                        setQuickDiscountForm({
+                          regularPrice: reg,
+                          discountPercentage: '',
+                          salePrice: reg,
+                          isFlashSale: false,
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Flash Sale Tagging */}
+              <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-xs font-bold text-zinc-800 cursor-pointer transition-colors w-full">
+                <input
+                  type="checkbox"
+                  checked={quickDiscountForm.isFlashSale}
+                  onChange={(e) =>
+                    setQuickDiscountForm({ ...quickDiscountForm, isFlashSale: e.target.checked })
+                  }
+                  className="w-4 h-4 accent-amber-500 rounded"
+                />
+                <span className="inline-flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Feature in Store Flash Sale</span>
+                </span>
+              </label>
+
+              {/* Live Calculated Preview Banner */}
+              {Number(quickDiscountForm.regularPrice) > Number(quickDiscountForm.salePrice) &&
+                Number(quickDiscountForm.salePrice) > 0 && (
+                  <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-900 text-xs font-bold flex items-center justify-between">
+                    <span>Active Promotional Savings:</span>
+                    <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white font-black">
+                      Save $
+                      {(
+                        Number(quickDiscountForm.regularPrice) -
+                        Number(quickDiscountForm.salePrice)
+                      ).toFixed(2)}{' '}
+                      (
+                      {quickDiscountForm.discountPercentage ||
+                        Math.round(
+                          ((Number(quickDiscountForm.regularPrice) -
+                            Number(quickDiscountForm.salePrice)) /
+                            Number(quickDiscountForm.regularPrice)) *
+                            100
+                        )}
+                      % OFF)
+                    </span>
+                  </div>
+                )}
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
+                {quickDiscountProduct.originalPrice && quickDiscountProduct.originalPrice > quickDiscountProduct.price ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveQuickDiscount}
+                    disabled={savingQuickDiscount}
+                    className="px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Remove Discount
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuickDiscountProduct(null)}
+                    className="px-4 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingQuickDiscount}
+                    className="px-5 py-2 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    {savingQuickDiscount ? 'Saving...' : 'Apply Discount'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {(showAddModal || editingProduct) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs animate-in fade-in duration-150"
@@ -1757,26 +2725,154 @@ export const BusinessHomePage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                    Price (USD)
+                    Regular Price ($)
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="299.99"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-                    required
+                    placeholder="100.00"
+                    value={formData.originalPrice}
+                    onChange={(e) => {
+                      const orig = e.target.value;
+                      const pct = Number(formData.discountPercentage);
+                      let newPrice = formData.price;
+                      if (orig && pct > 0) {
+                        newPrice = (Number(orig) * (1 - pct / 100)).toFixed(2);
+                      }
+                      setFormData({ ...formData, originalPrice: orig, price: newPrice });
+                    }}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                    Stock Units
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    placeholder="20"
+                    value={formData.discountPercentage}
+                    onChange={(e) => {
+                      const pctStr = e.target.value;
+                      const pct = Number(pctStr);
+                      const orig = Number(formData.originalPrice) || Number(formData.price);
+                      let newPrice = formData.price;
+                      let newOrig = formData.originalPrice;
+                      if (pct > 0 && orig > 0) {
+                        newOrig = String(orig);
+                        newPrice = (orig * (1 - pct / 100)).toFixed(2);
+                      }
+                      setFormData({
+                        ...formData,
+                        discountPercentage: pctStr,
+                        originalPrice: newOrig,
+                        price: newPrice,
+                      });
+                    }}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Sale Price ($) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="80.00"
+                    value={formData.price}
+                    onChange={(e) => {
+                      const pStr = e.target.value;
+                      const p = Number(pStr);
+                      const orig = Number(formData.originalPrice);
+                      let newPct = formData.discountPercentage;
+                      if (orig > p && p > 0) {
+                        newPct = String(Math.round(((orig - p) / orig) * 100));
+                      }
+                      setFormData({ ...formData, price: pStr, discountPercentage: newPct });
+                    }}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 font-extrabold placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Quick Discount Preset Chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mr-1">
+                  Presets:
+                </span>
+                {[10, 15, 20, 25, 30, 50].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      const basePrice = Number(formData.originalPrice) || Number(formData.price) || 0;
+                      if (basePrice <= 0) return;
+                      const sale = Number((basePrice * (1 - preset / 100)).toFixed(2));
+                      setFormData({
+                        ...formData,
+                        originalPrice: String(basePrice),
+                        discountPercentage: String(preset),
+                        price: String(sale),
+                      });
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
+                  >
+                    {preset}% OFF
+                  </button>
+                ))}
+                {(Number(formData.originalPrice) > Number(formData.price) || Number(formData.discountPercentage) > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const orig = Number(formData.originalPrice) || Number(formData.price);
+                      setFormData({
+                        ...formData,
+                        price: String(orig),
+                        originalPrice: '',
+                        discountPercentage: '',
+                        isFlashSale: false,
+                      });
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer"
+                  >
+                    Clear Discount
+                  </button>
+                )}
+              </div>
+
+              {/* Instant Discount Preview */}
+              {Number(formData.originalPrice) > Number(formData.price) && Number(formData.price) > 0 && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800 text-xs font-bold flex items-center justify-between animate-in fade-in">
+                  <span className="flex items-center gap-1">
+                    <Percent className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Promotional Discount:</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[11px] font-black">
+                    {Math.round(
+                      ((Number(formData.originalPrice) - Number(formData.price)) /
+                        Number(formData.originalPrice)) *
+                        100
+                    )}
+                    % OFF (Save ${(Number(formData.originalPrice) - Number(formData.price)).toFixed(2)})
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Stock Units *
                   </label>
                   <input
                     type="number"
@@ -1787,6 +2883,23 @@ export const BusinessHomePage: React.FC = () => {
                     className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
                     required
                   />
+                </div>
+
+                <div className="space-y-1.5 flex flex-col justify-end">
+                  <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100/80 text-xs font-bold text-zinc-800 cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.isFlashSale}
+                      onChange={(e) =>
+                        setFormData({ ...formData, isFlashSale: e.target.checked })
+                      }
+                      className="w-4 h-4 accent-amber-500 rounded"
+                    />
+                    <span className="inline-flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Feature in Store Flash Sale</span>
+                    </span>
+                  </label>
                 </div>
               </div>
 
