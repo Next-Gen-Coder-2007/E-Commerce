@@ -319,6 +319,7 @@ export const HomePage: React.FC = () => {
                 price: product.price,
                 image: product.image,
                 category: product.category,
+                companyId: product.companyId,
                 companyName: product.companyName,
                 stock: product.stock,
                 quantity: 1,

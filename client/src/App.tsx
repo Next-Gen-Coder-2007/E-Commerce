@@ -13,7 +13,12 @@ import { RegisterPage } from './pages/RegisterPage';
 import { BusinessHomePage } from './pages/business/BusinessHomePage';
 import { BusinessLoginPage } from './pages/business/BusinessLoginPage';
 import { BusinessRegisterPage } from './pages/business/BusinessRegisterPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { OrderDetailsPage } from './pages/OrderDetailsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -29,6 +34,38 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetailsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/login"
             element={

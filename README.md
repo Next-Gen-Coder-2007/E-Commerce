@@ -450,10 +450,13 @@ npm run product-service
 # Terminal 3: Start Shopping Cart Microservice (Port 5003)
 npm run cart-service
 
-# Terminal 4: Start API Gateway (Port 5000)
+# Terminal 4: Start Order Management Microservice (Port 5004)
+npm run order-service
+
+# Terminal 5: Start API Gateway (Port 5000)
 npm run gateway
 
-# Terminal 5: Start React Client (Port 5173)
+# Terminal 6: Start React Client (Port 5173)
 npm run client
 ```
 
@@ -467,7 +470,7 @@ Open `http://localhost:5173` in your browser to access the application.
 * **Sanitized Responses**: Mongoose schema serialization hooks automatically delete the `password` hash and internal `__v` metadata before returning user JSON objects.
 * **Strict CORS Policies**: The API Gateway allows credentialed requests strictly from the configured `CLIENT_URL`.
 * **Security Headers**: The API Gateway incorporates Helmet middleware for header protection.
-* **Decoupled Internal Network**: Services run on internal ports (5001, 5002, 5003) and are accessed exclusively through the API Gateway (Port 5000).
+* **Decoupled Internal Network**: Services run on internal ports (5001, 5002, 5003, 5004) and are accessed exclusively through the API Gateway (Port 5000).
 
 ## Development Roadmap
 
@@ -475,7 +478,7 @@ Open `http://localhost:5173` in your browser to access the application.
 flowchart LR
     Auth["1. Auth Service\n(Completed)"] --> Product["2. Product Service\n(Completed)"]
     Product --> Cart["3. Cart Service\n(Completed)"]
-    Cart --> Order["4. Order Service\n(Planned)"]
+    Cart --> Order["4. Order Service\n(Completed)"]
     Order --> Payment["5. Payment Service\n(Planned)"]
     Payment --> Notification["6. Notification Service\n(Planned)"]
 ```
@@ -483,7 +486,7 @@ flowchart LR
 * **Phase 1 (Completed)**: API Gateway, Auth Service, MongoDB Atlas, Redis rate limiting, React client with full authentication lifecycle.
 * **Phase 2 (Completed)**: Product Catalog & Merchant Inventory Service with search, category filtering, stock tracking, and Cloudinary media uploads.
 * **Phase 3 (Completed)**: Shopping Cart Microservice with dual guest/user sessions, automatic cart merging, Redis caching, and interactive React Cart Drawer.
-* **Phase 4 (Planned)**: Order Management Service with order lifecycles and address management.
+* **Phase 4 (Completed)**: Order Management Microservice with full order lifecycle, multi-step Checkout, live carrier tracking timelines, customer order history, and Merchant Seller Fulfillment Studio.
 * **Phase 5 (Planned)**: Payment Gateway Service supporting Stripe/PayPal webhooks and transaction records.
 * **Phase 6 (Planned)**: Asynchronous Notification Service for transactional emails and event-driven updates.
 
