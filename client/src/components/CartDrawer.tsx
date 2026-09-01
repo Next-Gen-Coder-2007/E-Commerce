@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   X,
@@ -13,13 +13,17 @@ import {
   RotateCcw,
   Tag,
   CheckCircle2,
+  Building2,
+  LogOut,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const FREE_SHIPPING_THRESHOLD = 100;
 
 export const CartDrawer: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const {
     items,
     totalItems,
@@ -29,8 +33,11 @@ export const CartDrawer: React.FC = () => {
     updateQuantity,
     removeFromCart,
     clearCart,
+    openBusinessModal,
     actionLoading,
   } = useCart();
+
+  const isCompany = user?.role === 'company';
 
   const [promoCode, setPromoCode] = useState('');
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -103,6 +110,21 @@ export const CartDrawer: React.FC = () => {
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Business Account Detected Banner */}
+          {isCompany && (
+            <div className="px-6 py-3.5 bg-amber-50 border-b border-amber-200 text-amber-950 space-y-1.5 animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-amber-700 shrink-0" />
+                <span className="text-xs font-black">
+                  Business Account Active ({user?.companyName || user?.name})
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-tight">
+                Seller/business accounts cannot place retail customer orders. Please log out or sign in with a customer account to make purchases.
+              </p>
+            </div>
+          )}
 
           {/* Free Shipping Progress Meter */}
           {items.length > 0 && (
@@ -326,17 +348,61 @@ export const CartDrawer: React.FC = () => {
 
               {/* Checkout Action Button */}
               <div className="space-y-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeCart();
-                    navigate('/checkout');
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-zinc-950 hover:bg-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
-                >
-                  <span>Proceed to Checkout</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {isCompany ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeCart();
+                        openBusinessModal({ actionTitle: 'Checkout' });
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-amber-600 hover:bg-amber-700 shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      <span>Business Account - Switch to Customer to Order</span>
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          closeCart();
+                          await clearCart();
+                          await logout();
+                          navigate('/login');
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Log Out</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeCart();
+                          navigate('/business');
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>Merchant Hub</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeCart();
+                      navigate('/checkout');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-zinc-950 hover:bg-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                )}
 
                 <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
                   <button

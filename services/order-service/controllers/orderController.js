@@ -38,6 +38,7 @@ const invalidateOrderCaches = async (userId, orderId, companyId) => {
 export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const userEmail = req.user?.email || req.body.customer?.email;
     const userName = req.user?.name || req.body.customer?.name;
 
@@ -45,6 +46,13 @@ export const createOrder = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'You must be logged in to create an order',
+      });
+    }
+
+    if (userRole === 'company') {
+      return res.status(403).json({
+        success: false,
+        message: 'Business accounts are not permitted to place customer orders. Please log out and sign in with a customer account to make purchases.',
       });
     }
 

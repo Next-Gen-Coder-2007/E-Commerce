@@ -51,7 +51,16 @@ const getOrCreateCart = async (userId, guestId) => {
 export const getCart = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(200).json({
+        success: true,
+        cart: { items: [], totalItems: 0, subtotal: 0 },
+        message: 'Business account detected. Cart operations are disabled for merchant accounts.',
+      });
+    }
 
     const cacheKey = getCartCacheKey(userId, guestId);
     if (isRedisReady() && cacheKey) {
@@ -94,7 +103,15 @@ export const getCart = async (req, res, next) => {
 export const addToCart = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(403).json({
+        success: false,
+        message: 'Business accounts cannot make customer purchases. Please log out or sign in with a customer account to add items to cart.',
+      });
+    }
     const {
       productId,
       title,
@@ -169,7 +186,16 @@ export const addToCart = async (req, res, next) => {
 export const updateCartItem = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(403).json({
+        success: false,
+        message: 'Business accounts cannot modify customer shopping carts.',
+      });
+    }
+
     const { productId } = req.params;
     const { quantity } = req.body;
 
@@ -229,7 +255,16 @@ export const updateCartItem = async (req, res, next) => {
 export const removeCartItem = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(403).json({
+        success: false,
+        message: 'Business accounts cannot modify customer shopping carts.',
+      });
+    }
+
     const { productId } = req.params;
 
     if (!productId) {
@@ -262,7 +297,16 @@ export const removeCartItem = async (req, res, next) => {
 export const clearCart = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(200).json({
+        success: true,
+        message: 'Shopping cart cleared successfully',
+        cart: { items: [], totalItems: 0, subtotal: 0 },
+      });
+    }
 
     const cart = await getOrCreateCart(userId, guestId);
     cart.items = [];
@@ -284,7 +328,15 @@ export const clearCart = async (req, res, next) => {
 export const mergeCart = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const guestId = req.body.guestId || req.guestId;
+
+    if (userRole === 'company') {
+      return res.status(403).json({
+        success: false,
+        message: 'Business accounts cannot merge or manage customer carts.',
+      });
+    }
 
     if (!userId) {
       return res.status(400).json({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Package,
@@ -10,10 +10,12 @@ import {
   RefreshCw,
   ShoppingBag,
   ArrowRight,
+  Building2,
 } from 'lucide-react';
 import { getMyOrdersApi } from '../services/orderService';
 import { Order, OrderStatus } from '../types/order';
 import { CancelOrderModal } from '../components/CancelOrderModal';
+import { useAuth } from '../context/AuthContext';
 
 const getStatusBadge = (status: OrderStatus) => {
   switch (status) {
@@ -69,6 +71,7 @@ const getStatusBadge = (status: OrderStatus) => {
 };
 
 export const OrdersPage: React.FC = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +118,30 @@ export const OrdersPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-zinc-50/70 pb-20 pt-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Business Account Banner */}
+        {user?.role === 'company' && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <Building2 className="w-5 h-5 text-amber-700 shrink-0" />
+              <div>
+                <p className="text-xs font-bold">
+                  Business Account Active ({user.companyName || user.name})
+                </p>
+                <p className="text-[11px] text-amber-800">
+                  This page displays customer retail orders. To manage your seller orders & inventory, visit your Merchant Dashboard.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/business"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition-transform active:scale-95 shadow-xs shrink-0 self-start sm:self-center"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Merchant Dashboard</span>
+            </Link>
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200/80">
           <div className="space-y-1">

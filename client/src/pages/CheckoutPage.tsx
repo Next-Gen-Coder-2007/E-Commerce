@@ -19,6 +19,8 @@ import {
   Trash2,
   QrCode,
   Check,
+  Building2,
+  LogOut,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -53,7 +55,7 @@ const AVAILABLE_COUPONS = [
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
-  const { user, addSavedAddress, updateProfile, deleteSavedAddress, setDefaultAddress } = useAuth();
+  const { user, logout, addSavedAddress, updateProfile, deleteSavedAddress, setDefaultAddress } = useAuth();
 
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>('new');
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(true);
@@ -338,6 +340,63 @@ export const CheckoutPage: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  if (user?.role === 'company') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700 shadow-sm">
+          <Building2 className="w-10 h-10" />
+        </div>
+        <div className="space-y-3">
+          <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold uppercase tracking-wider">
+            Business Account Active
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black text-zinc-950 tracking-tight">
+            Checkout Restricted for Business Accounts
+          </h1>
+          <p className="text-sm text-zinc-600 max-w-md mx-auto leading-relaxed">
+            You are currently logged in with your seller account (<strong className="text-zinc-900 font-bold">{user.companyName || user.name}</strong>). Business accounts are configured to sell products and manage merchant inventory, and cannot place customer orders.
+          </p>
+          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 max-w-md mx-auto text-left space-y-1">
+            <p className="font-bold flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>How to order as a customer:</span>
+            </p>
+            <p className="text-amber-800 pl-5.5">
+              Please log out from this business account and sign in with or register a customer account.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={async () => {
+              await clearCart();
+              await logout();
+              navigate('/login?redirect=/checkout');
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-extrabold text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-md active:scale-[0.98] cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out & Sign In as Customer</span>
+          </button>
+          <Link
+            to="/business"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-zinc-800 bg-white hover:bg-zinc-100 border border-zinc-200 transition-all shadow-2xs"
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Go to Merchant Dashboard</span>
+          </Link>
+          <Link
+            to="/"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-zinc-600 hover:text-zinc-900 transition-colors"
+          >
+            <span>Browse Products</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0 && !submitting) {
     return (

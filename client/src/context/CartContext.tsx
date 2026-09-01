@@ -18,6 +18,11 @@ import {
 } from '../services/cartService';
 import { useAuth } from './AuthContext';
 
+interface BusinessModalData {
+  actionTitle?: string;
+  productTitle?: string;
+}
+
 interface CartContextType {
   cart: Cart | null;
   items: CartItem[];
@@ -26,6 +31,10 @@ interface CartContextType {
   isCartOpen: boolean;
   loading: boolean;
   actionLoading: boolean;
+  isBusinessModalOpen: boolean;
+  businessModalData: BusinessModalData | null;
+  openBusinessModal: (data?: BusinessModalData) => void;
+  closeBusinessModal: () => void;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
@@ -44,9 +53,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+  const [businessModalData, setBusinessModalData] = useState<BusinessModalData | null>(null);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
+  const openBusinessModal = useCallback((data?: BusinessModalData) => {
+    setBusinessModalData(data || null);
+    setIsBusinessModalOpen(true);
+  }, []);
+
+  const closeBusinessModal = useCallback(() => {
+    setIsBusinessModalOpen(false);
+    setBusinessModalData(null);
+  }, []);
+
   const fetchCart = useCallback(async () => {
+    if (user?.role === 'company') {
+      setCart(null);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const res = await getCartApi();
@@ -58,10 +84,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const handleAuthChangeAndLoad = async () => {
+      if (user?.role === 'company') {
+        setCart(null);
+        setLoading(false);
+        prevUserIdRef.current = user._id;
+        return;
+      }
+
       const currentUserId = user?._id;
       const guestId = getGuestCartId();
 
@@ -86,14 +119,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleAuthChangeAndLoad();
   }, [user, fetchCart]);
 
-  const openCart = () => setIsCartOpen(true);
+  const openCart = () => {
+    if (user?.role === 'company') {
+      openBusinessModal({ actionTitle: 'Shopping Cart' });
+      return;
+    }
+    setIsCartOpen(true);
+  };
+
   const closeCart = () => setIsCartOpen(false);
-  const toggleCart = () => setIsCartOpen((prev) => !prev);
+
+  const toggleCart = () => {
+    if (user?.role === 'company') {
+      openBusinessModal({ actionTitle: 'Shopping Cart' });
+      return;
+    }
+    setIsCartOpen((prev) => !prev);
+  };
 
   const addToCart = async (
     payload: AddToCartPayload,
     openDrawer: boolean = true
   ): Promise<boolean> => {
+    if (user?.role === 'company') {
+      openBusinessModal({
+        actionTitle: 'Add to Cart',
+        productTitle: payload.title,
+      });
+      return false;
+    }
+
     try {
       setActionLoading(true);
       const res = await addToCartApi(payload);
@@ -117,6 +172,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     productId: string,
     quantity: number
   ): Promise<boolean> => {
+    if (user?.role === 'company') {
+      openBusinessModal({ actionTitle: 'Update Quantity' });
+      return false;
+    }
+
     try {
       setActionLoading(true);
       const res = await updateCartItemApi(productId, quantity);
@@ -158,9 +218,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCart(res.cart);
         return true;
       }
-      return false;
+      setCart(null);
+      return true;
     } catch (err) {
       console.error('[CartContext] Error clearing cart:', err);
+      setCart(null);
       return false;
     } finally {
       setActionLoading(false);
@@ -181,6 +243,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCartOpen,
         loading,
         actionLoading,
+        isBusinessModalOpen,
+        businessModalData,
+        openBusinessModal,
+        closeBusinessModal,
         openCart,
         closeCart,
         toggleCart,
