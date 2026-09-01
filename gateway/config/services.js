@@ -37,6 +37,16 @@ export const serviceRegistry = {
     stripPrefix: false,
     requireAuth: false,
   },
+  orders: {
+    name: 'Order Service',
+    routePrefix: '/api/orders',
+    instances: parseInstances(
+      process.env.ORDER_SERVICE_URLS,
+      process.env.ORDER_SERVICE_URL || 'http://localhost:5004'
+    ),
+    stripPrefix: false,
+    requireAuth: false,
+  },
 };
 
 export default serviceRegistry;

@@ -92,9 +92,11 @@ export const globalRateLimiter = createGatewayRateLimiter({
   keyPrefix: 'gw:global',
 });
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const authGatewayRateLimiter = createGatewayRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: isDev ? 500 : 30,
   message: 'Too many authentication attempts via Gateway. Please try again in 15 minutes.',
   keyPrefix: 'gw:auth',
 });

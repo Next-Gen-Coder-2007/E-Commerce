@@ -9,7 +9,9 @@
     "dev:product": "nodemon product-service/server.js",
     "start:product": "node product-service/server.js",
     "dev:cart": "nodemon cart-service/server.js",
-    "start:cart": "node cart-service/server.js"
+    "start:cart": "node cart-service/server.js",
+    "dev:order": "nodemon order-service/server.js",
+    "start:order": "node order-service/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
