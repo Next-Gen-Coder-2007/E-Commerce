@@ -10,13 +10,17 @@ const getCartCacheKey = (userId, guestId) => {
 
 const invalidateCartCache = async (userId, guestId) => {
   if (!isRedisReady()) return;
-  const key = getCartCacheKey(userId, guestId);
-  if (key) {
-    try {
-      await redisClient.del(key);
-    } catch (e) {
-      console.warn(`[Cart Cache] Error deleting key ${key}:`, e.message);
+  try {
+    if (userId) {
+      const key = getCartCacheKey(userId, null);
+      if (key) await redisClient.del(key);
     }
+    if (guestId) {
+      const key = getCartCacheKey(null, guestId);
+      if (key) await redisClient.del(key);
+    }
+  } catch (e) {
+    console.warn('[Cart Cache] Error invalidating cache:', e.message);
   }
 };
 
@@ -97,6 +101,7 @@ export const addToCart = async (req, res, next) => {
       price,
       image,
       category,
+      companyId,
       companyName,
       quantity = 1,
       stock,
@@ -131,6 +136,8 @@ export const addToCart = async (req, res, next) => {
       if (image) cart.items[existingIndex].image = image;
       if (title) cart.items[existingIndex].title = title;
       if (stock !== undefined) cart.items[existingIndex].stock = Number(stock);
+      if (companyId) cart.items[existingIndex].companyId = companyId;
+      if (companyName) cart.items[existingIndex].companyName = companyName;
     } else {
       cart.items.push({
         productId,
@@ -138,6 +145,7 @@ export const addToCart = async (req, res, next) => {
         price: Number(price),
         image: image || undefined,
         category: category || 'general',
+        companyId: companyId || undefined,
         companyName: companyName || '',
         quantity: stock ? Math.min(addQty, Number(stock)) : addQty,
         stock: stock !== undefined ? Number(stock) : 999,
@@ -304,9 +312,12 @@ export const mergeCart = async (req, res, next) => {
         );
 
         if (existingIdx > -1) {
-          const combinedQty = userCart.items[existingIdx].quantity + guestItem.quantity;
           const maxStock = guestItem.stock || userCart.items[existingIdx].stock;
-          userCart.items[existingIdx].quantity = maxStock ? Math.min(combinedQty, maxStock) : combinedQty;
+          userCart.items[existingIdx].quantity = maxStock
+            ? Math.min(guestItem.quantity, maxStock)
+            : guestItem.quantity;
+          userCart.items[existingIdx].price = guestItem.price;
+          if (guestItem.image) userCart.items[existingIdx].image = guestItem.image;
         } else {
           userCart.items.push({
             productId: guestItem.productId,
@@ -314,6 +325,7 @@ export const mergeCart = async (req, res, next) => {
             price: guestItem.price,
             image: guestItem.image,
             category: guestItem.category,
+            companyId: guestItem.companyId,
             companyName: guestItem.companyName,
             quantity: guestItem.quantity,
             stock: guestItem.stock,

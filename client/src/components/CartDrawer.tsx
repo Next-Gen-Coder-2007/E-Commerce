@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   X,
   ShoppingBag,
@@ -18,6 +19,7 @@ import { useCart } from '../context/CartContext';
 const FREE_SHIPPING_THRESHOLD = 100;
 
 export const CartDrawer: React.FC = () => {
+  const navigate = useNavigate();
   const {
     items,
     totalItems,
@@ -327,7 +329,8 @@ export const CartDrawer: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    alert('Order Management & Payment Gateway will be available in Phase 4 & Phase 5! Your cart state is safely saved.');
+                    closeCart();
+                    navigate('/checkout');
                   }}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-zinc-950 hover:bg-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer group"
                 >

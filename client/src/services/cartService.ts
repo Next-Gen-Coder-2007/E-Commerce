@@ -129,6 +129,7 @@ export const clearCartApi = async (): Promise<{
   message?: string;
   cart: Cart;
 }> => {
+  clearGuestCartId();
   const response = await api.delete<{
     success: boolean;
     message?: string;
@@ -136,6 +137,7 @@ export const clearCartApi = async (): Promise<{
   }>('/cart', {
     headers: getCartHeaders(),
   });
+  clearGuestCartId();
   return response.data;
 };
 
@@ -147,6 +149,7 @@ export const mergeCartApi = async (
   cart: Cart;
 }> => {
   const targetGuestId = guestId || getGuestCartId();
+  clearGuestCartId();
   const response = await api.post<{
     success: boolean;
     message?: string;

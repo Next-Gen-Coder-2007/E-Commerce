@@ -31,6 +31,10 @@ const cartItemSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     quantity: {
       type: Number,
       required: true,

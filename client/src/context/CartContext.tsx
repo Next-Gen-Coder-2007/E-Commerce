@@ -63,22 +63,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const handleAuthChangeAndLoad = async () => {
       const currentUserId = user?._id;
-      const prevUserId = prevUserIdRef.current;
+      const guestId = getGuestCartId();
 
-      if (prevUserId === null && currentUserId) {
-        const guestId = getGuestCartId();
-        if (guestId) {
-          try {
-            const mergeRes = await mergeCartApi(guestId);
-            if (mergeRes.success && mergeRes.cart) {
-              setCart(mergeRes.cart);
-              prevUserIdRef.current = currentUserId;
-              setLoading(false);
-              return;
-            }
-          } catch (err) {
-            console.warn('[CartContext] Failed to merge guest cart:', err);
+      if (currentUserId && guestId) {
+        try {
+          const mergeRes = await mergeCartApi(guestId);
+          if (mergeRes.success && mergeRes.cart) {
+            setCart(mergeRes.cart);
+            prevUserIdRef.current = currentUserId;
+            setLoading(false);
+            return;
           }
+        } catch (err) {
+          console.warn('[CartContext] Failed to merge guest cart:', err);
         }
       }
 
