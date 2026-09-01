@@ -47,6 +47,26 @@ export const serviceRegistry = {
     stripPrefix: false,
     requireAuth: false,
   },
+  reviews: {
+    name: 'Review Service (Product Service)',
+    routePrefix: '/api/reviews',
+    instances: parseInstances(
+      process.env.PRODUCT_SERVICE_URLS,
+      process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002'
+    ),
+    stripPrefix: false,
+    requireAuth: false,
+  },
+  coupons: {
+    name: 'Coupon Service (Product Service)',
+    routePrefix: '/api/coupons',
+    instances: parseInstances(
+      process.env.PRODUCT_SERVICE_URLS,
+      process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002'
+    ),
+    stripPrefix: false,
+    requireAuth: false,
+  },
 };
 
 export default serviceRegistry;

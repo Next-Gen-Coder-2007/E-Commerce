@@ -51,6 +51,7 @@ router.use(
     serviceKey: 'products',
     serviceName: serviceRegistry.products.name,
     instances: serviceRegistry.products.instances,
+    pathRewrite: (path) => `/products${path}`,
   })
 );
 
@@ -69,6 +70,26 @@ router.use(
     serviceKey: 'orders',
     serviceName: serviceRegistry.orders.name,
     instances: serviceRegistry.orders.instances,
+  })
+);
+
+router.use(
+  '/reviews',
+  createMicroserviceProxy({
+    serviceKey: 'reviews',
+    serviceName: serviceRegistry.reviews.name,
+    instances: serviceRegistry.reviews.instances,
+    pathRewrite: (path) => `/reviews${path}`,
+  })
+);
+
+router.use(
+  '/coupons',
+  createMicroserviceProxy({
+    serviceKey: 'coupons',
+    serviceName: serviceRegistry.coupons.name,
+    instances: serviceRegistry.coupons.instances,
+    pathRewrite: (path) => `/coupons${path}`,
   })
 );
 
