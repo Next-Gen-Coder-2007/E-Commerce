@@ -11,10 +11,13 @@ import {
   ShoppingBag,
   ArrowRight,
   Building2,
+  Star,
 } from 'lucide-react';
 import { getMyOrdersApi } from '../services/orderService';
+import { getMyReviewedProductIdsApi } from '../services/reviewService';
 import { Order, OrderStatus } from '../types/order';
 import { CancelOrderModal } from '../components/CancelOrderModal';
+import { WriteReviewModal } from '../components/reviews/WriteReviewModal';
 import { useAuth } from '../context/AuthContext';
 
 const getStatusBadge = (status: OrderStatus) => {
@@ -82,6 +85,13 @@ export const OrdersPage: React.FC = () => {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
+  const [reviewedProductIds, setReviewedProductIds] = useState<string[]>([]);
+  const [reviewTarget, setReviewTarget] = useState<{
+    productId: string;
+    productTitle: string;
+    productImage?: string;
+    orderId: string;
+  } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -105,9 +115,22 @@ export const OrdersPage: React.FC = () => {
     }
   }, [page, statusFilter]);
 
+  const fetchReviewedStatus = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await getMyReviewedProductIdsApi();
+      if (res.success) {
+        setReviewedProductIds(res.productIds || []);
+      }
+    } catch {
+      // Non-blocking
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    fetchReviewedStatus();
+  }, [fetchOrders, fetchReviewedStatus]);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -330,7 +353,7 @@ export const OrdersPage: React.FC = () => {
                       {order.orderItems.slice(0, 4).map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-2.5 p-2 rounded-2xl bg-zinc-50 border border-zinc-200/70 max-w-[220px]"
+                          className="flex items-center gap-2.5 p-2 rounded-2xl bg-zinc-50 border border-zinc-200/70 max-w-[260px]"
                         >
                           <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center p-0.5">
                             {item.image ? (
@@ -347,9 +370,36 @@ export const OrdersPage: React.FC = () => {
                             <h5 className="text-[11px] font-bold text-zinc-900 truncate">
                               {item.title}
                             </h5>
-                            <span className="text-[10px] text-zinc-500 font-mono">
-                              ${item.price.toFixed(2)} × {item.quantity}
-                            </span>
+                            <div className="flex items-center justify-between gap-1 mt-0.5">
+                              <span className="text-[10px] text-zinc-500 font-mono">
+                                ${item.price.toFixed(2)} × {item.quantity}
+                              </span>
+                              {!order.cancellation?.isCancelled && (
+                                reviewedProductIds.includes(item.productId) ? (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-[9px] font-bold text-emerald-700">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                    <span>Reviewed</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setReviewTarget({
+                                        productId: item.productId,
+                                        productTitle: item.title,
+                                        productImage: item.image,
+                                        orderId: order._id,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[9px] font-bold text-amber-900 transition-colors cursor-pointer"
+                                    title="Write Verified Customer Review"
+                                  >
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                    <span>Review</span>
+                                  </button>
+                                )
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -436,6 +486,24 @@ export const OrdersPage: React.FC = () => {
           onClose={() => setCancelModalOrder(null)}
           onSuccess={() => fetchOrders()}
         />
+
+        {/* Verified Review Modal */}
+        {reviewTarget && (
+          <WriteReviewModal
+            isOpen={Boolean(reviewTarget)}
+            onClose={() => setReviewTarget(null)}
+            productId={reviewTarget.productId}
+            productTitle={reviewTarget.productTitle}
+            productImage={reviewTarget.productImage}
+            orderId={reviewTarget.orderId}
+            onReviewSaved={(savedReview) => {
+              setReviewedProductIds((prev) =>
+                prev.includes(savedReview.productId) ? prev : [...prev, savedReview.productId]
+              );
+              setReviewTarget(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );

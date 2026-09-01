@@ -24,6 +24,7 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight,
+  Sliders,
 } from 'lucide-react';
 import { getProductsApi } from '../services/productService';
 import { useCart } from '../context/CartContext';
@@ -42,22 +43,22 @@ const BANNERS = [
   },
   {
     id: 2,
-    title: 'Modern Luxe & Streetwear',
-    subtitle: 'Curated Autumn Cashmere, Minimalist Outerwear & Designer Footwear',
+    title: 'Autumn Tailored Wardrobe',
+    subtitle: 'Elevated textures, structured outerwear, and modern minimalist cuts',
     category: 'fashion',
-    badge: 'DESIGNER COLLECTION',
+    badge: 'NEW SEASON DROP',
     image: '/banners/fashion_banner.jpg',
-    cta: 'Shop Designer Fashion',
+    cta: 'Shop Collection',
     accentColor: 'from-zinc-950/95 via-stone-900/70 to-transparent',
   },
   {
     id: 3,
-    title: 'Architectural Smart Living',
-    subtitle: 'Scandinavian Craftsmanship, Ambient Lighting & Minimalist Decor',
+    title: 'Scandinavian Living Space',
+    subtitle: 'Warm minimalism, architectural lighting, and artisanal ceramics',
     category: 'home',
-    badge: 'HOME & LIVING',
+    badge: 'HOME SANCTUARY',
     image: '/banners/home_banner.jpg',
-    cta: 'Discover Home Essentials',
+    cta: 'Upgrade Space',
     accentColor: 'from-zinc-950/95 via-zinc-900/70 to-transparent',
   },
 ];
@@ -65,18 +66,18 @@ const BANNERS = [
 const HOME_CATEGORY_SECTIONS = [
   {
     id: 'electronics',
-    title: 'Next-Gen Electronics & Computing',
-    subtitle: 'High-performance audio, ultra-light laptops, and smart wearable gadgets',
+    title: 'Audio & Premium Computing',
+    subtitle: 'High-fidelity acoustic systems, precision mice, and 4K displays',
   },
   {
     id: 'fashion',
-    title: 'Modern Luxe & Streetwear',
-    subtitle: 'Designer knitwear, minimalist outerwear, and premium seasonal styles',
+    title: 'Contemporary Essentials',
+    subtitle: 'Organic cotton garments, breathable knitwear, and leather goods',
   },
   {
     id: 'home',
-    title: 'Smart Living & Ambient Decor',
-    subtitle: 'Minimalist lighting, interior furniture, and modern kitchen essentials',
+    title: 'Sanctuary & Modern Living',
+    subtitle: 'Handmade ceramic serveware, ambient luminaires, and linen textiles',
   },
   {
     id: 'beauty',
@@ -113,6 +114,7 @@ export const HomePage: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
   const [modalQuantity, setModalQuantity] = useState(1);
   const [addingId, setAddingId] = useState<string | null>(null);
 
@@ -337,7 +339,7 @@ export const HomePage: React.FC = () => {
             {product.numReviews && product.numReviews > 0 ? (
               <div className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>{product.rating ? product.rating.toFixed(1) : '5.0'}</span>
+                <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
                 <span className="text-zinc-400">({product.numReviews})</span>
               </div>
             ) : (
@@ -1160,13 +1162,73 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-              <div className="aspect-square rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-100">
-                <img
-                  src={selectedProduct.image}
-                  alt={selectedProduct.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {/* Photo Showcase */}
+              {(() => {
+                const photos =
+                  selectedProduct.images && selectedProduct.images.length > 0
+                    ? selectedProduct.images
+                    : [selectedProduct.image];
+                const activePhoto = photos[modalImageIndex] || photos[0] || selectedProduct.image;
+
+                return (
+                  <div className="space-y-3">
+                    <div className="relative aspect-square rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-200 group">
+                      <img
+                        src={activePhoto}
+                        alt={selectedProduct.title}
+                        className="w-full h-full object-contain p-2"
+                      />
+
+                      {photos.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalImageIndex((idx) => (idx === 0 ? photos.length - 1 : idx - 1))
+                            }
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-zinc-900 border border-zinc-200 shadow-sm flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Previous Photo"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalImageIndex((idx) => (idx === photos.length - 1 ? 0 : idx + 1))
+                            }
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-zinc-900 border border-zinc-200 shadow-sm flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Next Photo"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-zinc-950/80 text-white text-[9px] font-bold">
+                            {modalImageIndex + 1} / {photos.length}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {photos.length > 1 && (
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                        {photos.map((pUrl, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => setModalImageIndex(pIdx)}
+                            className={`w-12 h-12 rounded-lg border-2 overflow-hidden bg-white p-0.5 shrink-0 cursor-pointer transition-all ${
+                              modalImageIndex === pIdx
+                                ? 'border-zinc-950 shadow-xs'
+                                : 'border-zinc-200 opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={pUrl} alt="" className="w-full h-full object-contain" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-zinc-950 leading-tight">
@@ -1177,11 +1239,15 @@ export const HomePage: React.FC = () => {
                   <div className="text-2xl font-extrabold text-zinc-950">
                     ${selectedProduct.price.toFixed(2)}
                   </div>
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>{selectedProduct.rating}</span>
-                    <span className="text-zinc-400 font-normal">({selectedProduct.numReviews} reviews)</span>
-                  </div>
+                  {(selectedProduct.numReviews || 0) > 0 ? (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-xs font-bold">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>{selectedProduct.rating}</span>
+                      <span className="text-zinc-400 font-normal">({selectedProduct.numReviews} reviews)</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-zinc-400 font-medium">No reviews yet</span>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -1192,6 +1258,24 @@ export const HomePage: React.FC = () => {
                     {selectedProduct.description}
                   </p>
                 </div>
+
+                {/* Technical Specifications Summary in Quick View */}
+                {selectedProduct.specifications && selectedProduct.specifications.length > 0 && (
+                  <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-1.5 text-xs">
+                    <div className="flex items-center gap-1 font-bold text-[11px] text-zinc-800 uppercase tracking-wider">
+                      <Sliders className="w-3 h-3 text-indigo-600" />
+                      <span>Key Technical Specifications</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      {selectedProduct.specifications.slice(0, 4).map((spec, sIdx) => (
+                        <div key={sIdx} className="bg-white p-1.5 rounded-lg border border-zinc-200 shadow-2xs truncate">
+                          <span className="text-zinc-400 font-medium block text-[9px] uppercase tracking-wider">{spec.key}</span>
+                          <span className="font-bold text-zinc-900 truncate">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs">
                   <span className="text-zinc-500 font-medium">Availability</span>
@@ -1235,35 +1319,46 @@ export const HomePage: React.FC = () => {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  disabled={selectedProduct.stock === 0 || addingId === selectedProduct._id}
-                  onClick={async () => {
-                    setAddingId(selectedProduct._id);
-                    await addToCart({
-                      productId: selectedProduct._id,
-                      title: selectedProduct.title,
-                      price: selectedProduct.price,
-                      image: selectedProduct.image,
-                      category: selectedProduct.category,
-                      companyName: selectedProduct.companyName,
-                      stock: selectedProduct.stock,
-                      quantity: modalQuantity,
-                    }, true);
-                    setAddingId(null);
-                    setSelectedProduct(null);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>
-                    {selectedProduct.stock === 0
-                      ? 'Out of Stock'
-                      : addingId === selectedProduct._id
-                      ? 'Adding to Cart...'
-                      : `Add to Cart • $${(selectedProduct.price * modalQuantity).toFixed(2)}`}
-                  </span>
-                </button>
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={selectedProduct.stock === 0 || addingId === selectedProduct._id}
+                    onClick={async () => {
+                      setAddingId(selectedProduct._id);
+                      await addToCart({
+                        productId: selectedProduct._id,
+                        title: selectedProduct.title,
+                        price: selectedProduct.price,
+                        image: selectedProduct.image,
+                        category: selectedProduct.category,
+                        companyName: selectedProduct.companyName,
+                        stock: selectedProduct.stock,
+                        quantity: modalQuantity,
+                      }, true);
+                      setAddingId(null);
+                      setSelectedProduct(null);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>
+                      {selectedProduct.stock === 0
+                        ? 'Out of Stock'
+                        : addingId === selectedProduct._id
+                        ? 'Adding to Cart...'
+                        : `Add to Cart • $${(selectedProduct.price * modalQuantity).toFixed(2)}`}
+                    </span>
+                  </button>
+
+                  <Link
+                    to={`/product/${selectedProduct._id}`}
+                    onClick={() => setSelectedProduct(null)}
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-zinc-800 bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>View Full Product Page & All Photos</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
 
                 <div className="pt-2 text-center">
                   <Link

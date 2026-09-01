@@ -23,10 +23,13 @@ import {
   Clock,
   Zap,
   Megaphone,
+  Ticket,
 } from 'lucide-react';
 import { getCompanyStorefrontApi } from '../services/productService';
+import { getAvailableCouponsApi } from '../services/couponService';
 import { useCart } from '../context/CartContext';
 import type { Product, CompanyStorefrontResponse } from '../types/product';
+import type { Coupon } from '../types/coupon';
 
 export const CompanyStorePage: React.FC = () => {
   const { companyIdentifier } = useParams<{ companyIdentifier: string }>();
@@ -40,6 +43,8 @@ export const CompanyStorePage: React.FC = () => {
   const [searchInput, setSearchInput] = useState(search);
   const [storeData, setStoreData] = useState<CompanyStorefrontResponse['store'] | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [storeCoupons, setStoreCoupons] = useState<Coupon[]>([]);
+  const [copiedCouponCode, setCopiedCouponCode] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +76,18 @@ export const CompanyStorePage: React.FC = () => {
       setStoreData(data.store);
       setProducts(data.products || []);
       setTotalCount(data.total || 0);
+
+      // Fetch active store coupons
+      if (data.store?.companyId) {
+        try {
+          const couponRes = await getAvailableCouponsApi({ companyId: data.store.companyId });
+          if (couponRes.success && couponRes.coupons) {
+            setStoreCoupons(couponRes.coupons);
+          }
+        } catch {
+          // Non-blocking
+        }
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.message || err.message || 'Failed to load merchant store.'
@@ -273,10 +290,10 @@ export const CompanyStorePage: React.FC = () => {
                 <div className="text-center px-2 sm:px-3">
                   <div className="text-lg sm:text-2xl font-black text-amber-400 flex items-center justify-center gap-1">
                     <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400" />
-                    <span>{storeData.rating > 0 ? storeData.rating.toFixed(1) : '5.0'}</span>
+                    <span>{storeData.numReviews > 0 && storeData.rating > 0 ? storeData.rating.toFixed(1) : '0.0'}</span>
                   </div>
                   <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                    Seller Rating
+                    {storeData.numReviews > 0 ? `${storeData.numReviews} Reviews` : 'No reviews'}
                   </div>
                 </div>
 
@@ -401,6 +418,62 @@ export const CompanyStorePage: React.FC = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Active Store Coupons & Discounts Ribbon */}
+            {storeCoupons.length > 0 && (
+              <div className="bg-white border border-zinc-200/90 rounded-3xl p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-zinc-950">
+                    <Ticket className="w-4 h-4 text-emerald-600" />
+                    <span>Store Coupons & Promo Deals</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    {storeCoupons.length} Active {storeCoupons.length === 1 ? 'Voucher' : 'Vouchers'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {storeCoupons.map((cp) => (
+                    <div
+                      key={cp._id || cp.code}
+                      className="bg-emerald-50/40 border border-emerald-200/80 rounded-2xl p-3.5 flex flex-col justify-between space-y-2 hover:bg-emerald-50/80 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-white shadow-2xs">
+                          {cp.code}
+                        </span>
+                        <span className="text-xs font-black text-emerald-800">
+                          {cp.discountType === 'percentage'
+                            ? `${cp.discountValue}% OFF`
+                            : `$${cp.discountValue.toFixed(2)} OFF`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-600 line-clamp-1">
+                        {cp.description}
+                      </p>
+                      <div className="flex items-center justify-between pt-1 border-t border-emerald-100 text-[10px]">
+                        <span className="text-zinc-500 font-mono">
+                          {cp.minPurchaseAmount > 0
+                            ? `Min $${cp.minPurchaseAmount.toFixed(2)}`
+                            : 'No minimum'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(cp.code);
+                            setCopiedCouponCode(cp.code);
+                            setTimeout(() => setCopiedCouponCode(null), 2000);
+                          }}
+                          className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
+                        >
+                          {copiedCouponCode === cp.code ? 'Copied ✓' : 'Copy Code'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -636,7 +709,7 @@ export const CompanyStorePage: React.FC = () => {
                           {product.numReviews && product.numReviews > 0 ? (
                             <div className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
                               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                              <span>{product.rating ? product.rating.toFixed(1) : '5.0'}</span>
+                              <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
                               <span className="text-zinc-400">({product.numReviews})</span>
                             </div>
                           ) : (

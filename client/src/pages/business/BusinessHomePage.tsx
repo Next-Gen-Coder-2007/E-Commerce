@@ -31,6 +31,17 @@ import {
   Flame,
   ExternalLink,
   Eye,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Plus,
+  Sliders,
+  MessageSquare,
+  Ticket,
+  Tag,
+  Gift,
+  Check,
 } from 'lucide-react';
 import {
   getMyCompanyProductsApi,
@@ -47,13 +58,24 @@ import {
   getCompanyOrdersApi,
   updateOrderStatusApi,
 } from '../../services/orderService';
+import { getCompanyReviewsApi } from '../../services/reviewService';
+import {
+  getMyCompanyCouponsApi,
+  createCouponApi,
+  updateCouponApi,
+  toggleCouponApi,
+  deleteCouponApi,
+} from '../../services/couponService';
+import { ReviewCard } from '../../components/reviews/ReviewCard';
 import type { Product, CompanyStats } from '../../types/product';
 import type { Order, CompanyOrderStats, OrderStatus } from '../../types/order';
+import type { Review, CompanyReviewSummary } from '../../types/review';
+import type { Coupon, CompanyCouponMetrics, CreateCouponInput } from '../../types/coupon';
 
 export const BusinessHomePage: React.FC = () => {
   const { user, loading: authLoading, logout, updateBusinessDetails } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'products' | 'inventory' | 'orders' | 'storefront' | 'profile'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'inventory' | 'orders' | 'reviews' | 'coupons' | 'storefront' | 'profile'>('products');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<CompanyStats>({
@@ -63,6 +85,36 @@ export const BusinessHomePage: React.FC = () => {
     outOfStock: 0,
     totalValue: 0,
   });
+
+  // Coupons State
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [couponSummary, setCouponSummary] = useState<CompanyCouponMetrics | null>(null);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [submittingCoupon, setSubmittingCoupon] = useState(false);
+  const [couponModalError, setCouponModalError] = useState<string | null>(null);
+  const [couponForm, setCouponForm] = useState<CreateCouponInput>({
+    code: '',
+    description: '',
+    discountType: 'percentage',
+    discountValue: 15,
+    minPurchaseAmount: 0,
+    maxDiscountAmount: null,
+    applicableProducts: [],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    usageLimit: null,
+    userUsageLimit: 1,
+  });
+  const [editingCouponId, setEditingCouponId] = useState<string | null>(null);
+  const [copiedCouponCode, setCopiedCouponCode] = useState<string | null>(null);
+
+  // Business Customer Reviews Management State
+  const [companyReviews, setCompanyReviews] = useState<Review[]>([]);
+  const [companyReviewSummary, setCompanyReviewSummary] = useState<CompanyReviewSummary | null>(null);
+  const [companyReviewsLoading, setCompanyReviewsLoading] = useState(false);
+  const [companyReviewProductFilter, setCompanyReviewProductFilter] = useState<string>('all');
+  const [companyReviewRatingFilter, setCompanyReviewRatingFilter] = useState<number | null>(null);
+  const [companyReviewReplyFilter, setCompanyReviewReplyFilter] = useState<'all' | 'unreplied' | 'replied'>('all');
 
   // Orders State
   const [merchantOrders, setMerchantOrders] = useState<Order[]>([]);
@@ -157,7 +209,19 @@ export const BusinessHomePage: React.FC = () => {
   });
   const [savingQuickDiscount, setSavingQuickDiscount] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    price: string;
+    originalPrice: string;
+    discountPercentage: string;
+    isFlashSale: boolean;
+    category: string;
+    stock: string;
+    image: string;
+    images: string[];
+    specifications: Array<{ key: string; value: string }>;
+  }>({
     title: '',
     description: '',
     price: '',
@@ -167,11 +231,15 @@ export const BusinessHomePage: React.FC = () => {
     category: 'electronics',
     stock: '',
     image: '',
+    images: [],
+    specifications: [],
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number } | null>(null);
+  const [directImageUrlInput, setDirectImageUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -242,6 +310,42 @@ export const BusinessHomePage: React.FC = () => {
     }
   }, [user]);
 
+  const fetchCompanyReviews = useCallback(async () => {
+    if (!user || (user.role !== 'company' && user.role !== 'admin')) return;
+    setCompanyReviewsLoading(true);
+    try {
+      const res = await getCompanyReviewsApi({
+        productId: companyReviewProductFilter !== 'all' ? companyReviewProductFilter : undefined,
+        rating: companyReviewRatingFilter || undefined,
+        replyStatus: companyReviewReplyFilter,
+      });
+      if (res.success) {
+        setCompanyReviews(res.reviews || []);
+        setCompanyReviewSummary(res.summary || null);
+      }
+    } catch (err: any) {
+      console.warn('Failed to load company reviews:', err);
+    } finally {
+      setCompanyReviewsLoading(false);
+    }
+  }, [user, companyReviewProductFilter, companyReviewRatingFilter, companyReviewReplyFilter]);
+
+  const fetchCoupons = useCallback(async () => {
+    if (!user || (user.role !== 'company' && user.role !== 'admin')) return;
+    setCouponsLoading(true);
+    try {
+      const res = await getMyCompanyCouponsApi();
+      if (res.success) {
+        setCoupons(res.coupons || []);
+        setCouponSummary(res.summary || null);
+      }
+    } catch (err: any) {
+      console.warn('Failed to load merchant coupons:', err);
+    } finally {
+      setCouponsLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -251,8 +355,12 @@ export const BusinessHomePage: React.FC = () => {
       fetchOrders();
     } else if (activeTab === 'storefront') {
       fetchStorefrontSettings();
+    } else if (activeTab === 'reviews') {
+      fetchCompanyReviews();
+    } else if (activeTab === 'coupons') {
+      fetchCoupons();
     }
-  }, [activeTab, fetchOrders, fetchStorefrontSettings]);
+  }, [activeTab, fetchOrders, fetchStorefrontSettings, fetchCompanyReviews, fetchCoupons]);
 
   useEffect(() => {
     if (user) {
@@ -532,13 +640,27 @@ export const BusinessHomePage: React.FC = () => {
       category: 'electronics',
       stock: '',
       image: '',
+      images: [],
+      specifications: [
+        { key: 'Brand / Manufacturer', value: user?.companyName || '' },
+        { key: 'Model / Version', value: '' },
+        { key: 'Warranty & Support', value: '1 Year Full Manufacturer Warranty' },
+      ],
     });
+    setDirectImageUrlInput('');
     setModalError(null);
     setShowAddModal(true);
   };
 
   const handleOpenEdit = (prod: Product) => {
     setEditingProduct(prod);
+    const existingImages =
+      prod.images && prod.images.length > 0
+        ? [...prod.images]
+        : prod.image
+        ? [prod.image]
+        : [];
+
     setFormData({
       title: prod.title,
       description: prod.description,
@@ -548,41 +670,215 @@ export const BusinessHomePage: React.FC = () => {
       isFlashSale: Boolean(prod.isFlashSale),
       category: prod.category,
       stock: prod.stock.toString(),
-      image: prod.image,
+      image: prod.image || existingImages[0] || '',
+      images: existingImages,
+      specifications:
+        prod.specifications && prod.specifications.length > 0
+          ? prod.specifications.map((s) => ({ key: s.key, value: s.value }))
+          : [],
     });
+    setDirectImageUrlInput('');
     setModalError(null);
   };
 
   const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!file.type.startsWith('image/')) {
-      setModalError('Please select a valid image file (PNG, JPG, WEBP)');
+    const remainingSlots = 10 - formData.images.length;
+    if (remainingSlots <= 0) {
+      setModalError('Maximum limit of 10 photos reached. Please remove a photo before uploading more.');
       return;
     }
 
-    if (file.size > 500 * 1024) {
-      setModalError('Image size exceeds 500KB limit. Please choose a smaller image.');
-      return;
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      alert(`You can attach up to 10 photos total. Only the first ${remainingSlots} selected file(s) will be uploaded.`);
+    }
+
+    for (const file of filesToUpload) {
+      if (!file.type.startsWith('image/')) {
+        setModalError('Please select valid image files (PNG, JPG, WEBP)');
+        return;
+      }
+      if (file.size > 500 * 1024) {
+        setModalError(`File "${file.name}" exceeds 500KB limit. Please choose a smaller image.`);
+        return;
+      }
     }
 
     setUploadingImage(true);
+    setUploadProgress({ completed: 0, total: filesToUpload.length });
     setModalError(null);
 
     try {
-      const result = await uploadProductImageApi(file);
-      if (result.url) {
-        setFormData((prev) => ({ ...prev, image: result.url }));
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const result = await uploadProductImageApi(file);
+        if (result.url) {
+          uploadedUrls.push(result.url);
+        }
+        setUploadProgress({ completed: i + 1, total: filesToUpload.length });
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData((prev) => {
+          const combined = [...prev.images, ...uploadedUrls].slice(0, 10);
+          return {
+            ...prev,
+            images: combined,
+            image: combined[0] || prev.image,
+          };
+        });
       }
     } catch (err: any) {
-      setModalError(err.response?.data?.message || err.message || 'Failed to upload image to Cloudinary');
+      setModalError(err.response?.data?.message || err.message || 'Failed to upload image(s)');
     } finally {
       setUploadingImage(false);
+      setUploadProgress(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleAddDirectImageUrl = () => {
+    if (!directImageUrlInput.trim()) return;
+    if (formData.images.length >= 10) {
+      setModalError('Maximum limit of 10 photos reached. Please remove a photo before adding more.');
+      return;
+    }
+    const url = directImageUrlInput.trim();
+    setFormData((prev) => {
+      const combined = [...prev.images, url].slice(0, 10);
+      return {
+        ...prev,
+        images: combined,
+        image: combined[0] || prev.image,
+      };
+    });
+    setDirectImageUrlInput('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData((prev) => {
+      const nextImages = prev.images.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        images: nextImages,
+        image: nextImages[0] || '',
+      };
+    });
+  };
+
+  const handleSetPrimaryImage = (index: number) => {
+    if (index === 0) return;
+    setFormData((prev) => {
+      const target = prev.images[index];
+      const nextImages = [target, ...prev.images.filter((_, i) => i !== index)];
+      return {
+        ...prev,
+        images: nextImages,
+        image: nextImages[0] || '',
+      };
+    });
+  };
+
+  const handleMoveImage = (index: number, direction: 'left' | 'right') => {
+    const targetIndex = direction === 'left' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= formData.images.length) return;
+    setFormData((prev) => {
+      const nextImages = [...prev.images];
+      const temp = nextImages[index];
+      nextImages[index] = nextImages[targetIndex];
+      nextImages[targetIndex] = temp;
+      return {
+        ...prev,
+        images: nextImages,
+        image: nextImages[0] || '',
+      };
+    });
+  };
+
+  const handleAddSpecificationRow = () => {
+    setFormData((prev) => ({
+      ...prev,
+      specifications: [...prev.specifications, { key: '', value: '' }],
+    }));
+  };
+
+  const handleUpdateSpecificationRow = (index: number, field: 'key' | 'value', val: string) => {
+    setFormData((prev) => {
+      const nextSpecs = [...prev.specifications];
+      nextSpecs[index] = { ...nextSpecs[index], [field]: val };
+      return { ...prev, specifications: nextSpecs };
+    });
+  };
+
+  const handleRemoveSpecificationRow = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      specifications: prev.specifications.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleApplySpecPreset = (presetType: 'electronics' | 'fashion' | 'home' | 'beauty' | 'sports') => {
+    const presets: Record<string, Array<{ key: string; value: string }>> = {
+      electronics: [
+        { key: 'Brand / Manufacturer', value: user?.companyName || '' },
+        { key: 'Model / Series', value: '' },
+        { key: 'Processor / Chipset', value: '' },
+        { key: 'Memory & Storage', value: '' },
+        { key: 'Display Specs', value: '' },
+        { key: 'Battery & Power', value: '' },
+        { key: 'Connectivity', value: 'Bluetooth 5.3, Wi-Fi 6E, Type-C' },
+        { key: 'Dimensions & Weight', value: '' },
+        { key: 'Warranty & Support', value: '1 Year Manufacturer Warranty' },
+      ],
+      fashion: [
+        { key: 'Brand', value: user?.companyName || '' },
+        { key: 'Material Composition', value: '100% Premium Organic Cotton' },
+        { key: 'Fit / Cut', value: 'Regular Fit' },
+        { key: 'Care Instructions', value: 'Machine Wash Cold, Tumble Dry Low' },
+        { key: 'Origin', value: 'Imported' },
+        { key: 'Style Tag', value: 'Casual & Daily Wear' },
+      ],
+      home: [
+        { key: 'Brand', value: user?.companyName || '' },
+        { key: 'Material', value: 'Solid Wood / Stainless Steel' },
+        { key: 'Dimensions (L x W x H)', value: '' },
+        { key: 'Item Weight', value: '' },
+        { key: 'Assembly Required', value: 'No - Pre-assembled' },
+        { key: 'Warranty', value: '2-Year Limited Structural Warranty' },
+      ],
+      beauty: [
+        { key: 'Brand', value: user?.companyName || '' },
+        { key: 'Item Form', value: 'Serum / Cream' },
+        { key: 'Skin Type', value: 'All Skin Types (Dermatologist Tested)' },
+        { key: 'Key Ingredients', value: 'Hyaluronic Acid, Vitamin C, Niacinamide' },
+        { key: 'Net Volume / Weight', value: '50 ml / 1.7 fl oz' },
+        { key: 'Cruelty Free', value: 'Yes - 100% Cruelty Free & Vegan' },
+      ],
+      sports: [
+        { key: 'Brand', value: user?.companyName || '' },
+        { key: 'Activity / Sport', value: 'Gym, Running, Training' },
+        { key: 'Material', value: 'High-Tensile Reinforced Alloy' },
+        { key: 'Max Weight Capacity', value: '300 lbs / 136 kg' },
+        { key: 'Water Resistance', value: 'IPX7 Sweat & Water Resistant' },
+        { key: 'Warranty', value: 'Lifetime Frame Warranty' },
+      ],
+    };
+
+    const chosen = presets[presetType] || presets.electronics;
+    setFormData((prev) => {
+      const existingKeys = new Set(prev.specifications.map((s) => s.key.toLowerCase().trim()));
+      const newAdditions = chosen.filter((c) => !existingKeys.has(c.key.toLowerCase().trim()));
+      return {
+        ...prev,
+        specifications: [...prev.specifications.filter((s) => s.key.trim() !== ''), ...newAdditions],
+      };
+    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -595,6 +891,10 @@ export const BusinessHomePage: React.FC = () => {
     setSubmitting(true);
     setModalError(null);
 
+    const cleanImages = formData.images.filter((img) => img.trim().length > 0).slice(0, 10);
+    const primaryImg = cleanImages[0] || formData.image || undefined;
+    const cleanSpecs = formData.specifications.filter((s) => s.key.trim().length > 0);
+
     try {
       if (editingProduct) {
         await updateProductApi(editingProduct._id, {
@@ -606,11 +906,14 @@ export const BusinessHomePage: React.FC = () => {
           isFlashSale: formData.isFlashSale,
           category: formData.category,
           stock: Number(formData.stock),
-          image: formData.image || undefined,
+          image: primaryImg,
+          images: cleanImages.length > 0 ? cleanImages : primaryImg ? [primaryImg] : [],
+          specifications: cleanSpecs,
         });
+        window.dispatchEvent(new CustomEvent('product-updated', { detail: { productId: editingProduct._id } }));
         setEditingProduct(null);
       } else {
-        await createProductApi({
+        const res = await createProductApi({
           title: formData.title,
           description: formData.description,
           price: Number(formData.price),
@@ -619,8 +922,11 @@ export const BusinessHomePage: React.FC = () => {
           isFlashSale: formData.isFlashSale,
           category: formData.category,
           stock: Number(formData.stock),
-          image: formData.image || undefined,
+          image: primaryImg,
+          images: cleanImages.length > 0 ? cleanImages : primaryImg ? [primaryImg] : [],
+          specifications: cleanSpecs,
         });
+        window.dispatchEvent(new CustomEvent('product-updated', { detail: { productId: res.product?._id } }));
         setShowAddModal(false);
       }
       await fetchData();
@@ -636,6 +942,7 @@ export const BusinessHomePage: React.FC = () => {
     setSubmitting(true);
     try {
       await deleteProductApi(deletingProductId);
+      window.dispatchEvent(new CustomEvent('product-updated', { detail: { productId: deletingProductId } }));
       setDeletingProductId(null);
       await fetchData();
     } catch (err: any) {
@@ -661,6 +968,80 @@ export const BusinessHomePage: React.FC = () => {
       navigator.clipboard.writeText(user._id);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleOpenCreateCoupon = () => {
+    setEditingCouponId(null);
+    setCouponForm({
+      code: `SAVE${Math.floor(10 + Math.random() * 89)}`,
+      description: 'Special store discount on your purchase',
+      discountType: 'percentage',
+      discountValue: 15,
+      minPurchaseAmount: 0,
+      maxDiscountAmount: null,
+      applicableProducts: [],
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      usageLimit: null,
+      userUsageLimit: 1,
+    });
+    setCouponModalError(null);
+    setShowCouponModal(true);
+  };
+
+  const handleOpenEditCoupon = (coupon: Coupon) => {
+    setEditingCouponId(coupon._id);
+    setCouponForm({
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minPurchaseAmount: coupon.minPurchaseAmount || 0,
+      maxDiscountAmount: coupon.maxDiscountAmount || null,
+      applicableProducts: coupon.applicableProducts || [],
+      endDate: new Date(coupon.endDate).toISOString().split('T')[0],
+      usageLimit: coupon.usageLimit || null,
+      userUsageLimit: coupon.userUsageLimit || 1,
+    });
+    setCouponModalError(null);
+    setShowCouponModal(true);
+  };
+
+  const handleSaveCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingCoupon(true);
+    setCouponModalError(null);
+    try {
+      if (editingCouponId) {
+        await updateCouponApi(editingCouponId, couponForm);
+      } else {
+        await createCouponApi(couponForm);
+      }
+      setShowCouponModal(false);
+      await fetchCoupons();
+    } catch (err: any) {
+      setCouponModalError(err.message || 'Failed to save coupon');
+    } finally {
+      setSubmittingCoupon(false);
+    }
+  };
+
+  const handleToggleCoupon = async (couponId: string) => {
+    try {
+      await toggleCouponApi(couponId);
+      await fetchCoupons();
+    } catch (err: any) {
+      alert(err.message || 'Failed to toggle coupon status');
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId: string, code: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete coupon "${code}"?`)) return;
+    try {
+      await deleteCouponApi(couponId);
+      await fetchCoupons();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete coupon');
     }
   };
 
@@ -791,6 +1172,37 @@ export const BusinessHomePage: React.FC = () => {
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Orders & Sales</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('reviews')}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              activeTab === 'reviews'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Customer Reviews</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('coupons')}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              activeTab === 'coupons'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+            }`}
+          >
+            <Ticket className="w-3.5 h-3.5" />
+            <span>Coupons & Discounts</span>
+            {couponSummary && couponSummary.activeCoupons > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                {couponSummary.activeCoupons} active
+              </span>
+            )}
           </button>
 
           <button
@@ -2434,6 +2846,617 @@ export const BusinessHomePage: React.FC = () => {
             </form>
           </div>
         )}
+
+        {/* Customer Reviews & Reputation Management Tab */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                  Customer Reviews & Store Reputation
+                </h3>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Monitor buyer feedback, track product satisfaction ratings, and publish official merchant responses
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fetchCompanyReviews()}
+                disabled={companyReviewsLoading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-xs font-bold text-zinc-800 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Loader2 className={`w-3.5 h-3.5 ${companyReviewsLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh Reviews</span>
+              </button>
+            </div>
+
+            {/* Overview Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Store Average Rating</span>
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+                </div>
+                <div className="text-2xl font-extrabold text-zinc-950 font-mono">
+                  {(companyReviewSummary?.totalReviews || 0) > 0
+                    ? (companyReviewSummary?.averageRating || 0).toFixed(1)
+                    : '0.0'}
+                  <span className="text-xs text-zinc-400 font-sans font-normal ml-1">/ 5.0</span>
+                </div>
+                <div className="text-[11px] text-zinc-500">
+                  {(companyReviewSummary?.totalReviews || 0) > 0
+                    ? 'Across all catalog reviews'
+                    : 'No customer reviews yet'}
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Total Customer Reviews</span>
+                  <MessageSquare className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="text-2xl font-extrabold text-zinc-950 font-mono">
+                  {companyReviewSummary?.totalReviews || 0}
+                </div>
+                <div className="text-[11px] text-zinc-500">Verified customer submissions</div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Needs Merchant Reply</span>
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="text-2xl font-extrabold text-amber-600 font-mono flex items-center gap-2">
+                  <span>{companyReviewSummary?.unrepliedCount || 0}</span>
+                  {(companyReviewSummary?.unrepliedCount || 0) > 0 && (
+                    <span className="text-[10px] font-sans font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                      Action Required
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-zinc-500">Unanswered customer reviews</div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Official Responses</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="text-2xl font-extrabold text-zinc-950 font-mono">
+                  {companyReviewSummary?.repliedCount || 0}
+                </div>
+                <div className="text-[11px] text-emerald-600 font-medium">Published merchant replies</div>
+              </div>
+            </div>
+
+            {/* Filter Toolbar */}
+            <div className="p-4 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Product Selector */}
+                <div className="flex items-center gap-2 min-w-[240px]">
+                  <span className="text-xs font-bold text-zinc-700 whitespace-nowrap">
+                    Product Filter:
+                  </span>
+                  <select
+                    value={companyReviewProductFilter}
+                    onChange={(e) => setCompanyReviewProductFilter(e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-950 cursor-pointer"
+                  >
+                    <option value="all">All Products ({products.length})</option>
+                    {products.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.title} ({p.numReviews || 0} reviews)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Tabs */}
+                <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setCompanyReviewReplyFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      companyReviewReplyFilter === 'all'
+                        ? 'bg-white text-zinc-950 shadow-2xs'
+                        : 'text-zinc-600 hover:text-zinc-950'
+                    }`}
+                  >
+                    All ({companyReviewSummary?.totalReviews || 0})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCompanyReviewReplyFilter('unreplied')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      companyReviewReplyFilter === 'unreplied'
+                        ? 'bg-amber-400 text-zinc-950 shadow-2xs'
+                        : 'text-zinc-600 hover:text-zinc-950'
+                    }`}
+                  >
+                    <span>Needs Reply</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-zinc-950 text-white font-mono font-bold">
+                      {companyReviewSummary?.unrepliedCount || 0}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCompanyReviewReplyFilter('replied')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      companyReviewReplyFilter === 'replied'
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : 'text-zinc-600 hover:text-zinc-950'
+                    }`}
+                  >
+                    Replied ({companyReviewSummary?.repliedCount || 0})
+                  </button>
+                </div>
+              </div>
+
+              {/* Star Rating Quick Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-zinc-100">
+                <span className="text-[11px] font-semibold text-zinc-500 mr-1">Rating:</span>
+                <button
+                  type="button"
+                  onClick={() => setCompanyReviewRatingFilter(null)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border ${
+                    companyReviewRatingFilter === null
+                      ? 'bg-zinc-950 text-white border-zinc-950'
+                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                  }`}
+                >
+                  All Stars
+                </button>
+                {[5, 4, 3, 2, 1].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() =>
+                      setCompanyReviewRatingFilter(companyReviewRatingFilter === s ? null : s)
+                    }
+                    className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border flex items-center gap-1 ${
+                      companyReviewRatingFilter === s
+                        ? 'bg-amber-400 text-zinc-950 border-amber-400 font-extrabold'
+                        : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <span>{s}</span>
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Customer Reviews Feed */}
+            <div className="space-y-4">
+              {companyReviewsLoading ? (
+                <div className="space-y-4 py-6">
+                  {[1, 2, 3].map((n) => (
+                    <div
+                      key={n}
+                      className="p-6 rounded-3xl bg-white border border-zinc-200 animate-pulse space-y-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-zinc-200" />
+                        <div className="space-y-1.5">
+                          <div className="w-32 h-3.5 bg-zinc-200 rounded-md" />
+                          <div className="w-20 h-3 bg-zinc-200 rounded-md" />
+                        </div>
+                      </div>
+                      <div className="w-48 h-4 bg-zinc-200 rounded-md" />
+                      <div className="w-full h-12 bg-zinc-200 rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              ) : companyReviews.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-zinc-200/80 p-12 text-center space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
+                    <MessageSquare className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-zinc-950">
+                      {companyReviewReplyFilter !== 'all' || companyReviewRatingFilter || companyReviewProductFilter !== 'all'
+                        ? 'No reviews match your selected filter criteria'
+                        : 'No Customer Reviews Yet'}
+                    </h4>
+                    <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                      {companyReviewReplyFilter !== 'all' || companyReviewRatingFilter || companyReviewProductFilter !== 'all'
+                        ? 'Try selecting "All Products" or clearing status filters to view all customer reviews.'
+                        : 'Once customers buy your products and leave ratings, their reviews and photos will appear right here.'}
+                    </p>
+                  </div>
+                  {(companyReviewReplyFilter !== 'all' || companyReviewRatingFilter || companyReviewProductFilter !== 'all') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCompanyReviewReplyFilter('all');
+                        setCompanyReviewRatingFilter(null);
+                        setCompanyReviewProductFilter('all');
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-900 bg-white border border-zinc-200 hover:bg-zinc-100 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      Reset All Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {companyReviews.map((rev) => (
+                    <ReviewCard
+                      key={rev._id}
+                      review={rev}
+                      isMerchantOwner={true}
+                      onReviewUpdated={(updated) => {
+                        setCompanyReviews((prev) =>
+                          prev.map((r) => (r._id === updated._id ? updated : r))
+                        );
+                        fetchCompanyReviews();
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Product Ratings Health Overview Table */}
+            <div className="bg-white rounded-3xl border border-zinc-200/80 overflow-hidden shadow-xs mt-8">
+              <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-zinc-950">Product Ratings Health Table</h4>
+                  <p className="text-[11px] text-zinc-500">Summary rating performance across all active catalog listings</p>
+                </div>
+              </div>
+
+              {products.length === 0 ? (
+                <div className="p-12 text-center text-xs text-zinc-500">
+                  No catalog products found. Create your first product listing to start collecting customer reviews.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-zinc-50/80 border-b border-zinc-100 text-zinc-500 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Product Details</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Average Rating</th>
+                        <th className="py-3 px-4">Total Reviews</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 font-medium text-zinc-900">
+                      {products.map((prod) => (
+                        <tr key={prod._id} className="hover:bg-zinc-50/60 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={prod.images?.[0] || prod.image}
+                                alt={prod.title}
+                                className="w-10 h-10 rounded-xl object-contain bg-zinc-50 border border-zinc-200 shrink-0 p-0.5"
+                              />
+                              <div className="min-w-0 max-w-xs">
+                                <span className="font-bold text-zinc-950 truncate block">{prod.title}</span>
+                                <span className="text-[10px] text-zinc-400 font-mono">ID: {prod._id}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 capitalize text-zinc-600">
+                            {prod.category}
+                          </td>
+                          <td className="py-3 px-4">
+                            {(prod.numReviews || 0) > 0 ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-0.5 text-amber-400">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${
+                                        s <= Math.round(prod.rating || 0)
+                                          ? 'fill-amber-400 text-amber-400'
+                                          : 'text-zinc-200'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="font-bold text-xs text-zinc-900">
+                                  {(prod.rating || 0).toFixed(1)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-zinc-400 font-medium">
+                                No reviews yet
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-800">
+                              <MessageSquare className="w-3 h-3 text-zinc-500" />
+                              <span>{prod.numReviews || 0} reviews</span>
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCompanyReviewProductFilter(prod._id);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                            >
+                              <span>Filter Reviews</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: COUPONS & PROMOTIONAL DISCOUNTS */}
+        {activeTab === 'coupons' && (
+          <div className="space-y-6">
+            {/* Header & Create CTA */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                  <Ticket className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Promo & Loyalty Suite</span>
+                </div>
+                <h3 className="text-xl font-black text-zinc-950 tracking-tight">
+                  Store Coupons & Discount Management
+                </h3>
+                <p className="text-xs text-zinc-500 max-w-xl leading-relaxed">
+                  Design promotional discount codes, percentage vouchers, minimum cart thresholds, and customer redemption limits for your store.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateCoupon}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs shadow-md transition-transform active:scale-[0.98] cursor-pointer shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Coupon</span>
+              </button>
+            </div>
+
+            {/* Metrics Overview Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <Ticket className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-zinc-500">Active Coupons</div>
+                  <div className="text-2xl font-black text-zinc-950 tracking-tight">
+                    {couponSummary?.activeCoupons || 0}
+                  </div>
+                  <div className="text-[10px] text-emerald-600 font-bold">Currently redeemable</div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                  <Tag className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-zinc-500">Total Redemptions</div>
+                  <div className="text-2xl font-black text-zinc-950 tracking-tight">
+                    {couponSummary?.totalRedemptions || 0}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-medium">Orders with discounts</div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+                  <DollarSign className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-zinc-500">Savings Delivered</div>
+                  <div className="text-2xl font-black text-zinc-950 tracking-tight font-mono">
+                    ${(couponSummary?.totalSavingsGranted || 0).toFixed(2)}
+                  </div>
+                  <div className="text-[10px] text-violet-600 font-bold">Shopper value granted</div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 shrink-0">
+                  <Gift className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-zinc-500">Total Campaigns</div>
+                  <div className="text-2xl font-black text-zinc-950 tracking-tight">
+                    {couponSummary?.totalCoupons || 0}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-medium">Created to date</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Coupons List */}
+            {couponsLoading ? (
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-16 flex flex-col items-center justify-center text-center space-y-3 shadow-xs">
+                <Loader2 className="w-8 h-8 text-zinc-950 animate-spin" />
+                <p className="text-xs text-zinc-500 font-mono">Loading store coupon campaigns...</p>
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className="bg-white border border-zinc-200/80 rounded-3xl p-16 text-center space-y-4 shadow-xs">
+                <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto text-amber-600">
+                  <Ticket className="w-8 h-8" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-base font-bold text-zinc-950">No Store Coupons Created Yet</h4>
+                  <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                    Attract new buyers and reward loyal shoppers with seasonal promo codes, discount percentages, or instant checkout credits.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateCoupon}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-bold shadow-xs hover:bg-zinc-800 transition-transform active:scale-[0.98] cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create First Store Coupon</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {coupons.map((coupon) => {
+                  const isExpired = new Date(coupon.endDate) <= new Date();
+                  const isLimitReached = coupon.usageLimit ? coupon.usageCount >= coupon.usageLimit : false;
+                  const isLive = coupon.isActive && !isExpired && !isLimitReached;
+
+                  return (
+                    <div
+                      key={coupon._id}
+                      className={`bg-white border rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-5 transition-all hover:shadow-md ${
+                        isLive ? 'border-zinc-200/90' : 'border-zinc-200/50 opacity-75 bg-zinc-50/50'
+                      }`}
+                    >
+                      {/* Top Bar: Code Badge + Status Chip */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-extrabold text-sm tracking-wider px-3 py-1.5 rounded-xl bg-zinc-950 text-white shadow-2xs">
+                            {coupon.code}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(coupon.code);
+                              setCopiedCouponCode(coupon.code);
+                              setTimeout(() => setCopiedCouponCode(null), 2000);
+                            }}
+                            className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950 transition-colors cursor-pointer"
+                            title="Copy Promo Code"
+                          >
+                            {copiedCouponCode === coupon.code ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+
+                        {isExpired ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            Expired
+                          </span>
+                        ) : isLimitReached ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            Max Limit
+                          </span>
+                        ) : coupon.isActive ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                            Paused
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Discount Headline */}
+                      <div className="space-y-1">
+                        <div className="text-2xl font-black text-zinc-950 tracking-tight">
+                          {coupon.discountType === 'percentage' ? (
+                            <span>{coupon.discountValue}% OFF</span>
+                          ) : (
+                            <span>${coupon.discountValue.toFixed(2)} OFF</span>
+                          )}
+                          {coupon.maxDiscountAmount && coupon.discountType === 'percentage' && (
+                            <span className="text-xs font-semibold text-zinc-400 font-mono ml-2">
+                              (Up to ${coupon.maxDiscountAmount.toFixed(2)})
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed">
+                          {coupon.description}
+                        </p>
+                      </div>
+
+                      {/* Rules & Eligibility */}
+                      <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-3.5 space-y-2 text-[11px]">
+                        <div className="flex items-center justify-between text-zinc-600">
+                          <span className="font-medium">Min. Order Value:</span>
+                          <span className="font-bold font-mono text-zinc-900">
+                            {coupon.minPurchaseAmount > 0
+                              ? `$${coupon.minPurchaseAmount.toFixed(2)}`
+                              : 'No Minimum'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-zinc-600">
+                          <span className="font-medium">Valid Until:</span>
+                          <span className="font-bold text-zinc-900">
+                            {new Date(coupon.endDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-zinc-600">
+                          <span className="font-medium">Times Redeemed:</span>
+                          <span className="font-bold font-mono text-zinc-900">
+                            {coupon.usageCount}
+                            {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ' (Unlimited)'}
+                          </span>
+                        </div>
+                        {coupon.totalDiscountGiven > 0 && (
+                          <div className="flex items-center justify-between text-zinc-600 pt-1 border-t border-zinc-200/60">
+                            <span className="font-medium text-violet-700">Total Savings Given:</span>
+                            <span className="font-black font-mono text-violet-700">
+                              ${coupon.totalDiscountGiven.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCoupon(coupon._id)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                            coupon.isActive
+                              ? 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {coupon.isActive ? 'Pause' : 'Activate'}
+                        </button>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditCoupon(coupon)}
+                            className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-950 transition-colors cursor-pointer"
+                            title="Edit Coupon Settings"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCoupon(coupon._id, coupon.code)}
+                            className="p-2 rounded-xl border border-zinc-200 hover:border-rose-200 hover:bg-rose-50 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Delete Coupon"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Quick Individual Product Discount Modal */}
@@ -2657,25 +3680,25 @@ export const BusinessHomePage: React.FC = () => {
 
       {(showAddModal || editingProduct) && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => {
             setShowAddModal(false);
             setEditingProduct(null);
           }}
         >
           <div
-            className="bg-white border border-zinc-200 max-w-lg w-full p-6 sm:p-8 rounded-3xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-zinc-900"
+            className="bg-white border border-zinc-200 max-w-2xl w-full p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto text-zinc-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-zinc-950">
+                <h3 className="text-xl font-bold text-zinc-950">
                   {editingProduct ? 'Edit Product Listing' : 'Add New Product Listing'}
                 </h3>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 mt-0.5">
                   {editingProduct
-                    ? 'Modify catalog details, pricing, and Cloudinary media'
-                    : 'Publish an item directly to the live marketplace'}
+                    ? 'Modify catalog details, multi-photo reference gallery, and technical specifications'
+                    : 'Publish an item directly to the live marketplace with up to 10 photos and technical specs'}
                 </p>
               </div>
               <button
@@ -2684,48 +3707,53 @@ export const BusinessHomePage: React.FC = () => {
                   setShowAddModal(false);
                   setEditingProduct(null);
                 }}
-                className="p-1.5 text-zinc-400 hover:text-zinc-950 rounded-lg cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-zinc-950 rounded-lg cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {modalError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
-                {modalError}
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{modalError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveProduct} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                  Product Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Sony WH-1000XM5 Wireless Headphones"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-                  required
-                />
+            <form onSubmit={handleSaveProduct} className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Product Title *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Sony WH-1000XM5 Wireless Noise-Canceling Headphones"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Overview Description *
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide a comprehensive summary of key features, uses, and benefits..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                  Description & Specifications
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Provide comprehensive details for shoppers..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Pricing Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-zinc-50/80 border border-zinc-200/80">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
                     Regular Price ($)
@@ -2745,7 +3773,7 @@ export const BusinessHomePage: React.FC = () => {
                       }
                       setFormData({ ...formData, originalPrice: orig, price: newPrice });
                     }}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 font-medium"
+                    className="w-full rounded-xl border border-zinc-200 bg-white p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 font-medium"
                   />
                 </div>
 
@@ -2776,7 +3804,7 @@ export const BusinessHomePage: React.FC = () => {
                         price: newPrice,
                       });
                     }}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 font-bold"
+                    className="w-full rounded-xl border border-zinc-200 bg-white p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 font-bold"
                   />
                 </div>
 
@@ -2800,76 +3828,61 @@ export const BusinessHomePage: React.FC = () => {
                       }
                       setFormData({ ...formData, price: pStr, discountPercentage: newPct });
                     }}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 font-extrabold placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                    className="w-full rounded-xl border border-zinc-200 bg-white p-2.5 text-xs text-zinc-900 font-extrabold placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Quick Discount Preset Chips */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mr-1">
-                  Presets:
-                </span>
-                {[10, 15, 20, 25, 30, 50].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => {
-                      const basePrice = Number(formData.originalPrice) || Number(formData.price) || 0;
-                      if (basePrice <= 0) return;
-                      const sale = Number((basePrice * (1 - preset / 100)).toFixed(2));
-                      setFormData({
-                        ...formData,
-                        originalPrice: String(basePrice),
-                        discountPercentage: String(preset),
-                        price: String(sale),
-                      });
-                    }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
-                  >
-                    {preset}% OFF
-                  </button>
-                ))}
-                {(Number(formData.originalPrice) > Number(formData.price) || Number(formData.discountPercentage) > 0) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const orig = Number(formData.originalPrice) || Number(formData.price);
-                      setFormData({
-                        ...formData,
-                        price: String(orig),
-                        originalPrice: '',
-                        discountPercentage: '',
-                        isFlashSale: false,
-                      });
-                    }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer"
-                  >
-                    Clear Discount
-                  </button>
-                )}
-              </div>
+                <div className="sm:col-span-3 pt-1 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mr-1">
+                      Presets:
+                    </span>
+                    {[10, 15, 20, 25, 30, 50].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          const basePrice = Number(formData.originalPrice) || Number(formData.price) || 0;
+                          if (basePrice <= 0) return;
+                          const sale = Number((basePrice * (1 - preset / 100)).toFixed(2));
+                          setFormData({
+                            ...formData,
+                            originalPrice: String(basePrice),
+                            discountPercentage: String(preset),
+                            price: String(sale),
+                          });
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-bold rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
+                      >
+                        {preset}% OFF
+                      </button>
+                    ))}
+                  </div>
 
-              {/* Instant Discount Preview */}
-              {Number(formData.originalPrice) > Number(formData.price) && Number(formData.price) > 0 && (
-                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-800 text-xs font-bold flex items-center justify-between animate-in fade-in">
-                  <span className="flex items-center gap-1">
-                    <Percent className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Promotional Discount:</span>
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[11px] font-black">
-                    {Math.round(
-                      ((Number(formData.originalPrice) - Number(formData.price)) /
-                        Number(formData.originalPrice)) *
-                        100
-                    )}
-                    % OFF (Save ${(Number(formData.originalPrice) - Number(formData.price)).toFixed(2)})
-                  </span>
+                  {(Number(formData.originalPrice) > Number(formData.price) || Number(formData.discountPercentage) > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const orig = Number(formData.originalPrice) || Number(formData.price);
+                        setFormData({
+                          ...formData,
+                          price: String(orig),
+                          originalPrice: '',
+                          discountPercentage: '',
+                          isFlashSale: false,
+                        });
+                      }}
+                      className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      Clear Discount
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Stock, Flash Sale & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
                     Stock Units *
@@ -2885,8 +3898,26 @@ export const BusinessHomePage: React.FC = () => {
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+                    Category Department
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-900 capitalize cursor-pointer"
+                  >
+                    <option value="electronics">Electronics</option>
+                    <option value="fashion">Fashion & Apparel</option>
+                    <option value="home">Home & Living</option>
+                    <option value="beauty">Beauty & Skincare</option>
+                    <option value="sports">Sports & Outdoors</option>
+                    <option value="books">Books & Media</option>
+                  </select>
+                </div>
+
                 <div className="space-y-1.5 flex flex-col justify-end">
-                  <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100/80 text-xs font-bold text-zinc-800 cursor-pointer transition-colors">
+                  <label className="inline-flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100/80 text-xs font-bold text-zinc-800 cursor-pointer transition-colors h-[38px]">
                     <input
                       type="checkbox"
                       checked={formData.isFlashSale}
@@ -2897,38 +3928,39 @@ export const BusinessHomePage: React.FC = () => {
                     />
                     <span className="inline-flex items-center gap-1">
                       <Flame className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Feature in Store Flash Sale</span>
+                      <span>Flash Sale</span>
                     </span>
                   </label>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                  Category Department
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-900 capitalize cursor-pointer"
-                >
-                  <option value="electronics">Electronics</option>
-                  <option value="fashion">Fashion & Apparel</option>
-                  <option value="home">Home & Living</option>
-                  <option value="beauty">Beauty & Skincare</option>
-                  <option value="sports">Sports & Outdoors</option>
-                  <option value="books">Books & Media</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
+              {/* ---------------------------------------------------- */}
+              {/* MULTI-PHOTO REFERENCE GALLERY (UP TO 10 PHOTOS)     */}
+              {/* ---------------------------------------------------- */}
+              <div className="p-5 rounded-3xl border border-zinc-200 bg-zinc-50/50 space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider">
-                    Product Image (Cloudinary)
-                  </label>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-indigo-600" />
+                      <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
+                        Product Reference Photos
+                      </h4>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        formData.images.length >= 10
+                          ? 'bg-amber-100 text-amber-900'
+                          : 'bg-indigo-100 text-indigo-800'
+                      }`}>
+                        {formData.images.length} / 10 Photos
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                      Upload up to 10 high-resolution photos for reference. The first photo is your primary cover.
+                    </p>
+                  </div>
+
                   <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 font-medium">
                     <Cloud className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Cloudinary Storage</span>
+                    <span>Cloud Storage</span>
                   </span>
                 </div>
 
@@ -2937,112 +3969,308 @@ export const BusinessHomePage: React.FC = () => {
                   ref={fileInputRef}
                   onChange={handleImageFileUpload}
                   accept="image/png, image/jpeg, image/webp, image/jpg"
+                  multiple
                   className="hidden"
                 />
 
-                {!formData.image ? (
-                  <div className="space-y-2.5">
+                {/* Upload Action Area */}
+                {formData.images.length < 10 && (
+                  <div className="space-y-3">
                     <div
                       onClick={() => fileInputRef.current?.click()}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
-                        if (file) {
+                        const droppedFiles = Array.from(e.dataTransfer.files || []);
+                        if (droppedFiles.length > 0) {
                           const fakeEvent = {
-                            target: { files: [file] },
+                            target: { files: droppedFiles },
                           } as any;
                           handleImageFileUpload(fakeEvent);
                         }
                       }}
-                      className="group border-2 border-dashed border-zinc-200 hover:border-zinc-950 rounded-2xl p-6 text-center bg-zinc-50/60 hover:bg-zinc-100/60 transition-all cursor-pointer space-y-2"
+                      className="group border-2 border-dashed border-zinc-300 hover:border-zinc-950 rounded-2xl p-5 text-center bg-white hover:bg-zinc-50/80 transition-all cursor-pointer space-y-1.5"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-white border border-zinc-200 shadow-2xs flex items-center justify-center mx-auto text-zinc-600 group-hover:scale-105 transition-transform">
+                      <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-700 group-hover:scale-105 transition-transform">
                         {uploadingImage ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
+                          <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
                         ) : (
-                          <Upload className="w-5 h-5 text-zinc-700" />
+                          <Upload className="w-4 h-4 text-zinc-700" />
                         )}
                       </div>
-                      <div>
-                        <div className="text-xs font-semibold text-zinc-900">
-                          {uploadingImage
-                            ? 'Uploading image to Cloudinary...'
-                            : 'Click to upload or drag & drop'}
-                        </div>
-                        <div className="text-[11px] text-zinc-500 mt-0.5">
-                          PNG, JPG, WEBP up to 500KB
-                        </div>
+                      <div className="text-xs font-semibold text-zinc-900">
+                        {uploadingImage
+                          ? uploadProgress
+                            ? `Uploading photo ${uploadProgress.completed} of ${uploadProgress.total}...`
+                            : 'Uploading photos to Cloudinary...'
+                          : 'Click to select multiple photos or drag & drop'}
+                      </div>
+                      <div className="text-[10px] text-zinc-500">
+                        PNG, JPG, WEBP (Max 500KB per photo) • Add up to {10 - formData.images.length} more
                       </div>
                     </div>
 
+                    {/* Direct Image URL input */}
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-zinc-200" />
-                      <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">or direct web link</span>
-                      <div className="flex-1 h-px bg-zinc-200" />
+                      <input
+                        type="url"
+                        placeholder="Or paste direct image URL (https://...)"
+                        value={directImageUrlInput}
+                        onChange={(e) => setDirectImageUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddDirectImageUrl();
+                          }
+                        }}
+                        className="flex-1 rounded-xl border border-zinc-200 bg-white p-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddDirectImageUrl}
+                        disabled={!directImageUrlInput.trim()}
+                        className="px-3.5 py-2 text-xs font-bold rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white disabled:opacity-40 cursor-pointer shadow-xs transition-colors"
+                      >
+                        + Add URL
+                      </button>
                     </div>
+                  </div>
+                )}
 
-                    <input
-                      type="url"
-                      placeholder="Paste direct image URL (https://...)"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-                    />
+                {/* Uploaded Photos Grid */}
+                {formData.images.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+                    {formData.images.map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative group aspect-square rounded-2xl overflow-hidden bg-zinc-100 border-2 transition-all shadow-xs ${
+                          idx === 0
+                            ? 'border-indigo-600 ring-2 ring-indigo-200'
+                            : 'border-zinc-200 hover:border-zinc-400'
+                        }`}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Product photo ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80';
+                          }}
+                        />
+
+                        {/* Badge for Cover */}
+                        {idx === 0 ? (
+                          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow-xs flex items-center gap-1">
+                            <Star className="w-2.5 h-2.5 fill-white" />
+                            <span>Cover</span>
+                          </div>
+                        ) : (
+                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-zinc-950/70 text-white text-[9px] font-bold">
+                            #{idx + 1}
+                          </div>
+                        )}
+
+                        {/* Action Overlays */}
+                        <div className="absolute inset-0 bg-zinc-950/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                          <div className="flex items-center justify-between">
+                            {idx > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimaryImage(idx)}
+                                className="px-2 py-1 rounded bg-white text-zinc-950 hover:bg-indigo-50 text-[10px] font-bold shadow-xs cursor-pointer"
+                                title="Make Primary Cover"
+                              >
+                                ★ Cover
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-white font-bold">Primary</span>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(idx)}
+                              className="p-1 rounded bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer"
+                              title="Delete Photo"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Reordering Controls */}
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => handleMoveImage(idx, 'left')}
+                              className="p-1 rounded bg-white/90 hover:bg-white text-zinc-900 disabled:opacity-30 cursor-pointer shadow-xs"
+                              title="Move Left"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === formData.images.length - 1}
+                              onClick={() => handleMoveImage(idx, 'right')}
+                              className="p-1 rounded bg-white/90 hover:bg-white text-zinc-900 disabled:opacity-30 cursor-pointer shadow-xs"
+                              title="Move Right"
+                            >
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="relative aspect-video rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-200 group">
-                      <img
-                        src={formData.image}
-                        alt="Product preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-zinc-950/80 px-2.5 py-1 rounded-lg backdrop-blur-xs">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          Image Attached
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-zinc-950 text-[11px] font-bold shadow-xs cursor-pointer"
-                          >
-                            Replace
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, image: '' })}
-                            className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-xs cursor-pointer"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="text-center p-4 text-xs text-zinc-400 bg-white rounded-2xl border border-zinc-200/80">
+                    No reference photos attached yet. Upload photos to help buyers inspect your product.
                   </div>
                 )}
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-zinc-200/80">
+              {/* ---------------------------------------------------- */}
+              {/* DYNAMIC KEY-VALUE TECHNICAL SPECIFICATIONS BUILDER   */}
+              {/* ---------------------------------------------------- */}
+              <div className="p-5 rounded-3xl border border-zinc-200 bg-zinc-50/50 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-emerald-600" />
+                      <h4 className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
+                        Technical Specifications (Key-Value Pairs)
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        {formData.specifications.length} Specs
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                      Define technical specifications for shoppers to review before purchasing.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddSpecificationRow}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-bold shadow-xs cursor-pointer transition-colors self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Row</span>
+                  </button>
+                </div>
+
+                {/* Quick Templates */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                    Quick Industry Templates:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { id: 'electronics', label: '⚡ Electronics' },
+                      { id: 'fashion', label: '👗 Fashion' },
+                      { id: 'home', label: '🏡 Home & Living' },
+                      { id: 'beauty', label: '✨ Beauty' },
+                      { id: 'sports', label: '🏃 Sports' },
+                    ].map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => handleApplySpecPreset(tpl.id as any)}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
+                      >
+                        {tpl.label}
+                      </button>
+                    ))}
+                    {formData.specifications.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, specifications: [] })}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                      >
+                        Clear All Specs
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Key-Value Pair Rows */}
+                {formData.specifications.length > 0 ? (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-1">
+                      <div className="col-span-5">Specification Key / Attribute</div>
+                      <div className="col-span-6">Technical Value</div>
+                      <div className="col-span-1 text-center">Action</div>
+                    </div>
+
+                    {formData.specifications.map((spec, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-xl border border-zinc-200 shadow-2xs group hover:border-zinc-400 transition-colors"
+                      >
+                        <div className="col-span-5">
+                          <input
+                            type="text"
+                            placeholder="e.g. Processor / Battery / Material"
+                            value={spec.key}
+                            onChange={(e) =>
+                              handleUpdateSpecificationRow(idx, 'key', e.target.value)
+                            }
+                            className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 font-medium"
+                          />
+                        </div>
+                        <div className="col-span-6">
+                          <input
+                            type="text"
+                            placeholder="e.g. Apple M3 Max / 22 Hours / Titanium"
+                            value={spec.value}
+                            onChange={(e) =>
+                              handleUpdateSpecificationRow(idx, 'value', e.target.value)
+                            }
+                            className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSpecificationRow(idx)}
+                            className="p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Remove Specification"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-4 text-xs text-zinc-400 bg-white rounded-2xl border border-zinc-200/80">
+                    No technical specifications added yet. Click &quot;Add Row&quot; or select a template above.
+                  </div>
+                )}
+              </div>
+
+              {/* Submit & Cancel Actions */}
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-zinc-200/80">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddModal(false);
                     setEditingProduct(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-950 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 hover:text-zinc-950 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || uploadingImage}
-                  className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 transition-colors cursor-pointer shadow-xs disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-all cursor-pointer shadow-md disabled:opacity-60"
                 >
-                  {submitting ? 'Saving...' : editingProduct ? 'Save Changes' : 'Publish Listing'}
+                  {submitting
+                    ? 'Saving...'
+                    : editingProduct
+                    ? 'Save Product Listing'
+                    : 'Publish Listing'}
                 </button>
               </div>
             </form>
@@ -3087,6 +4315,327 @@ export const BusinessHomePage: React.FC = () => {
                 {submitting ? 'Deleting...' : 'Confirm Delete'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE / EDIT STORE COUPON MODAL */}
+      {showCouponModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150"
+          onClick={() => setShowCouponModal(false)}
+        >
+          <div
+            className="bg-white border border-zinc-200/90 max-w-xl w-full my-8 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 text-zinc-900 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-zinc-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
+                  <Ticket className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-zinc-950">
+                    {editingCouponId ? 'Edit Store Coupon' : 'Create Store Coupon Offer'}
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Set discount parameters, eligibility thresholds, and expiration schedule
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCouponModal(false)}
+                className="p-2 rounded-xl text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Error message */}
+            {couponModalError && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-semibold text-rose-800 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{couponModalError}</span>
+              </div>
+            )}
+
+            {/* Coupon Form */}
+            <form onSubmit={handleSaveCoupon} className="space-y-4">
+              {/* Promo Code & Generator */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                  Promo Code Name *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={couponForm.code}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        code: e.target.value.toUpperCase().replace(/\s+/g, ''),
+                      }))
+                    }
+                    placeholder="e.g. FLASH25"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 font-mono font-bold text-sm tracking-wider text-zinc-950 uppercase focus:outline-none focus:bg-white focus:border-zinc-950"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        code: `DEAL${Math.floor(100 + Math.random() * 900)}`,
+                      }))
+                    }
+                    className="px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-xs font-bold text-zinc-700 transition-colors cursor-pointer"
+                  >
+                    🎲 Generate
+                  </button>
+                </div>
+              </div>
+
+              {/* Offer Description */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                  Offer Description / Banner Copy *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={couponForm.description}
+                  onChange={(e) =>
+                    setCouponForm((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="e.g. 20% off all orders over $40 for loyal members"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950"
+                />
+              </div>
+
+              {/* Discount Type & Value */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Discount Type *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCouponForm((prev) => ({ ...prev, discountType: 'percentage' }))
+                      }
+                      className={`py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                        couponForm.discountType === 'percentage'
+                          ? 'bg-zinc-950 text-white border-zinc-950 shadow-xs'
+                          : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                      }`}
+                    >
+                      <Percent className="w-3.5 h-3.5" />
+                      <span>Percentage %</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCouponForm((prev) => ({ ...prev, discountType: 'fixed' }))
+                      }
+                      className={`py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                        couponForm.discountType === 'fixed'
+                          ? 'bg-zinc-950 text-white border-zinc-950 shadow-xs'
+                          : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                      }`}
+                    >
+                      <DollarSign className="w-3.5 h-3.5" />
+                      <span>Fixed Cash $</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Discount Value ({couponForm.discountType === 'percentage' ? '%' : '$'}) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0.01"
+                    max={couponForm.discountType === 'percentage' ? '100' : '9999'}
+                    step="any"
+                    value={couponForm.discountValue || ''}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        discountValue: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder={couponForm.discountType === 'percentage' ? '15' : '10.00'}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 font-mono font-bold text-sm text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950"
+                  />
+                </div>
+              </div>
+
+              {/* Threshold & Cap */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Minimum Cart Subtotal ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={couponForm.minPurchaseAmount || ''}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        minPurchaseAmount: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0.00 (No minimum)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 font-mono text-xs text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Max Discount Cap ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    disabled={couponForm.discountType === 'fixed'}
+                    value={couponForm.maxDiscountAmount || ''}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        maxDiscountAmount: e.target.value ? parseFloat(e.target.value) : null,
+                      }))
+                    }
+                    placeholder={
+                      couponForm.discountType === 'fixed'
+                        ? 'Not applicable for fixed'
+                        : 'Optional (e.g. 50.00)'
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 font-mono text-xs text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* Expiration Date & Total Limits */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Expiration Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={couponForm.endDate}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({ ...prev, endDate: e.target.value }))
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Total Redemption Limit
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={couponForm.usageLimit || ''}
+                    onChange={(e) =>
+                      setCouponForm((prev) => ({
+                        ...prev,
+                        usageLimit: e.target.value ? parseInt(e.target.value, 10) : null,
+                      }))
+                    }
+                    placeholder="Unlimited redemptions"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 font-mono text-xs text-zinc-950 focus:outline-none focus:bg-white focus:border-zinc-950"
+                  />
+                </div>
+              </div>
+
+              {/* Product Catalog Scope */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
+                    Applicable Catalog Scope
+                  </label>
+                  <span className="text-[10px] text-zinc-400">
+                    {couponForm.applicableProducts && couponForm.applicableProducts.length > 0
+                      ? `${couponForm.applicableProducts.length} specific items`
+                      : 'All Store Catalog'}
+                  </span>
+                </div>
+                <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-2 max-h-36 overflow-y-auto">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-900 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!couponForm.applicableProducts || couponForm.applicableProducts.length === 0}
+                      onChange={() => setCouponForm((prev) => ({ ...prev, applicableProducts: [] }))}
+                      className="rounded border-zinc-300 text-zinc-950 focus:ring-0"
+                    />
+                    <span>All Products in My Store Catalog (Storewide Promo)</span>
+                  </label>
+
+                  {products.map((p) => {
+                    const isChecked = couponForm.applicableProducts?.includes(p._id);
+                    return (
+                      <label
+                        key={p._id}
+                        className="flex items-center gap-2 text-xs text-zinc-700 pl-4 cursor-pointer hover:text-zinc-950"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(isChecked)}
+                          onChange={() => {
+                            setCouponForm((prev) => {
+                              const existing = prev.applicableProducts || [];
+                              const next = existing.includes(p._id)
+                                ? existing.filter((id) => id !== p._id)
+                                : [...existing, p._id];
+                              return { ...prev, applicableProducts: next };
+                            });
+                          }}
+                          className="rounded border-zinc-300 text-zinc-950 focus:ring-0"
+                        />
+                        <span className="truncate">{p.title} (${p.price.toFixed(2)})</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCouponModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-xs font-semibold text-zinc-700 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingCoupon}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold shadow-xs transition-transform active:scale-[0.98] cursor-pointer"
+                >
+                  {submittingCoupon ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving Coupon...</span>
+                    </>
+                  ) : (
+                    <span>{editingCouponId ? 'Update Coupon' : 'Publish Promo Code'}</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

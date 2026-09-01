@@ -158,3 +158,24 @@ export const uploadProductImageApi = async (
   });
   return response.data;
 };
+
+export const uploadMultipleProductImagesApi = async (
+  files: File[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<string[]> => {
+  const urls: string[] = [];
+  let completed = 0;
+
+  for (const file of files) {
+    const res = await uploadProductImageApi(file);
+    if (res.url) {
+      urls.push(res.url);
+    }
+    completed++;
+    if (onProgress) {
+      onProgress(completed, files.length);
+    }
+  }
+
+  return urls;
+};

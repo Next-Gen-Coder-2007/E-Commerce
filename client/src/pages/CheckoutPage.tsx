@@ -25,8 +25,10 @@ import {
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { createOrderApi } from '../services/orderService';
+import { validateCouponApi, getAvailableCouponsApi } from '../services/couponService';
 import { PaymentMethod, ShippingMethodType } from '../types/order';
 import { SavedAddress } from '../types/auth';
+import type { Coupon } from '../types/coupon';
 
 const AVAILABLE_COUPONS = [
   {
@@ -83,7 +85,9 @@ export const CheckoutPage: React.FC = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [showCouponDrawer, setShowCouponDrawer] = useState(false);
+  const [dynamicCoupons, setDynamicCoupons] = useState<Coupon[]>([]);
 
   const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
   const [cardExpiry, setCardExpiry] = useState('12/28');
@@ -91,6 +95,20 @@ export const CheckoutPage: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAvailableOffers = async () => {
+      try {
+        const res = await getAvailableCouponsApi();
+        if (res.success && res.coupons) {
+          setDynamicCoupons(res.coupons);
+        }
+      } catch {
+        // Non-blocking
+      }
+    };
+    fetchAvailableOffers();
+  }, []);
 
   // Auto-populate from user's saved addresses
   useEffect(() => {
@@ -195,23 +213,50 @@ export const CheckoutPage: React.FC = () => {
 
   const finalTotal = Math.max(0, rawItemsPrice + (appliedCoupon?.code === 'FREESHIP' ? 0 : shippingPrice) + taxPrice - discountAmount);
 
-  const applySpecificCoupon = (code: string) => {
+  const applySpecificCoupon = async (code: string) => {
     setCouponError(null);
     const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) return;
 
-    if (cleanCode === 'NOVA10' || cleanCode === 'WELCOME10') {
-      const discount = Number((rawItemsPrice * 0.1).toFixed(2));
-      setAppliedCoupon({ code: cleanCode, discount });
-      setCouponCode(cleanCode);
-    } else if (cleanCode === 'NOVA20' || cleanCode === 'SPRING20') {
-      const discount = Number((rawItemsPrice * 0.2).toFixed(2));
-      setAppliedCoupon({ code: cleanCode, discount });
-      setCouponCode(cleanCode);
-    } else if (cleanCode === 'FREESHIP') {
-      setAppliedCoupon({ code: cleanCode, discount: shippingPrice });
-      setCouponCode(cleanCode);
-    } else {
-      setCouponError('Invalid promo coupon code.');
+    setValidatingCoupon(true);
+    try {
+      const res = await validateCouponApi({
+        code: cleanCode,
+        cartItems: items.map((item) => ({
+          productId: item.productId,
+          companyId: item.companyId,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal: rawItemsPrice,
+        userId: user?._id,
+      });
+
+      if (res.isValid && res.discountAmount > 0) {
+        setAppliedCoupon({ code: res.code || cleanCode, discount: res.discountAmount });
+        setCouponCode(res.code || cleanCode);
+        setCouponError(null);
+      } else {
+        throw new Error(res.message || 'Invalid coupon code.');
+      }
+    } catch (err: any) {
+      // Fallback for legacy codes
+      if (cleanCode === 'NOVA10' || cleanCode === 'WELCOME10') {
+        const discount = Number((rawItemsPrice * 0.1).toFixed(2));
+        setAppliedCoupon({ code: cleanCode, discount });
+        setCouponCode(cleanCode);
+      } else if (cleanCode === 'NOVA20' || cleanCode === 'SPRING20') {
+        const discount = Number((rawItemsPrice * 0.2).toFixed(2));
+        setAppliedCoupon({ code: cleanCode, discount });
+        setCouponCode(cleanCode);
+      } else if (cleanCode === 'FREESHIP') {
+        setAppliedCoupon({ code: cleanCode, discount: shippingPrice });
+        setCouponCode(cleanCode);
+      } else {
+        setCouponError(err.message || 'Invalid or expired coupon promo code.');
+      }
+    } finally {
+      setValidatingCoupon(false);
     }
   };
 
@@ -1153,37 +1198,81 @@ export const CheckoutPage: React.FC = () => {
 
                   {/* Expandable Available Coupons List */}
                   {showCouponDrawer && (
-                    <div className="space-y-2 pt-2 border-t border-zinc-100 animate-in fade-in">
+                    <div className="space-y-2 pt-2 border-t border-zinc-100 animate-in fade-in max-h-60 overflow-y-auto pr-1">
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                         Available Coupon Discounts
                       </span>
-                      {AVAILABLE_COUPONS.map((cp) => (
-                        <div
-                          key={cp.code}
-                          className="p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/50 flex items-center justify-between gap-2"
-                        >
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-xs font-black text-zinc-950 bg-zinc-200 px-1.5 py-0.5 rounded">
-                                {cp.code}
-                              </span>
-                              <span className="text-xs font-bold text-zinc-800">
-                                {cp.title}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">
-                              {cp.description}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => applySpecificCoupon(cp.code)}
-                            className="px-2.5 py-1 rounded-lg bg-zinc-950 text-white text-[10px] font-bold shrink-0 hover:bg-zinc-800 cursor-pointer"
+                      {dynamicCoupons.length > 0 ? (
+                        dynamicCoupons.map((cp) => (
+                          <div
+                            key={cp._id || cp.code}
+                            className="p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/70 flex items-center justify-between gap-2"
                           >
-                            Apply
-                          </button>
-                        </div>
-                      ))}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-mono text-xs font-black text-zinc-950 bg-zinc-200 px-1.5 py-0.5 rounded">
+                                  {cp.code}
+                                </span>
+                                <span className="text-xs font-bold text-emerald-800">
+                                  {cp.discountType === 'percentage'
+                                    ? `${cp.discountValue}% OFF`
+                                    : `$${cp.discountValue.toFixed(2)} OFF`}
+                                </span>
+                                {cp.companyName && (
+                                  <span className="text-[9px] text-zinc-500 font-medium">
+                                    • {cp.companyName}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">
+                                {cp.description}
+                              </p>
+                              {cp.minPurchaseAmount > 0 && (
+                                <p className="text-[9px] text-zinc-400 font-mono">
+                                  Min. order: ${cp.minPurchaseAmount.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={validatingCoupon}
+                              onClick={() => applySpecificCoupon(cp.code)}
+                              className="px-2.5 py-1 rounded-lg bg-zinc-950 text-white text-[10px] font-bold shrink-0 hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        AVAILABLE_COUPONS.map((cp) => (
+                          <div
+                            key={cp.code}
+                            className="p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/50 flex items-center justify-between gap-2"
+                          >
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs font-black text-zinc-950 bg-zinc-200 px-1.5 py-0.5 rounded">
+                                  {cp.code}
+                                </span>
+                                <span className="text-xs font-bold text-zinc-800">
+                                  {cp.title}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-zinc-500 mt-0.5">
+                                {cp.description}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={validatingCoupon}
+                              onClick={() => applySpecificCoupon(cp.code)}
+                              className="px-2.5 py-1 rounded-lg bg-zinc-950 text-white text-[10px] font-bold shrink-0 hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

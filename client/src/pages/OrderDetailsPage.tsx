@@ -16,10 +16,13 @@ import {
   Calendar,
   XCircle,
   X,
+  Star,
 } from 'lucide-react';
 import { getOrderByIdApi, payOrderApi } from '../services/orderService';
+import { getMyReviewedProductIdsApi } from '../services/reviewService';
 import { Order, OrderStatus } from '../types/order';
 import { CancelOrderModal } from '../components/CancelOrderModal';
+import { WriteReviewModal } from '../components/reviews/WriteReviewModal';
 
 const STEPS: { key: OrderStatus; label: string; desc: string }[] = [
   { key: 'placed', label: 'Order Placed', desc: 'Order details received' },
@@ -60,8 +63,14 @@ export const OrderDetailsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedTracking, setCopiedTracking] = useState(false);
-
   const [paying, setPaying] = useState(false);
+  const [reviewedProductIds, setReviewedProductIds] = useState<string[]>([]);
+  const [reviewTarget, setReviewTarget] = useState<{
+    productId: string;
+    productTitle: string;
+    productImage?: string;
+    orderId: string;
+  } | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(isNewOrder);
   const [successProgress, setSuccessProgress] = useState(100);
@@ -110,9 +119,21 @@ export const OrderDetailsPage: React.FC = () => {
     }
   }, [id]);
 
+  const fetchReviewedStatus = useCallback(async () => {
+    try {
+      const res = await getMyReviewedProductIdsApi();
+      if (res.success) {
+        setReviewedProductIds(res.productIds || []);
+      }
+    } catch {
+      // Non-blocking
+    }
+  }, []);
+
   useEffect(() => {
     fetchOrder();
-  }, [fetchOrder]);
+    fetchReviewedStatus();
+  }, [fetchOrder, fetchReviewedStatus]);
 
   const handleCopyOrderNumber = () => {
     if (order?.orderNumber) {
@@ -464,13 +485,40 @@ export const OrderDetailsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <div className="text-xs sm:text-sm font-black font-mono text-zinc-950">
-                        ${(item.price * item.quantity).toFixed(2)}
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="text-right">
+                        <div className="text-xs sm:text-sm font-black font-mono text-zinc-950">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </div>
+                        <div className="text-[11px] text-zinc-400 font-mono">
+                          ${item.price.toFixed(2)} × {item.quantity}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-zinc-400 font-mono">
-                        ${item.price.toFixed(2)} × {item.quantity}
-                      </div>
+                      {!order.cancellation?.isCancelled && (
+                        reviewedProductIds.includes(item.productId) ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700 shadow-2xs">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Verified Review Submitted</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReviewTarget({
+                                productId: item.productId,
+                                productTitle: item.title,
+                                productImage: item.image,
+                                orderId: order._id,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-[11px] font-bold text-amber-900 transition-colors shadow-2xs cursor-pointer"
+                            title="Write Verified Customer Review"
+                          >
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            <span>Write Review</span>
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 ))}
@@ -616,6 +664,24 @@ export const OrderDetailsPage: React.FC = () => {
         onClose={() => setIsCancelModalOpen(false)}
         onSuccess={() => fetchOrder()}
       />
+
+      {/* Verified Review Modal */}
+      {reviewTarget && (
+        <WriteReviewModal
+          isOpen={Boolean(reviewTarget)}
+          onClose={() => setReviewTarget(null)}
+          productId={reviewTarget.productId}
+          productTitle={reviewTarget.productTitle}
+          productImage={reviewTarget.productImage}
+          orderId={reviewTarget.orderId}
+          onReviewSaved={(savedReview) => {
+            setReviewedProductIds((prev) =>
+              prev.includes(savedReview.productId) ? prev : [...prev, savedReview.productId]
+            );
+            setReviewTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 };

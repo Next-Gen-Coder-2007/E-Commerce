@@ -1,3 +1,8 @@
+export interface ProductSpecification {
+  key: string;
+  value: string;
+}
+
 export interface Product {
   _id: string;
   title: string;
@@ -9,6 +14,8 @@ export interface Product {
   category: string;
   stock: number;
   image: string;
+  images?: string[];
+  specifications?: ProductSpecification[];
   companyId: string;
   companyName: string;
   isPublished: boolean;
@@ -28,6 +35,8 @@ export interface CreateProductInput {
   category: string;
   stock: number;
   image?: string;
+  images?: string[];
+  specifications?: ProductSpecification[];
 }
 
 export interface UpdateProductInput {
@@ -40,6 +49,8 @@ export interface UpdateProductInput {
   category?: string;
   stock?: number;
   image?: string;
+  images?: string[];
+  specifications?: ProductSpecification[];
   isPublished?: boolean;
 }
 
