@@ -9,6 +9,7 @@ import {
   updateOrderStatus,
   getOrderAnalytics,
   trackOrder,
+  checkUserPurchasedProduct,
 } from '../controllers/orderController.js';
 import {
   attachOrderIdentity,
@@ -23,6 +24,7 @@ router.use(attachOrderIdentity);
 
 // Public / Lookup Routes
 router.get('/track/:orderNumber', trackOrder);
+router.get('/check-purchase/:userId/:productId', checkUserPurchasedProduct);
 
 // Customer Routes
 router.post('/', requireAuth, createOrder);

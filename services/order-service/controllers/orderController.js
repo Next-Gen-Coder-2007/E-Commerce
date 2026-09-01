@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import Order from '../models/Order.js';
 import redisClient, { isRedisReady } from '../config/redis.js';
 
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002';
+
 const generateOrderNumber = () => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -121,13 +123,41 @@ export const createOrder = async (req, res, next) => {
 
     let discountAmount = 0;
     const normalizedCoupon = (couponCode || '').trim().toUpperCase();
-    if (normalizedCoupon === 'NOVA10' || normalizedCoupon === 'WELCOME10') {
-      discountAmount = Number((itemsPrice * 0.10).toFixed(2));
-    } else if (normalizedCoupon === 'NOVA20' || normalizedCoupon === 'SPRING20') {
-      discountAmount = Number((itemsPrice * 0.20).toFixed(2));
-    } else if (normalizedCoupon === 'FREESHIP') {
-      discountAmount = shippingPrice;
-      shippingPrice = 0;
+
+    if (normalizedCoupon) {
+      // 1. Query dynamic Coupon Service
+      try {
+        const couponRes = await fetch(`${PRODUCT_SERVICE_URL}/api/coupons/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: normalizedCoupon,
+            cartItems: sanitizedItems,
+            subtotal: itemsPrice,
+            userId,
+          }),
+        });
+        if (couponRes.ok) {
+          const couponData = await couponRes.json();
+          if (couponData.isValid && couponData.discountAmount > 0) {
+            discountAmount = Number(couponData.discountAmount);
+          }
+        }
+      } catch (couponErr) {
+        console.warn(`[Order Service] Dynamic coupon validation warning: ${couponErr.message}`);
+      }
+
+      // 2. Legacy fallback
+      if (discountAmount === 0) {
+        if (normalizedCoupon === 'NOVA10' || normalizedCoupon === 'WELCOME10') {
+          discountAmount = Number((itemsPrice * 0.10).toFixed(2));
+        } else if (normalizedCoupon === 'NOVA20' || normalizedCoupon === 'SPRING20') {
+          discountAmount = Number((itemsPrice * 0.20).toFixed(2));
+        } else if (normalizedCoupon === 'FREESHIP') {
+          discountAmount = shippingPrice;
+          shippingPrice = 0;
+        }
+      }
     }
 
     const totalPrice = Number(
@@ -208,6 +238,24 @@ export const createOrder = async (req, res, next) => {
     });
 
     const savedOrder = await newOrder.save();
+
+    // If a coupon was applied and had a discount, register its redemption
+    if (normalizedCoupon && discountAmount > 0) {
+      try {
+        await fetch(`${PRODUCT_SERVICE_URL}/api/coupons/redeem`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: normalizedCoupon,
+            userId,
+            orderId: savedOrder._id,
+            discountAmount,
+          }),
+        });
+      } catch (redeemErr) {
+        console.warn(`[Order Service] Coupon redemption logging note: ${redeemErr.message}`);
+      }
+    }
 
     const companyIds = [
       ...new Set(sanitizedItems.map((item) => item.companyId).filter(Boolean)),
@@ -755,5 +803,28 @@ export const trackOrder = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const checkUserPurchasedProduct = async (req, res, next) => {
+  try {
+    const { userId, productId } = req.params;
+    if (!userId || !productId) {
+      return res.status(200).json({ hasPurchased: false });
+    }
+
+    const order = await Order.findOne({
+      userId,
+      'orderItems.productId': productId,
+      orderStatus: { $nin: ['cancelled'] },
+    }).lean();
+
+    return res.status(200).json({
+      success: true,
+      hasPurchased: Boolean(order),
+      orderId: order ? order._id : null,
+    });
+  } catch (error) {
+    return res.status(200).json({ success: true, hasPurchased: false });
   }
 };
