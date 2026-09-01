@@ -3,6 +3,9 @@ export interface Product {
   title: string;
   description: string;
   price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isFlashSale?: boolean;
   category: string;
   stock: number;
   image: string;
@@ -19,6 +22,9 @@ export interface CreateProductInput {
   title: string;
   description: string;
   price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isFlashSale?: boolean;
   category: string;
   stock: number;
   image?: string;
@@ -28,6 +34,9 @@ export interface UpdateProductInput {
   title?: string;
   description?: string;
   price?: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isFlashSale?: boolean;
   category?: string;
   stock?: number;
   image?: string;
@@ -37,6 +46,8 @@ export interface UpdateProductInput {
 export interface ProductFilterParams {
   search?: string;
   category?: string;
+  companyId?: string;
+  companyName?: string;
   minPrice?: number | string;
   maxPrice?: number | string;
   sort?: 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'oldest';
@@ -46,6 +57,51 @@ export interface ProductFilterParams {
 
 export interface ProductsResponse {
   success: boolean;
+  count: number;
+  total: number;
+  page: number;
+  pages: number;
+  products: Product[];
+}
+
+export interface StorefrontSettings {
+  _id?: string;
+  companyId: string;
+  companyName: string;
+  bannerImage: string;
+  tagline: string;
+  description: string;
+  announcement: string;
+  flashSale: {
+    isActive: boolean;
+    title: string;
+    description: string;
+    discountPercentage: number;
+    endsAt: string | null;
+  };
+}
+
+export interface CompanyStorefrontResponse {
+  success: boolean;
+  store: {
+    companyId: string;
+    companyName: string;
+    totalProducts: number;
+    rating: number;
+    numReviews: number;
+    categories: string[];
+    bannerImage?: string;
+    tagline?: string;
+    description?: string;
+    announcement?: string;
+    flashSale?: {
+      isActive: boolean;
+      title: string;
+      description: string;
+      discountPercentage: number;
+      endsAt: string | null;
+    };
+  };
   count: number;
   total: number;
   page: number;

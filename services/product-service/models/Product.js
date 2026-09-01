@@ -19,6 +19,21 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Please provide a product price'],
       min: [0, 'Price cannot be negative'],
     },
+    originalPrice: {
+      type: Number,
+      default: 0,
+      min: [0, 'Original price cannot be negative'],
+    },
+    discountPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 99,
+    },
+    isFlashSale: {
+      type: Boolean,
+      default: false,
+    },
     category: {
       type: String,
       required: [true, 'Please provide a category'],
@@ -52,7 +67,7 @@ const productSchema = new mongoose.Schema(
     },
     rating: {
       type: Number,
-      default: 4.5,
+      default: 0,
       min: 0,
       max: 5,
     },

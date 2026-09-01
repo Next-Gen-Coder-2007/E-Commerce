@@ -10,6 +10,10 @@ import {
   deleteProduct,
   getCompanyStats,
   uploadImage,
+  getCompanyStorefront,
+  getStorefrontSettings,
+  updateStorefrontSettings,
+  applyBulkDiscount,
 } from '../controllers/productController.js';
 import { requireCompany } from '../middleware/authCheck.js';
 
@@ -38,6 +42,10 @@ const handleImageUpload = (req, res, next) => {
 };
 
 router.get('/categories', getCategories);
+router.get('/storefront/:companyIdentifier', getCompanyStorefront);
+router.get('/company/storefront-settings', requireCompany, getStorefrontSettings);
+router.put('/company/storefront-settings', requireCompany, updateStorefrontSettings);
+router.post('/company/bulk-discount', requireCompany, applyBulkDiscount);
 router.get('/company/mine', requireCompany, getMyCompanyProducts);
 router.get('/company/stats', requireCompany, getCompanyStats);
 router.post('/upload-image', requireCompany, handleImageUpload, uploadImage);

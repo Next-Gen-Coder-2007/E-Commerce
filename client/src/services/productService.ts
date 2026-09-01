@@ -5,6 +5,8 @@ import type {
   UpdateProductInput,
   ProductFilterParams,
   ProductsResponse,
+  CompanyStorefrontResponse,
+  StorefrontSettings,
   CompanyStats,
 } from '../types/product';
 
@@ -12,6 +14,61 @@ export const getProductsApi = async (
   params?: ProductFilterParams
 ): Promise<ProductsResponse> => {
   const response = await api.get<ProductsResponse>('/products', { params });
+  return response.data;
+};
+
+export const getCompanyStorefrontApi = async (
+  companyIdentifier: string,
+  params?: ProductFilterParams
+): Promise<CompanyStorefrontResponse> => {
+  const response = await api.get<CompanyStorefrontResponse>(
+    `/products/storefront/${encodeURIComponent(companyIdentifier)}`,
+    { params }
+  );
+  return response.data;
+};
+
+export const getStorefrontSettingsApi = async (): Promise<{
+  success: boolean;
+  storefront: StorefrontSettings;
+}> => {
+  const response = await api.get<{
+    success: boolean;
+    storefront: StorefrontSettings;
+  }>('/products/company/storefront-settings');
+  return response.data;
+};
+
+export const updateStorefrontSettingsApi = async (
+  data: Partial<StorefrontSettings>
+): Promise<{
+  success: boolean;
+  message: string;
+  storefront: StorefrontSettings;
+}> => {
+  const response = await api.put<{
+    success: boolean;
+    message: string;
+    storefront: StorefrontSettings;
+  }>('/products/company/storefront-settings', data);
+  return response.data;
+};
+
+export const applyBulkDiscountApi = async (data: {
+  discountPercentage?: number;
+  category?: string;
+  isFlashSale?: boolean;
+  reset?: boolean;
+}): Promise<{
+  success: boolean;
+  message: string;
+  updatedCount: number;
+}> => {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    updatedCount: number;
+  }>('/products/company/bulk-discount', data);
   return response.data;
 };
 

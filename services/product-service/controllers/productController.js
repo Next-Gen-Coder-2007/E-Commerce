@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+import StorefrontConfig from '../models/StorefrontConfig.js';
 import cloudinary from '../config/cloudinary.js';
 
 export const getProducts = async (req, res, next) => {
@@ -7,6 +8,8 @@ export const getProducts = async (req, res, next) => {
     const {
       search,
       category,
+      companyId,
+      companyName,
       minPrice,
       maxPrice,
       sort = 'newest',
@@ -15,6 +18,14 @@ export const getProducts = async (req, res, next) => {
     } = req.query;
 
     const query = { isPublished: true };
+
+    if (companyId && mongoose.Types.ObjectId.isValid(companyId)) {
+      query.companyId = companyId;
+    }
+
+    if (companyName && companyName.trim()) {
+      query.companyName = { $regex: new RegExp(`^${companyName.trim()}$`, 'i') };
+    }
 
     if (search && search.trim()) {
       const term = search.trim();
@@ -73,6 +84,153 @@ export const getProducts = async (req, res, next) => {
   }
 };
 
+export const getCompanyStorefront = async (req, res, next) => {
+  try {
+    const { companyIdentifier } = req.params;
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      sort = 'newest',
+      page = 1,
+      limit = 12,
+    } = req.query;
+
+    if (!companyIdentifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company identifier is required',
+      });
+    }
+
+    const isObjectId = mongoose.Types.ObjectId.isValid(companyIdentifier);
+    const companyQuery = isObjectId
+      ? { $or: [{ companyId: companyIdentifier }, { companyName: { $regex: new RegExp(`^${companyIdentifier}$`, 'i') } }] }
+      : { companyName: { $regex: new RegExp(`^${companyIdentifier}$`, 'i') } };
+
+    // Find any published product from this company to extract company metadata
+    const sampleProduct = await Product.findOne({ ...companyQuery, isPublished: true });
+
+    if (!sampleProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Company store not found or has no published products',
+      });
+    }
+
+    const resolvedCompanyId = sampleProduct.companyId;
+    const resolvedCompanyName = sampleProduct.companyName;
+
+    // Fetch custom storefront settings (or default if none exists)
+    const storefrontConfig = await StorefrontConfig.findOne({ companyId: resolvedCompanyId });
+
+    // Distinct categories for this company
+    const categories = await Product.distinct('category', {
+      companyId: resolvedCompanyId,
+      isPublished: true,
+    });
+
+    // Rating and review aggregations
+    const statsAggregation = await Product.aggregate([
+      { $match: { companyId: resolvedCompanyId, isPublished: true } },
+      {
+        $group: {
+          _id: null,
+          totalProducts: { $sum: 1 },
+          avgRating: { $avg: '$rating' },
+          totalReviews: { $sum: '$numReviews' },
+        },
+      },
+    ]);
+
+    const stats = statsAggregation[0] || {
+      totalProducts: 0,
+      avgRating: 0,
+      totalReviews: 0,
+    };
+
+    // Build filter query for products
+    const productQuery = {
+      companyId: resolvedCompanyId,
+      isPublished: true,
+    };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      productQuery.$or = [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { category: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (category && category.trim() && category.toLowerCase() !== 'all') {
+      productQuery.category = category.trim().toLowerCase();
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      productQuery.price = {};
+      if (minPrice !== undefined && minPrice !== '') {
+        productQuery.price.$gte = Number(minPrice);
+      }
+      if (maxPrice !== undefined && maxPrice !== '') {
+        productQuery.price.$lte = Number(maxPrice);
+      }
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sort === 'price_asc') {
+      sortOption = { price: 1 };
+    } else if (sort === 'price_desc') {
+      sortOption = { price: -1 };
+    } else if (sort === 'rating') {
+      sortOption = { rating: -1, numReviews: -1 };
+    } else if (sort === 'oldest') {
+      sortOption = { createdAt: 1 };
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 12));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [products, total] = await Promise.all([
+      Product.find(productQuery).sort(sortOption).skip(skip).limit(limitNum),
+      Product.countDocuments(productQuery),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      store: {
+        companyId: resolvedCompanyId,
+        companyName: resolvedCompanyName,
+        totalProducts: stats.totalProducts,
+        rating: stats.avgRating ? Number(stats.avgRating.toFixed(1)) : 0,
+        numReviews: stats.totalReviews || 0,
+        categories: categories.sort(),
+        bannerImage: storefrontConfig?.bannerImage || '',
+        tagline: storefrontConfig?.tagline || 'Official Brand Storefront',
+        description: storefrontConfig?.description || '',
+        announcement: storefrontConfig?.announcement || '',
+        flashSale: storefrontConfig?.flashSale || {
+          isActive: false,
+          title: '⚡ Store Flash Sale',
+          description: '',
+          discountPercentage: 0,
+          endsAt: null,
+        },
+      },
+      count: products.length,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum) || 1,
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -116,7 +274,17 @@ export const getCategories = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    const { title, description, price, category, stock, image } = req.body;
+    const {
+      title,
+      description,
+      price,
+      originalPrice,
+      discountPercentage,
+      isFlashSale,
+      category,
+      stock,
+      image,
+    } = req.body;
 
     if (!title || !description || price === undefined || !category || stock === undefined) {
       return res.status(400).json({
@@ -125,10 +293,23 @@ export const createProduct = async (req, res, next) => {
       });
     }
 
+    const numericPrice = Number(price);
+    let numericOriginal = originalPrice ? Number(originalPrice) : 0;
+    let numericDiscount = discountPercentage ? Number(discountPercentage) : 0;
+
+    if (numericOriginal > numericPrice && !numericDiscount) {
+      numericDiscount = Math.round(((numericOriginal - numericPrice) / numericOriginal) * 100);
+    } else if (numericDiscount > 0 && (!numericOriginal || numericOriginal <= numericPrice)) {
+      numericOriginal = Number((numericPrice / (1 - numericDiscount / 100)).toFixed(2));
+    }
+
     const product = await Product.create({
       title: title.trim(),
       description: description.trim(),
-      price: Number(price),
+      price: numericPrice,
+      originalPrice: numericOriginal,
+      discountPercentage: numericDiscount,
+      isFlashSale: Boolean(isFlashSale),
       category: category.trim().toLowerCase(),
       stock: Number(stock),
       image:
@@ -219,15 +400,35 @@ export const updateProduct = async (req, res, next) => {
       });
     }
 
-    const { title, description, price, category, stock, image, isPublished } = req.body;
+    const {
+      title,
+      description,
+      price,
+      originalPrice,
+      discountPercentage,
+      isFlashSale,
+      category,
+      stock,
+      image,
+      isPublished,
+    } = req.body;
 
     if (title !== undefined) product.title = title.trim();
     if (description !== undefined) product.description = description.trim();
     if (price !== undefined) product.price = Number(price);
+    if (originalPrice !== undefined) product.originalPrice = Number(originalPrice);
+    if (discountPercentage !== undefined) product.discountPercentage = Number(discountPercentage);
+    if (isFlashSale !== undefined) product.isFlashSale = Boolean(isFlashSale);
     if (category !== undefined) product.category = category.trim().toLowerCase();
     if (stock !== undefined) product.stock = Number(stock);
     if (image !== undefined) product.image = image.trim();
     if (isPublished !== undefined) product.isPublished = Boolean(isPublished);
+
+    if (product.originalPrice > product.price && !product.discountPercentage) {
+      product.discountPercentage = Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      );
+    }
 
     await product.save();
 
@@ -235,6 +436,142 @@ export const updateProduct = async (req, res, next) => {
       success: true,
       message: 'Product updated successfully',
       product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStorefrontSettings = async (req, res, next) => {
+  try {
+    const companyId = req.user.userId;
+    let config = await StorefrontConfig.findOne({ companyId });
+
+    if (!config) {
+      config = await StorefrontConfig.create({
+        companyId,
+        companyName: req.user.companyName || req.user.name || 'Merchant Store',
+        tagline: 'Official Brand Storefront',
+        description: '',
+        announcement: '',
+        flashSale: {
+          isActive: false,
+          title: '⚡ Limited-Time Flash Sale',
+          description: 'Promotional discount on selected products',
+          discountPercentage: 20,
+          endsAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      storefront: config,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateStorefrontSettings = async (req, res, next) => {
+  try {
+    const companyId = req.user.userId;
+    const { bannerImage, tagline, description, announcement, flashSale } = req.body;
+
+    let config = await StorefrontConfig.findOne({ companyId });
+
+    if (!config) {
+      config = new StorefrontConfig({
+        companyId,
+        companyName: req.user.companyName || req.user.name || 'Merchant Store',
+      });
+    }
+
+    if (bannerImage !== undefined) config.bannerImage = bannerImage.trim();
+    if (tagline !== undefined) config.tagline = tagline.trim();
+    if (description !== undefined) config.description = description.trim();
+    if (announcement !== undefined) config.announcement = announcement.trim();
+    if (flashSale !== undefined) {
+      config.flashSale = {
+        isActive: Boolean(flashSale.isActive),
+        title: flashSale.title || config.flashSale?.title || '⚡ Limited-Time Flash Sale',
+        description: flashSale.description || '',
+        discountPercentage: Number(flashSale.discountPercentage) || 0,
+        endsAt: flashSale.endsAt ? new Date(flashSale.endsAt) : config.flashSale?.endsAt,
+      };
+    }
+
+    await config.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Storefront customized successfully',
+      storefront: config,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const applyBulkDiscount = async (req, res, next) => {
+  try {
+    const companyId = req.user.userId;
+    const { discountPercentage, category, isFlashSale, reset } = req.body;
+
+    const query = { companyId };
+    if (category && category !== 'all') {
+      query.category = category.trim().toLowerCase();
+    }
+
+    if (reset) {
+      const productsToReset = await Product.find(query);
+      let updatedCount = 0;
+
+      for (const prod of productsToReset) {
+        if (prod.originalPrice && prod.originalPrice > prod.price) {
+          prod.price = prod.originalPrice;
+        }
+        prod.originalPrice = 0;
+        prod.discountPercentage = 0;
+        prod.isFlashSale = false;
+        await prod.save();
+        updatedCount++;
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Discounts reset for ${updatedCount} products`,
+        updatedCount,
+      });
+    }
+
+    const discountNum = Number(discountPercentage);
+    if (isNaN(discountNum) || discountNum <= 0 || discountNum >= 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Discount percentage must be between 1 and 99',
+      });
+    }
+
+    const productsToUpdate = await Product.find(query);
+    let updatedCount = 0;
+
+    for (const prod of productsToUpdate) {
+      const basePrice = prod.originalPrice && prod.originalPrice > prod.price ? prod.originalPrice : prod.price;
+      prod.originalPrice = basePrice;
+      prod.price = Number((basePrice * (1 - discountNum / 100)).toFixed(2));
+      prod.discountPercentage = discountNum;
+      if (isFlashSale !== undefined) {
+        prod.isFlashSale = Boolean(isFlashSale);
+      }
+      await prod.save();
+      updatedCount++;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Applied ${discountNum}% discount to ${updatedCount} products`,
+      updatedCount,
     });
   } catch (error) {
     next(error);

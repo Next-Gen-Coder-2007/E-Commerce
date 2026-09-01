@@ -117,24 +117,6 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    if (portal === 'customer' && user.role === 'company') {
-      clearToken(res);
-      return res.status(403).json({
-        success: false,
-        message:
-          'This email is registered as a business/merchant account and cannot be logged in from the customer portal. Please sign in at the Merchant Portal.',
-      });
-    }
-
-    if (portal === 'business' && user.role === 'customer') {
-      clearToken(res);
-      return res.status(403).json({
-        success: false,
-        message:
-          'This email is registered as a customer account and cannot be logged in from the merchant portal. Please sign in at the Customer Store.',
-      });
-    }
-
     if (!user.password && user.googleId) {
       return res.status(400).json({
         success: false,
@@ -204,22 +186,12 @@ export const googleAuth = async (req, res, next) => {
     let user = await User.findOne({ email: normalizedEmail });
 
     if (user) {
-      if (portal === 'customer' && user.role === 'company') {
-        clearToken(res);
-        return res.status(403).json({
-          success: false,
-          message:
-            'This email is registered as a business/merchant account and cannot be logged in from the customer portal. Please sign in at the Merchant Portal.',
-        });
-      }
-
+      // If user logs in from merchant portal and is not a company, upgrade them to merchant
       if (portal === 'business' && user.role === 'customer') {
-        clearToken(res);
-        return res.status(403).json({
-          success: false,
-          message:
-            'This email is registered as a customer account and cannot be logged in from the merchant portal. Please sign in at the Customer Store.',
-        });
+        user.role = 'company';
+        if (!user.companyName) {
+          user.companyName = `${user.name || 'Merchant'} Store`;
+        }
       }
 
       let updated = false;
@@ -231,25 +203,17 @@ export const googleAuth = async (req, res, next) => {
         user.avatar = picture;
         updated = true;
       }
-      if (updated) {
+      if (updated || portal === 'business') {
         await user.save();
       }
     } else {
-      if (portal === 'business') {
-        clearToken(res);
-        return res.status(404).json({
-          success: false,
-          message:
-            'No registered merchant account found with this Google email. Please register your business entity first.',
-        });
-      }
-
       user = await User.create({
         name: name || 'Google User',
         email: normalizedEmail,
         googleId,
         avatar: picture || '',
-        role: 'customer',
+        role: portal === 'business' ? 'company' : 'customer',
+        companyName: portal === 'business' ? `${name || 'Merchant'} Store` : '',
       });
     }
 
