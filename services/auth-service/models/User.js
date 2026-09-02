@@ -44,6 +44,15 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'company', 'admin'],
       default: 'customer',
     },
+    status: {
+      type: String,
+      enum: ['active', 'suspended', 'banned'],
+      default: 'active',
+    },
+    isVerifiedCompany: {
+      type: Boolean,
+      default: false,
+    },
     companyName: {
       type: String,
       trim: true,
