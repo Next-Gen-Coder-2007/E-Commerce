@@ -1,25 +1,59 @@
-# MERN E-Commerce Platform
+# Enterprise Distributed E-Commerce & Marketplace Platform
 
-A modular, microservices-oriented e-commerce backend and frontend architecture featuring an API Gateway, an isolated Authentication Microservice with Redis rate limiting, a unified Product & Catalog Service (with verified customer reviews, merchant replies, and promotional coupon management), a Shopping Cart Service with Redis caching, an Order Fulfillment Service, and a modern React 19 TypeScript client with secure HTTP-only cookie session management.
-
----
-
-## Overview
-
-This project is an e-commerce platform designed from the ground up to follow an incremental microservices architecture. Rather than building a tightly coupled monolithic application, core domain responsibilities are decoupled into dedicated services communicating behind a single API Gateway:
-
-* **API Gateway**: Provides unified routing, CORS configuration, security headers, distributed correlation IDs, and multi-instance load balancing.
-* **Authentication Service**: Handles customer/merchant identity, credential validation, Google OAuth 2.0, password hashing, JWT lifecycle, and Redis rate limiting.
-* **Product, Review & Coupon Service**: Centrally manages the product catalog, technical specifications, multi-image Cloudinary galleries, verified customer reviews & photo attachments, merchant responses, and dynamic store & platform coupon campaigns.
-* **Shopping Cart Service**: Manages persistent carts for both guest and authenticated users, automatic cart merging upon sign-in, and Redis cache acceleration.
-* **Order Management Service**: Powers multi-step checkout, coupon validation and redemption, order tracking timelines, customer order cancellation, and merchant fulfillment dispatch.
-* **Modern React Client**: Single-page application built with React 19, TypeScript, Vite, and Tailwind CSS with route guards, dark/light aesthetics, and live real-time sync.
+An enterprise-grade, event-driven distributed e-commerce marketplace platform engineered with Node.js microservices, Kafka, Redis, MongoDB database-per-service isolation, OpenSearch, OpenTelemetry distributed tracing, Docker, Kubernetes, and an AI-powered shopping & recommendation platform, fronted by a React 19 TypeScript application.
 
 ---
 
-## Current Architecture
+## 📑 Table of Contents
+1. [Platform Overview](#platform-overview)
+2. [Current Architecture vs. Target Enterprise Topology](#current-architecture-vs-target-enterprise-topology)
+3. [Core Distributed Systems & Reliability Engineering](#core-distributed-systems--reliability-engineering)
+   - [Event-Driven Architecture (Apache Kafka)](#1-event-driven-architecture-apache-kafka)
+   - [Dedicated Inventory Service (Two-Phase Reservation)](#2-dedicated-inventory-service-two-phase-reservation)
+   - [Payment Service & Idempotency Key Architecture](#3-payment-service--idempotency-key-architecture)
+   - [Distributed Transactions: Saga Pattern & Compensation](#4-distributed-transactions-saga-pattern--compensation)
+   - [Transactional Outbox Pattern (Dual-Write Prevention)](#5-transactional-outbox-pattern-dual-write-prevention)
+   - [Deterministic Order State Machine](#6-deterministic-order-state-machine)
+   - [Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)](#7-fault-tolerance-circuit-breakers-retries--dead-letter-queues-dlq)
+   - [Advanced Redis Infrastructure](#8-advanced-redis-infrastructure)
+4. [AI, Search & Marketplace Capabilities](#ai-search--marketplace-capabilities)
+   - [OpenSearch & Faceted Search](#9-opensearch--faceted-search)
+   - [AI Semantic Search & Hybrid Ranking](#10-ai-semantic-search--hybrid-ranking)
+   - [Real-Time Recommendation Engine Pipeline](#11-real-time-recommendation-engine-pipeline)
+   - [AI Shopping Assistant & Fraud Risk Engine](#12-ai-shopping-assistant--fraud-risk-engine)
+   - [Multi-Seller Marketplace Architecture & Buy-Box Algorithm](#13-multi-seller-marketplace-architecture--buy-box-algorithm)
+5. [Observability, Security & DevOps Engineering](#observability-security--devops-engineering)
+   - [OpenTelemetry Distributed Tracing & Telemetry Flow](#14-opentelemetry-distributed-tracing--telemetry-flow)
+   - [Centralized Structured Logging](#15-centralized-structured-logging)
+   - [Docker & Kubernetes Orchestration](#16-docker--kubernetes-orchestration)
+   - [Automated CI/CD Pipeline](#17-automated-cicd-pipeline)
+   - [Security Hardening & OWASP Compliance](#18-security-hardening--owasp-compliance)
+6. [Strategic Priority & Resume Value Matrix](#strategic-priority--resume-value-matrix)
+7. [12-Phase Implementation Roadmap](#12-phase-implementation-roadmap)
+8. [Current Project Structure & Database Schema](#current-project-structure--database-schema)
+9. [Current API Specifications](#current-api-specifications)
+10. [Local Development & Setup Guide](#local-development--setup-guide)
 
-The platform uses a decoupled client-gateway-service pattern where the frontend interfaces exclusively with the API Gateway.
+---
+
+## Platform Overview
+
+This platform is architected to demonstrate distributed-systems engineering, high availability, event-driven scalability, observability, fault tolerance, and production AI integration—transitioning from a standard CRUD microservice setup into a multi-seller marketplace system.
+
+### Key Highlights
+* **Decoupled Microservices**: Autonomous services with strict Database-per-Service isolation.
+* **Event-Driven Asynchrony**: Asynchronous message pipelines using Apache Kafka for decoupling, retries, and high-throughput background processing.
+* **Consistency & Reliability**: Distributed Sagas with compensating transactions, Transactional Outbox pattern, and strict idempotency keys.
+* **Full-Stack Observability**: End-to-end distributed tracing (OpenTelemetry), metric aggregation (Prometheus + Grafana), and correlation-ID structured logging.
+* **AI & Search Innovations**: Hybrid vector + keyword search, real-time personalization, checkout fraud scoring, and conversational shopping agents.
+* **Container & Cloud Native**: Dockerized services orchestrated with Kubernetes (Deployments, Services, ConfigMaps, Secrets, Ingress, HPA).
+
+---
+
+## Current Architecture vs. Target Enterprise Topology
+
+### 1. Current Architecture (Foundational State)
+The current implementation features an API Gateway with 4 isolated services communicating synchronously with database-per-service isolation in MongoDB Atlas and Redis acceleration:
 
 ```mermaid
 flowchart TD
@@ -36,7 +70,7 @@ flowchart TD
         OrderService["Order Service (Port 5004)\nExpress + Mongoose + Fulfillment Tracking"]
     end
 
-    subgraph DataLayer["Persistence & Caching (Same Cluster, Isolated Databases)"]
+    subgraph DataLayer["Persistence & Caching (Database-per-Service)"]
         AuthDB[("MongoDB: auth\nUsers, Merchant Details, Addresses")]
         ProductDB[("MongoDB: products\nCatalog, Specs, Customer Reviews, Store Coupons")]
         CartDB[("MongoDB: cart\nShopping Carts & Guest Sessions")]
@@ -61,142 +95,689 @@ flowchart TD
 
 ---
 
-## Technology Stack
+### 2. Target Enterprise Marketplace Topology
+The target production architecture incorporates dedicated Inventory and Payment services, an Apache Kafka event backbone, OpenSearch indexing, an AI/ML intelligence layer, full OpenTelemetry observability, and Kubernetes orchestration:
 
-### Frontend
-* **Core**: React 19, TypeScript, Vite
-* **Styling**: Tailwind CSS (v4), Lucide React icons
-* **Networking & State**: Axios (with credentials), Context API
-* **Auth**: `@react-oauth/google`
+```mermaid
+flowchart TD
+    Client["React 19 Frontend (TypeScript + Vite)"]
+    
+    subgraph EdgeLayer["Edge & Security Layer"]
+        CDN["CDN + WAF (Cloudflare / AWS CloudFront)"]
+        LB["Load Balancer (Nginx / Cloud Load Balancer)"]
+    end
+    
+    subgraph GatewayLayer["API Gateway Layer (Port 5000)"]
+        Gateway["Express API Gateway\nAuth Verification + Rate Limiting + Correlation IDs + OpenTelemetry Tracing"]
+    end
+    
+    subgraph CoreServices["Core Synchronous Services Layer"]
+        AuthSvc["Auth Service\n(Port 5001)"]
+        CatalogSvc["Catalog Service\n(Port 5002)"]
+        CartSvc["Cart Service\n(Port 5003)"]
+        OrderSvc["Order Service\n(Port 5004)"]
+        PaymentSvc["Payment Service\n(Port 5005)"]
+    end
 
-### Backend & Microservices
-* **Runtime**: Node.js (ES Modules)
-* **Framework**: Express (v5)
-* **Routing & Proxy**: `http-proxy-middleware`
-* **Security & Utilities**: Helmet, Morgan, Cookie-Parser, CORS, Dotenv, Crypto
+    subgraph DataStorage["Data & Cache Layer"]
+        AuthDB[("MongoDB: auth")]
+        CatalogDB[("MongoDB: products")]
+        CartRedis[("Upstash Redis: cart & sessions")]
+        OrderDB[("MongoDB: orders")]
+        PaymentDB[("MongoDB: payments")]
+    end
+    
+    subgraph OutboxLayer["Transactional Outbox Workers"]
+        OrderOutbox["Order Outbox Poller / CDC"]
+        PaymentOutbox["Payment Outbox Poller / CDC"]
+        CatalogOutbox["Catalog Outbox Poller / CDC"]
+    end
 
-### Data & Cloud Storage
-* **Databases**: MongoDB Atlas (Mongoose ODM) with Database-per-Service isolation
-* **Cache & Rate Limiting**: Upstash Redis (`ioredis`)
-* **Media & Cloud CDN**: Cloudinary for product galleries and customer review photos
+    subgraph EventBackbone["Apache Kafka Event Backbone"]
+        KafkaBrokers{{"Kafka Brokers (Cluster / KRaft)\nTopics: order.events, payment.events, inventory.events, catalog.events"}}
+    end
+
+    subgraph AsyncWorkers["Asynchronous Event Consumers"]
+        InvWorker["Inventory Service\n(Two-Phase Stock Allocation)"]
+        SearchWorker["Search Indexing Pipeline\n(Kafka Connect / Worker)"]
+        NotifWorker["Notification Worker\n(Email / SMS / Webhooks)"]
+        AnalyticsWorker["Real-Time Analytics Pipeline\n(ClickHouse / Data Lake)"]
+        AIWorker["AI / ML Recommendation\n& Fraud Scoring Engine"]
+    end
+
+    subgraph SearchAICluster["Search & Intelligence Storage"]
+        OpenSearch[("OpenSearch Cluster\n(Faceted & BM25 Search)")]
+        VectorDB[("Vector Database\n(Embeddings & kNN)")]
+        WarehouseDB[("Inventory DB\n(Multi-Warehouse Stocks)")]
+    end
+
+    Client --> CDN --> LB --> Gateway
+    Gateway --> AuthSvc
+    Gateway --> CatalogSvc
+    Gateway --> CartSvc
+    Gateway --> OrderSvc
+    Gateway --> PaymentSvc
+    
+    AuthSvc --> AuthDB
+    CatalogSvc --> CatalogDB
+    CartSvc --> CartRedis
+    OrderSvc --> OrderDB
+    PaymentSvc --> PaymentDB
+
+    OrderDB --> OrderOutbox --> KafkaBrokers
+    PaymentDB --> PaymentOutbox --> KafkaBrokers
+    CatalogDB --> CatalogOutbox --> KafkaBrokers
+
+    KafkaBrokers --> InvWorker --> WarehouseDB
+    KafkaBrokers --> SearchWorker --> OpenSearch
+    KafkaBrokers --> NotifWorker
+    KafkaBrokers --> AnalyticsWorker
+    KafkaBrokers --> AIWorker --> VectorDB
+```
 
 ---
 
-## Project Structure
+## Core Distributed Systems & Reliability Engineering
 
+### 1. Event-Driven Architecture (Apache Kafka)
+Direct synchronous REST calls between microservices (such as `Order Service -> Product Service`) introduce tight coupling, cascade failure risks, and latency accumulation. Apache Kafka decouples state transitions:
+
+```mermaid
+flowchart TD
+    ClientReq["Client: POST /api/v1/orders"] --> OrderSvc["Order Service"]
+    OrderSvc -- "1. Atomic Local Transaction" --> OrderDB[("Order DB\n(Order Record + Outbox Event)")]
+    OrderDB --> OutboxPublisher["Outbox CDC Publisher"]
+    OutboxPublisher -- "2. Publish ORDER_CREATED" --> KafkaTopic{{"Kafka Topic: order.events"}}
+
+    subgraph Consumers["Kafka Consumer Groups"]
+        InvConsumer["Inventory Service\nConsumer Group: 'inventory-workers'"]
+        NotifConsumer["Notification Service\nConsumer Group: 'notification-workers'"]
+        AnalyticsConsumer["Analytics Service\nConsumer Group: 'analytics-pipeline'"]
+        SearchConsumer["Search Indexer\nConsumer Group: 'search-sync'"]
+    end
+
+    KafkaTopic --> InvConsumer
+    KafkaTopic --> NotifConsumer
+    KafkaTopic --> AnalyticsConsumer
+    KafkaTopic --> SearchConsumer
+
+    InvConsumer -- "3a. Reserve Stock" --> WarehouseDB[("Warehouse DB")]
+    NotifConsumer -- "3b. Send Confirmation Email" --> SendGrid["Email / SMS Provider"]
+    AnalyticsConsumer -- "3c. Track GMV & Funnel" --> AnalyticsStore[("Analytics Store")]
+    SearchConsumer -- "3d. Update In-Stock Status" --> OpenSearchCluster[("OpenSearch")]
+```
+
+#### Key Kafka Topics & Event Schemas
+* `order.created`, `order.cancelled`, `order.fulfilled`
+* `payment.initiated`, `payment.completed`, `payment.failed`, `payment.refunded`
+* `inventory.reserved`, `inventory.reservation_failed`, `inventory.released`, `inventory.committed`
+* `catalog.product_updated`, `catalog.stock_changed`
+* `notification.dispatch_requested`
+
+---
+
+### 2. Dedicated Inventory Service (Two-Phase Reservation)
+Instead of keeping a primitive `stock: Number` in the product document, a dedicated **Inventory Service** maintains explicit warehouse stock allocation with two-phase locking semantics:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Cart as Cart Service
+    participant Order as Order Service / Saga
+    participant Inventory as Inventory Service
+    participant Redis as Redis / DB
+    participant Payment as Payment Service
+
+    User->>Cart: Proceed to Checkout
+    Cart->>Order: Create Order Request
+    Order->>Inventory: reserve(orderId, items, ttl=15m)
+    Inventory->>Redis: Check availableStock >= requestedQty
+    alt Stock Available
+        Inventory->>Redis: reservedStock += qty, availableStock -= qty
+        Inventory-->>Order: 200 OK (Reservation Token: res_98f2)
+        Order->>Payment: Process Payment
+        alt Payment Succeeded
+            Payment-->>Order: Payment Success
+            Order->>Inventory: commit(orderId, res_98f2)
+            Inventory->>Redis: totalStock -= qty, reservedStock -= qty
+            Inventory-->>Order: Stock Permanently Deducted
+        else Payment Failed / Timed Out
+            Payment-->>Order: Payment Failed
+            Order->>Inventory: release(orderId, res_98f2, reason="Payment Failed")
+            Inventory->>Redis: reservedStock -= qty, availableStock += qty
+            Inventory-->>Order: Stock Released Back to Pool
+        end
+    else Stock Insufficient
+        Inventory-->>Order: 409 Conflict (INSUFFICIENT_STOCK)
+        Order-->>User: Checkout Aborted: Item Out of Stock
+    end
+```
+
+#### Reservation Lifecycle
+1. **`reserve(orderId, items, ttl = 15m)`**: Atomically increments `reservedStock` via MongoDB conditional updates or Redis distributed locks. If `availableStock < quantity`, throws `INSUFFICIENT_STOCK`.
+2. **`commit(orderId)`**: Triggered on `PAYMENT_COMPLETED`. Permanently decrements `totalStock` and `reservedStock`, creating a permanent `StockMovementAudit`.
+3. **`release(orderId, reason)`**: Triggered on `PAYMENT_FAILED` or checkout expiry. Decrements `reservedStock`, returning available units back to the pool.
+
+---
+
+### 3. Payment Service & Idempotency Key Architecture
+Prevents duplicate financial charges caused by network drops, browser retries, or automated replay attacks.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Gateway
+    participant PaymentService
+    participant Redis
+    participant StripeGateway as Payment Provider
+    participant Kafka
+
+    Client->>Gateway: POST /api/v1/payments (Idempotency-Key: pay_req_8f29c4e1)
+    Gateway->>PaymentService: Route with Idempotency-Key
+    PaymentService->>Redis: SETNX idempotency:pay_req_8f29c4e1 "PROCESSING" EX 120
+    
+    alt Key already exists (Cached Result)
+        Redis-->>PaymentService: Key exists, status = "COMPLETED", body = {...}
+        PaymentService-->>Client: 200 OK (Cached Payment Receipt)
+    else Key acquired (First Execution)
+        PaymentService->>StripeGateway: Charge customer card / wallet
+        StripeGateway-->>PaymentService: Payment Success (txn_948271)
+        PaymentService->>Redis: SET idempotency:pay_req_8f29c4e1 "{status: 'COMPLETED', txnId: 'txn_948271'}" EX 86400
+        PaymentService->>Kafka: Publish PAYMENT_COMPLETED event
+        PaymentService-->>Client: 201 Created (Payment Receipt)
+    end
+```
+
+---
+
+### 4. Distributed Transactions: Saga Pattern & Compensation
+Since distributed transactions across independent microservices cannot use monolithic ACID locks without causing distributed deadlocks, an **Orchestrated Saga Pattern** is implemented.
+
+```mermaid
+stateDiagram-v2
+    [*] --> CreateOrderPending
+    CreateOrderPending --> ReserveInventory : Order Created
+    
+    state ReserveInventory {
+        [*] --> CheckStock
+        CheckStock --> InventoryReserved : Available
+        CheckStock --> StockFailed : Insufficient
+    }
+    
+    StockFailed --> CancelOrder : Compensate (Cancel Order)
+    
+    InventoryReserved --> ProcessPayment : Payment Requested
+    
+    state ProcessPayment {
+        [*] --> ChargeCard
+        ChargeCard --> PaymentSuccess : Success
+        ChargeCard --> PaymentFailed : Card Declined / Timeout
+    }
+    
+    PaymentFailed --> ReleaseInventory : Compensate (Release Reserved Stock)
+    ReleaseInventory --> CancelOrder : Compensate (Mark Order Cancelled)
+    CancelOrder --> [*]
+    
+    PaymentSuccess --> CommitInventory : Commit Stock Deduction
+    CommitInventory --> ConfirmOrder : Mark Order CONFIRMED
+    ConfirmOrder --> DispatchNotification : Emit ORDER_CONFIRMED Event
+    DispatchNotification --> [*]
+```
+
+---
+
+### 5. Transactional Outbox Pattern (Dual-Write Prevention)
+Publishing an event directly to Kafka right after `database.save()` can fail if the process crashes or Kafka is momentarily unreachable, leaving the database updated but no event emitted (Dual-Write Hazard).
+
+```mermaid
+flowchart TD
+    subgraph OrderServiceScope["Order Service Execution Scope"]
+        API["POST /api/v1/orders"] --> BeginTx["Begin MongoDB / SQL Transaction"]
+        BeginTx --> SaveOrder["1. Insert Order Document\n(status: 'PENDING')"]
+        SaveOrder --> SaveOutbox["2. Insert Outbox Event\n(topic: 'order.events', status: 'UNPUBLISHED')"]
+        SaveOutbox --> CommitTx["Commit Transaction (Atomic)"]
+    end
+
+    subgraph OutboxWorkerScope["Outbox Publisher Worker (Background Loop / Debezium)"]
+        PollEvents["Poll UNPUBLISHED Outbox Events\n(or tail Change Stream)"] --> PublishKafka["Publish Event to Kafka Topic"]
+        PublishKafka --> AckCheck{"Kafka Broker ACK?"}
+        AckCheck -- "Yes" --> MarkPublished["Update Outbox Event:\nstatus = 'PUBLISHED'"]
+        AckCheck -- "No / Retry" --> RetryBackoff["Exponential Backoff & Retry"]
+    end
+
+    CommitTx -.-> PollEvents
+    PublishKafka --> KafkaCluster{{"Kafka Cluster\n(order.events topic)"}}
+```
+
+---
+
+### 6. Deterministic Order State Machine
+Enforces strict unidirectional transitions, disallowing illegal state mutations (such as transitioning `DELIVERED -> PROCESSING` or `CANCELLED -> SHIPPED`):
+
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED : User submits checkout
+    CREATED --> PENDING : Inventory reservation requested
+    
+    PENDING --> CONFIRMED : Payment Captured & Stock Committed
+    PENDING --> CANCELLED : Payment Failed / Timeout / Insufficient Stock
+    
+    CONFIRMED --> PROCESSING : Merchant starts picking & packing
+    CONFIRMED --> CANCELLED : Customer cancellation within grace period
+    
+    PROCESSING --> SHIPPED : Dispatched with carrier tracking
+    PROCESSING --> CANCELLED : Merchant out-of-stock cancellation
+    
+    SHIPPED --> DELIVERED : Carrier confirms delivery
+    
+    CANCELLED --> REFUNDED : Automated payment refund issued
+    DELIVERED --> REFUNDED : Return accepted & refund completed
+    
+    DELIVERED --> [*]
+    REFUNDED --> [*]
+```
+
+---
+
+### 7. Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)
+* **Circuit Breakers (Opossum)**: Protects downstream service calls (Payment, Shipping APIs). Transitions from `CLOSED -> OPEN -> HALF-OPEN` when error thresholds exceed 50% over a 10s rolling window, failing fast with a fallback response rather than exhausting system threads.
+* **Exponential Backoff Retries**: Transient failures are retried at `100ms`, `400ms`, `1600ms` with jitter.
+* **Dead Letter Queues (DLQ)**: Poison pills or events that fail processing after max retries are published to `*-dlq` topics (`payment-dlq`, `inventory-dlq`) with full error stack traces and metadata for operator review and replay.
+
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED : Initial Normal State
+    
+    state CLOSED {
+        [*] --> ExecuteNormally
+        ExecuteNormally --> CheckHealth : Success response
+    }
+    
+    CLOSED --> OPEN : Failure rate > 50% in 10s rolling window
+    
+    state OPEN {
+        [*] --> FastFail
+        FastFail --> ReturnFallback : Immediate fallback / 503 error (No downstream calls)
+    }
+    
+    OPEN --> HALF_OPEN : Sleep window elapsed (e.g. 10s cooldown)
+    
+    state HALF_OPEN {
+        [*] --> TrialRequest
+        TrialRequest --> ProbeService : Send limited trial traffic (e.g. 3 requests)
+    }
+    
+    HALF_OPEN --> CLOSED : All trial requests succeed (System Recovered)
+    HALF_OPEN --> OPEN : Any trial request fails (System Still Degraded)
+```
+
+---
+
+### 8. Advanced Redis Infrastructure
+Redis is leveraged beyond basic key-value caching:
+* **Distributed Locks (Redlock)**: Ensures single-worker execution during inventory checkout and cron coupon recalculation.
+* **Sliding Window Rate Limiter**: Redis Sorted Sets (`ZREMRANGEBYSCORE`, `ZADD`, `ZCARD`) for precise per-IP and per-User rate limits.
+* **Idempotency Store**: Atomic `SET key val NX EX 86400` caching API execution results.
+* **Real-time Product Caching**: Multi-tier cache invalidation with stale-while-revalidate policies.
+* **Cart Acceleration**: Sub-5ms session carts for guest and logged-in users with write-back persistence.
+
+---
+
+## AI, Search & Marketplace Capabilities
+
+### 9. OpenSearch & Faceted Search
+MongoDB text indexes are replaced with an **OpenSearch** cluster synchronized in near real-time via Kafka CDC streams:
+* **Fuzzy & Typo Tolerance**: Handles search queries like `"iphon 17"` -> `"iPhone 17"`, `"runing shos"` -> `"running shoes"`.
+* **Multi-Attribute Faceting**: Instant faceted aggregations across Brand, Category, Price Range, Customer Rating, Merchant Badge, Discount %, and Warehouse Availability.
+* **Autocomplete & Query Suggestions**: N-gram edge tokenizers providing sub-15ms search-as-you-type completions.
+
+---
+
+### 10. AI Semantic Search & Hybrid Ranking
+Combines dense vector embeddings with sparse BM25 keyword matching using Reciprocal Rank Fusion (RRF):
+
+```mermaid
+flowchart TD
+    UserQuery["User Search: 'lightweight laptop for coding and 4k video editing'"] --> QueryRouter{"Query Router"}
+    
+    subgraph VectorBranch["Dense Semantic Vector Branch"]
+        QueryRouter --> Embedder["Embedding Model\n(text-embedding-3-small)"]
+        Embedder --> VectorSearch["Vector kNN Cosine Search\n(OpenSearch / Milvus Vector Index)"]
+        VectorSearch --> VectorCandidates["Top 50 Vector Candidates\n(Semantic & Conceptual Matches)"]
+    end
+
+    subgraph LexicalBranch["Sparse Lexical Keyword Branch"]
+        QueryRouter --> BM25Search["BM25 Text Search\n(Exact tokens, specs, brand, category)"]
+        BM25Search --> BM25Candidates["Top 50 Keyword Candidates\n(Token & Exact Term Matches)"]
+    end
+
+    VectorCandidates --> RRF["Reciprocal Rank Fusion (RRF)\nScore = 1/(60 + Rank_Vector) + 1/(60 + Rank_BM25)"]
+    BM25Candidates --> RRF
+
+    RRF --> BusinessBooster["Business Rule Boosting\n(Stock availability, merchant rating, profit margin)"]
+    BusinessBooster --> FinalRankedList["Final Ranked Product Results (Sub-50ms)"]
+```
+
+---
+
+### 11. Real-Time Recommendation Engine Pipeline
+* **Collaborative Filtering & Co-occurrence**: `"Frequently Bought Together"`, `"Customers Who Viewed This Also Bought"`.
+* **Content-Based Vector Similarity**: Cosine distance across product description and spec embeddings for `"You May Also Like"`.
+* **Session-Aware Re-ranking**: Real-time Kafka clickstream ingest dynamically re-ranks home feed based on active in-session category affinity.
+
+```mermaid
+flowchart LR
+    subgraph EventIngest["Real-Time User Activity"]
+        UserClick["User Click / View"] --> ClickKafka{{"Kafka: user.events"}}
+        UserAddCart["Add to Cart"] --> ClickKafka
+        UserPurchase["Order Placed"] --> ClickKafka
+    end
+
+    subgraph ProcessingPipeline["Recommendation Workers"]
+        ClickKafka --> StreamProcessor["Flink / Spark / Node.js Stream Processor"]
+        StreamProcessor --> SessionAffinity["In-Session Category Affinity\n(Redis Active Profile)"]
+        StreamProcessor --> ItemCoOccurrence["Item Co-Occurrence Matrix\n(Frequently Bought Together)"]
+    end
+
+    subgraph RecommendationOutput["Served UI Recommendation Widgets"]
+        SessionAffinity --> ReRankFeed["Personalized Home Feed"]
+        ItemCoOccurrence --> FreqBought["Frequently Bought Together Widget"]
+        VectorSim["Product Embedding Similarity"] --> YouMayLike["'You May Also Like' Slider"]
+    end
+```
+
+---
+
+### 12. AI Shopping Assistant & Fraud Risk Engine
+* **Conversational Shopping Assistant**: LangChain/LlamaIndex powered assistant that takes complex user prompts (*"Find me a mechanical keyboard under $100 with hot-swappable switches and quiet linear switches"*), parses criteria into structured API parameters, and presents rich interactive product cards.
+* **Fraud & Risk Scoring Engine**: Calculates risk score (0.0 to 1.0) during checkout based on IP geolocation discrepancies, card attempt velocity, account age, and order value anomaly detection. High-risk transactions (>0.80) trigger automated 3D-Secure challenges or merchant review flags.
+
+---
+
+### 13. Multi-Seller Marketplace Architecture & Buy-Box Algorithm
+Enables multiple merchants to sell against a single canonical product catalog entry (Amazon/Flipkart model):
+* **Canonical Catalog**: Master SKU with shared specifications, images, and verified reviews.
+* **Seller Offers**: Individual merchants provide competitive Offer entities with `{ price, stock, shippingCost, estimatedDeliveryDays, sellerRating }`.
+* **Dynamic Buy-Box Algorithm**: Selects the default featured seller based on price competitiveness, fulfillment speed, seller rating, and stock reliability.
+
+```mermaid
+flowchart TD
+    MasterProduct["Canonical Product SKU (e.g. iPhone 15 Pro 256GB)"] --> Offers
+    
+    subgraph Offers["Merchant Offers"]
+        SellerA["Seller A: $999 | Stock: 50 | Rating: 4.9 | 1-Day Prime"]
+        SellerB["Seller B: $980 | Stock: 5 | Rating: 3.8 | 5-Day Delivery"]
+        SellerC["Seller C: $1020 | Stock: 100 | Rating: 4.8 | 2-Day Delivery"]
+    end
+    
+    Offers --> BuyBoxAlgo["Buy-Box Scoring Algorithm\nScore = (0.4 * PriceScore) + (0.3 * ShippingScore) + (0.3 * SellerRatingScore)"]
+    BuyBoxAlgo --> FeaturedSeller["Featured Seller Winner (Default 'Add to Cart')\n--> Seller A"]
+    BuyBoxAlgo --> OtherSellers["'Other Sellers on Platform' Drawer\n--> Seller B, Seller C"]
+```
+
+---
+
+## Observability, Security & DevOps Engineering
+
+### 14. OpenTelemetry Distributed Tracing & Telemetry Flow
+* **Distributed Tracing (OpenTelemetry)**: Propagates W3C `traceparent` headers through API Gateway, microservices, and Kafka event headers. Provides complete flame graphs with individual span breakdowns (Gateway -> Order -> Payment -> Kafka -> Inventory).
+* **Prometheus Metrics**: Exposes `/metrics` on all services tracking request rates, HTTP latency (p50, p95, p99), Kafka consumer lag, Redis hit/miss rates, active database connections, and business KPIs (Orders/min, Payment Failure %).
+* **Grafana Dashboards**: Pre-built dashboards for system health, service mesh latency, and marketplace revenue telemetry.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Gateway as API Gateway (trace-id: 4bf92f...)
+    participant OrderSvc as Order Service (span: order-create)
+    participant PaymentSvc as Payment Service (span: payment-charge)
+    participant Kafka as Kafka Topic (traceparent header injected)
+    participant InvSvc as Inventory Worker (span: inventory-reserve)
+    participant Collector as OpenTelemetry Collector
+    participant Grafana as Grafana / Jaeger UI
+
+    User->>Gateway: POST /api/v1/orders
+    Note over Gateway: Injects W3C TraceContext<br/>traceId: 4bf92f3577b3...
+    Gateway->>OrderSvc: Forward with traceparent header
+    OrderSvc->>PaymentSvc: Synchronous Call /api/v1/payments (traceparent propagated)
+    PaymentSvc-->>Collector: Emit Span: "payment-charge" (duration: 85ms)
+    PaymentSvc-->>OrderSvc: Payment Authorized
+    OrderSvc->>Kafka: Publish ORDER_CREATED (traceparent in Kafka Headers)
+    OrderSvc-->>Collector: Emit Span: "order-create" (duration: 120ms)
+    OrderSvc-->>Gateway: Order Placed (201 Created)
+    Gateway-->>Collector: Emit Span: "gateway-proxy" (duration: 145ms)
+    Gateway-->>User: 201 Created { orderId: "..." }
+
+    Kafka->>InvSvc: Consume ORDER_CREATED with traceparent
+    InvSvc-->>Collector: Emit Span: "inventory-reserve" (duration: 25ms)
+    
+    Collector->>Grafana: Aggregate Trace Flame Graph
+```
+
+---
+
+### 15. Centralized Structured Logging
+Every service emits standardized, machine-readable JSON logs:
+
+```json
+{
+  "timestamp": "2026-09-02T11:20:00.123Z",
+  "service": "order-service",
+  "level": "error",
+  "correlationId": "corr_8f2a93c-912b",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "spanId": "00f067aa0ba902b7",
+  "userId": "usr_65a1e8c9",
+  "orderId": "ORD-2026-9821",
+  "message": "Payment reservation failed: insufficient funds",
+  "stack": "PaymentGatewayError: ..."
+}
+```
+
+Logs are shipped via Fluent Bit / OpenTelemetry Collector directly to OpenSearch for centralized querying and alerting.
+
+---
+
+### 16. Docker & Kubernetes Orchestration
+Each microservice is containerized with multi-stage Docker builds and orchestrated in Kubernetes:
+* **Deployments**: Declarative replicas with zero-downtime rolling updates.
+* **Horizontal Pod Autoscaling (HPA)**: Automatic pod scaling (3 -> 10 replicas) based on CPU/Memory and custom Prometheus metrics (e.g. Kafka consumer lag > 500).
+* **Ingress Controller (NGINX / Traefik)**: TLS termination, path routing, and header mutation.
+* **ConfigMaps & Secrets**: Secure separation of environment configuration and encrypted credentials.
+
+---
+
+### 17. Automated CI/CD Pipeline
+GitHub Actions pipeline executing on every pull request and push to `main`:
+
+```mermaid
+flowchart LR
+    DevPush["Git Push / PR to main"] --> GHAction["GitHub Actions Runner"]
+    
+    subgraph Stage1["Stage 1: Validation"]
+        GHAction --> ESLint["ESLint & Prettier"]
+        GHAction --> TypeCheck["TypeScript Typecheck"]
+    end
+
+    subgraph Stage2["Stage 2: Multi-Tier Testing"]
+        ESLint --> JestUnit["Unit Tests (Jest)"]
+        TypeCheck --> JestUnit
+        JestUnit --> SupertestIntegration["Integration Tests\n(Supertest + Testcontainers)"]
+        SupertestIntegration --> PlaywrightE2E["E2E Tests\n(Playwright Headless)"]
+    end
+
+    subgraph Stage3["Stage 3: Security & Build"]
+        PlaywrightE2E --> TrivyScan["Trivy & Snyk\nVulnerability Scan"]
+        TrivyScan --> DockerBuild["Docker Multi-Stage Buildx"]
+        DockerBuild --> RegistryPush["Push to Container Registry\n(GHCR / AWS ECR)"]
+    end
+
+    subgraph Stage4["Stage 4: GitOps Deployment"]
+        RegistryPush --> ArgoCD["ArgoCD / K8s Rolling Update"]
+        ArgoCD --> ProdCluster[("Production K8s Cluster")]
+    end
+```
+
+---
+
+### 18. Security Hardening & OWASP Compliance
+* **Token Rotation**: Secure HTTP-only cookies with short-lived JWT access tokens and Redis-backed refresh token rotation with reuse detection.
+* **RBAC & Authorization**: Granular role-based access control (`customer`, `company`, `support`, `admin`, `super-admin`).
+* **Injection Defense**: Parameterized Mongoose queries, strict schema sanitization against NoSQL injection, and DOMPurify for user-generated content.
+* **Transport Security**: TLS encryption for all ingress and inter-service communications, strict CORS policies, and Helmet headers.
+
+---
+
+## Strategic Priority & Resume Value Matrix
+
+| Phase / Focus | Architectural Area | Implementation Scope | Resume Impact |
+| :--- | :--- | :--- | :---: |
+| 🔴 **Priority 1** | **Kafka Event-Driven Backbone** | Asynchronous events, topic topologies, consumer groups, loose coupling | ⭐⭐⭐⭐⭐ |
+| 🔴 **Priority 2** | **Dedicated Inventory Service** | Available vs. reserved stock, 2-phase reserve/release/commit mechanics | ⭐⭐⭐⭐⭐ |
+| 🔴 **Priority 3** | **Payment Service & Idempotency** | Dedicated payment microservice, `Idempotency-Key` locks, Stripe webhooks | ⭐⭐⭐⭐⭐ |
+| 🔴 **Priority 4** | **Distributed Saga Orchestration** | Compensating transaction flows, failure recovery, checkout coordinator | ⭐⭐⭐⭐⭐ |
+| 🔴 **Priority 5** | **Transactional Outbox Pattern** | Atomic outbox table + CDC worker, zero dual-write event anomalies | ⭐⭐⭐⭐⭐ |
+| 🔴 **Priority 6** | **OpenSearch & Faceted Search** | Typo-tolerance, faceted search, sub-15ms search-as-you-type autocomplete | ⭐⭐⭐⭐⭐ |
+| 🟠 **Priority 7** | **Docker & Kubernetes (K8s)** | Deployments, Services, Ingress, ConfigMaps, Secrets, HPA autoscaling | ⭐⭐⭐⭐⭐ |
+| 🟠 **Priority 8** | **OpenTelemetry Distributed Tracing**| W3C trace propagation across Gateway, services, and Kafka spans | ⭐⭐⭐⭐⭐ |
+| 🟠 **Priority 9** | **Prometheus & Grafana Telemetry** | p95/p99 latency tracking, Kafka consumer lag, system health dashboards | ⭐⭐⭐⭐ |
+| 🟠 **Priority 10**| **Automated CI/CD Pipeline** | GitHub Actions: Lint, Jest, Supertest, Playwright, Docker, Security scan | ⭐⭐⭐⭐ |
+| 🟠 **Priority 11**| **Resilience & Fault Tolerance** | Opossum circuit breakers, exponential retries with jitter, Dead Letter Queues | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 12**| **AI Semantic Vector Search** | Text embeddings, hybrid vector + keyword ranking (RRF) | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 13**| **Real-time Recommendations** | Collaborative filtering, content similarity, in-session dynamic re-ranking | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 14**| **AI Assistant & Fraud Engine** | Natural language shopping agent, checkout risk scoring heuristics | ⭐⭐⭐⭐ |
+| 🟡 **Priority 15**| **Marketplace Seller Architecture**| Multi-seller offer buy-box algorithm, warehouse logistics & tracking | ⭐⭐⭐⭐ |
+| 🟡 **Priority 16**| **Admin & Compliance Platform** | Unified back-office analytics, RBAC, merchant audits, refund studio | ⭐⭐⭐ |
+
+---
+
+## 12-Phase Implementation Roadmap
+
+The evolution from the current working foundation to the enterprise distributed marketplace is executed in 12 structured phases:
+
+```mermaid
+flowchart TD
+    subgraph Foundation["Phase 1-4: Core Distributed Architecture"]
+        P1["Phase 1: Domain Boundaries & API v1 Standard"] --> P2["Phase 2: Dedicated Inventory & Payment (Idempotency)"]
+        P2 --> P3["Phase 3: Apache Kafka Event-Driven Backbone"]
+        P3 --> P4["Phase 4: Saga Distributed Transactions + Transactional Outbox"]
+    end
+
+    subgraph ScaleInfrastructure["Phase 5-8: Infrastructure & Observability"]
+        P4 --> P5["Phase 5: OpenSearch Cluster & Faceted Search"]
+        P5 --> P6["Phase 6: Docker Containerization & Kubernetes (HPA, Ingress)"]
+        P6 --> P7["Phase 7: Full-Stack Observability (OpenTelemetry + Prometheus + Grafana)"]
+        P7 --> P8["Phase 8: Automated CI/CD & Multi-Tier Test Suite (Playwright)"]
+    end
+
+    subgraph IntelligenceResilience["Phase 9-12: AI Intelligence & Production Readiness"]
+        P8 --> P9["Phase 9: AI Semantic Vector Search & Hybrid Ranking"]
+        P9 --> P10["Phase 10: AI Shopping Assistant & Fraud Risk Scoring"]
+        P10 --> P11["Phase 11: Resilience (Circuit Breakers, DLQ) & k6 Load Testing"]
+        P11 --> P12["Phase 12: Production OpenAPI/Swagger Docs, ADRs & System Design Portfolio"]
+    end
+```
+
+### Phase Details
+
+#### Phase 1: Domain Boundaries & Service Refactoring
+* Decouple the monolithic `product-service` into cleanly isolated domain modules (`catalog-module`, `reviews-module`, `coupons-module`).
+* Refactor synchronous cross-service calls in `order-service` to prepare for asynchronous event pipelines.
+* Introduce strict API versioning (`/api/v1/*`) and standardized JSON error response envelopes.
+
+#### Phase 2: Dedicated Inventory & Payment Services
+* Extract inventory logic into a standalone **Inventory Microservice** with `totalStock`, `reservedStock`, and `availableStock`.
+* Implement the atomic `reserve()`, `release()`, and `commit()` methods with TTL expiration.
+* Build a standalone **Payment Microservice** with Stripe/PayPal webhook integration and Redis-backed `Idempotency-Key` verification.
+
+#### Phase 3: Apache Kafka Event-Driven Backbone
+* Provision Apache Kafka and Zookeeper / KRaft cluster via Docker.
+* Create core topics (`order.events`, `payment.events`, `inventory.events`, `notification.events`).
+* Build robust Kafka producer and consumer wrappers with partition key strategies (e.g., partitioning by `orderId` or `userId` for strict ordering).
+
+#### Phase 4: Saga Distributed Transactions & Transactional Outbox
+* Implement the **Saga Orchestrator** in `order-service` to coordinate checkout workflows across Order, Inventory, and Payment.
+* Implement compensating actions (`releaseInventory`, `cancelOrder`, `refundPayment`) for failure handling.
+* Implement the **Transactional Outbox Pattern** in Order and Payment services with a background CDC poller to prevent dual-write inconsistencies.
+
+#### Phase 5: OpenSearch & High-Performance Faceted Search
+* Deploy an OpenSearch cluster and establish continuous indexing from MongoDB via Kafka event consumers.
+* Build faceted search endpoints supporting dynamic filtering (brand, category, price, rating, discount).
+* Implement edge n-gram autocomplete and fuzzy search typo tolerance.
+
+#### Phase 6: Docker Containerization & Kubernetes (K8s)
+* Write optimized multi-stage `Dockerfile` definitions for all microservices, the API Gateway, and the React frontend.
+* Create Kubernetes manifests: Deployments, Services, ConfigMaps, Secrets, Ingress, and Horizontal Pod Autoscalers (HPA).
+* Configure local K8s testing with Minikube / Kind.
+
+#### Phase 7: Observability, Distributed Tracing & Metrics
+* Instrument API Gateway and all microservices with OpenTelemetry Node.js SDK for distributed context propagation.
+* Expose standard Prometheus `/metrics` endpoints and configure Prometheus scrapers.
+* Build Grafana dashboards for latency heatmaps, error rates, Kafka consumer lag, and checkout throughput.
+* Implement structured JSON logging with automatic `correlationId` and `traceId` injection.
+
+#### Phase 8: CI/CD Pipeline & Automated Testing
+* Set up GitHub Actions CI workflow for linting, type-checking, and vulnerability scanning.
+* Build unit tests (Jest) and integration test suites (Supertest + Testcontainers for MongoDB, Redis, Kafka).
+* Implement end-to-end Playwright tests covering critical user flows (Register -> Search -> Add to Cart -> Checkout -> Payment -> Order Tracking).
+
+#### Phase 9: AI Semantic Vector Search & Recommendations
+* Generate vector embeddings for product titles and descriptions using OpenAI / open-source embedding models.
+* Implement kNN vector search in OpenSearch / Milvus and combine with BM25 keyword matching via Reciprocal Rank Fusion (RRF).
+* Build collaborative filtering and content-based recommendation services for `"Frequently Bought Together"` and `"You May Also Like"`.
+
+#### Phase 10: AI Shopping Assistant & Fraud Scoring
+* Create an AI Shopping Assistant agent with LangChain to interpret complex user shopping requirements and retrieve targeted products.
+* Build a real-time risk scoring engine analyzing order velocity, billing/shipping address mismatch, and card decline history.
+
+#### Phase 11: Resilience Engineering & Chaos Load Testing
+* Integrate Opossum circuit breakers on external integration points.
+* Configure Kafka Dead Letter Queues (DLQ) with automatic retry backoff.
+* Conduct load testing with k6 (1,000+ virtual users) and inject simulated network partitions and service crashes.
+
+#### Phase 12: Production Documentation, Swagger & ADRs
+* Generate interactive OpenAPI / Swagger documentation for all microservices.
+* Document Architecture Decision Records (ADRs) explaining distributed systems tradeoffs (e.g. Saga Orchestration vs. Choreography, Kafka vs. RabbitMQ).
+
+---
+
+## Current Project Structure & Database Schema
+
+### Directory Tree
 ```text
 E-Commerce/
 ├── client/                               # Frontend Single Page Application
 │   ├── src/
-│   │   ├── components/                   # Reusable UI components & route guards
-│   │   │   ├── business/                 # Merchant navbar and seller components
-│   │   │   ├── reviews/                  # Verified reviews feed, ReviewCard, WriteReviewModal
-│   │   │   ├── CartDrawer.tsx            # Slide-over interactive shopping cart drawer
-│   │   │   ├── CancelOrderModal.tsx      # Multi-step customer cancellation dialog
-│   │   │   ├── GoogleAuthButton.tsx      # Google Identity Services button
-│   │   │   ├── Navbar.tsx                # Global consumer navigation & badge
-│   │   │   ├── ProtectedRoute.tsx
-│   │   │   └── PublicOnlyRoute.tsx
-│   │   ├── context/
-│   │   │   ├── AuthContext.tsx           # Authentication state, session restore & address manager
-│   │   │   └── CartContext.tsx           # Shopping cart state, actions & guest-to-user merging
-│   │   ├── pages/
-│   │   │   ├── business/
-│   │   │   │   ├── BusinessHomePage.tsx     # Seller Central (Catalog, Inventory, Orders, Reviews, Coupons)
-│   │   │   │   ├── BusinessLoginPage.tsx    # Merchant authentication (/business/login)
-│   │   │   │   └── BusinessRegisterPage.tsx # Merchant registration (/business/register)
-│   │   │   ├── CompanyStorePage.tsx         # Brand storefront with active coupons & flash sales (/store/:id)
-│   │   │   ├── HomePage.tsx                 # Retail home & consumer catalog (/)
-│   │   │   ├── LoginPage.tsx                # Customer sign-in (/login)
-│   │   │   ├── RegisterPage.tsx             # Customer registration (/register)
-│   │   │   ├── OrdersPage.tsx               # Order history & verified review launchpad (/orders)
-│   │   │   ├── OrderDetailsPage.tsx         # Real-time tracking timeline & review badges (/orders/:id)
-│   │   │   ├── CheckoutPage.tsx             # Multi-step checkout & 1-click dynamic coupon drawer
-│   │   │   └── ProductDetailPage.tsx        # Product specs, gallery, coupon ribbon & reviews feed
-│   │   ├── services/
-│   │   │   ├── api.ts                    # Axios client instance with cookie credentials
-│   │   │   ├── authService.ts            # Auth & profile management API
-│   │   │   ├── cartService.ts            # Cart API client & guest tracking
-│   │   │   ├── couponService.ts          # Coupon validation, redemption & merchant CRUD API
-│   │   │   ├── orderService.ts           # Order creation, cancellation & tracking API
-│   │   │   ├── productService.ts         # Product catalog, specs & storefront API
-│   │   │   └── reviewService.ts          # Customer reviews, helpful votes & merchant replies API
-│   │   ├── types/
-│   │   │   ├── auth.ts                   # Auth & address TypeScript interfaces
-│   │   │   ├── cart.ts                   # Cart and CartItem definitions
-│   │   │   ├── coupon.ts                 # Coupon, discount types & validation definitions
-│   │   │   ├── order.ts                  # Order, payment, fulfillment & status types
-│   │   │   ├── product.ts                # Product, specifications & storefront types
-│   │   │   └── review.ts                 # Review, rating breakdown & merchant reply types
-│   │   ├── App.tsx                       # Client router configuration
-│   │   ├── index.css                     # Tailwind CSS entry
+│   │   ├── components/                   # UI components, cart drawer, modals & route guards
+│   │   ├── context/                      # AuthContext & CartContext (with guest session merge)
+│   │   ├── pages/                        # Consumer & Merchant pages (Storefront, Orders, Checkout)
+│   │   ├── services/                     # Axios API clients
+│   │   ├── types/                        # TypeScript domain interfaces
+│   │   ├── App.tsx                       # Client router
 │   │   └── main.tsx                      # Bootstrap entry
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── gateway/                              # Modular API Gateway (Port 5000)
-│   ├── config/
-│   │   ├── redis.js                      # Redis client for gateway rate limiting
-│   │   └── services.js                   # Unified microservices registry
-│   ├── middleware/
-│   │   ├── authGateway.js                # Token verification & user header injection
-│   │   ├── loadBalancer.js               # Multi-instance round-robin load balancer
-│   │   ├── rateLimiter.js                # Gateway-level distributed rate limiter
-│   │   ├── logging.js                    # Correlation ID tracking (x-correlation-id)
-│   │   └── errorMiddleware.js            # Gateway 404 & error handlers
-│   ├── routes/
-│   │   ├── proxyHandler.js               # Dynamic reverse proxy handler
-│   │   └── index.js                      # Service routing registry (/auth, /products, /reviews, /coupons, /cart, /orders)
+│   ├── config/                           # Redis & microservices registry
+│   ├── middleware/                       # Rate limiter, correlation IDs, auth gateway, load balancer
+│   ├── routes/                           # Reverse proxy routing
 │   ├── package.json
-│   └── server.js                         # Gateway orchestration server
+│   └── server.js                         # Gateway server
 ├── services/                             # Microservices Directory
-│   ├── auth-service/                     # Identity & Authentication Service (Port 5001)
-│   │   ├── config/ (db.js, redis.js)
-│   │   ├── controllers/ (authController.js)
-│   │   ├── middleware/ (authMiddleware.js, errorMiddleware.js, rateLimiter.js)
-│   │   ├── models/ (User.js)
-│   │   ├── routes/ (authRoutes.js)
-│   │   └── server.js
-│   ├── product-service/                  # Unified Catalog, Reviews & Coupons Service (Port 5002)
-│   │   ├── config/ (db.js, cloudinary.js)
-│   │   ├── controllers/
-│   │   │   ├── productController.js      # Catalog search, category filters, merchant CRUD
-│   │   │   ├── reviewController.js       # Customer reviews, rating aggregate, official merchant replies
-│   │   │   └── couponController.js       # Store coupons, cart validation, redemption recording
-│   │   ├── middleware/ (authCheck.js)
-│   │   ├── models/
-│   │   │   ├── Product.js                # Product schema (specs, multi-image, discount, stock)
-│   │   │   ├── Review.js                 # Review schema (ratings, photos, verified flag, replies)
-│   │   │   └── Coupon.js                 # Coupon schema (percentage/fixed, caps, user limits, usedBy)
-│   │   ├── routes/
-│   │   │   ├── productRoutes.js          # /api/products
-│   │   │   ├── reviewRoutes.js           # /api/reviews
-│   │   │   └── couponRoutes.js           # /api/coupons
-│   │   └── server.js
+│   ├── auth-service/                     # Identity & Auth Service (Port 5001)
+│   ├── product-service/                  # Catalog, Reviews & Coupons Service (Port 5002)
 │   ├── cart-service/                     # Shopping Cart Service (Port 5003)
-│   │   ├── config/ (db.js, redis.js)
-│   │   ├── controllers/ (cartController.js)
-│   │   ├── middleware/ (authCheck.js, errorMiddleware.js)
-│   │   ├── models/ (Cart.js)
-│   │   ├── routes/ (cartRoutes.js)
-│   │   └── server.js
-│   ├── order-service/                    # Order Management & Fulfillment Service (Port 5004)
-│   │   ├── config/ (db.js, redis.js)
-│   │   ├── controllers/ (orderController.js)
-│   │   ├── middleware/ (authCheck.js, errorMiddleware.js)
-│   │   ├── models/ (Order.js)
-│   │   ├── routes/ (orderRoutes.js)
-│   │   └── server.js
-│   └── package.json                      # Shared microservices dependencies
-├── package.json                          # Root repository orchestration scripts
+│   ├── order-service/                    # Order Fulfillment Service (Port 5004)
+│   └── package.json                      # Shared dependencies
+├── package.json                          # Root repository orchestration
 └── README.md
 ```
 
----
-
-## Database Architecture (Database-per-Service Pattern)
-
-The platform implements the **Database-per-Service** pattern with strict logical encapsulation across dedicated MongoDB databases within the cluster:
+### Database Architecture (Database-per-Service Pattern)
+The platform enforces strict logical encapsulation across dedicated MongoDB databases within the cluster:
 
 ```text
 MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
@@ -218,32 +799,31 @@ MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
 │   │   ├── title: String (indexed for text search)
 │   │   ├── description: String
 │   │   ├── price: Number
-│   │   ├── originalPrice: Number (for strikethrough sale pricing)
+│   │   ├── originalPrice: Number (strikethrough sale pricing)
 │   │   ├── discountPercentage: Number
 │   │   ├── isFlashSale: Boolean
-│   │   ├── category: String (electronics, fashion, home, beauty, sports, etc.)
+│   │   ├── category: String
 │   │   ├── image: String (Cloudinary primary URL)
-│   │   ├── images: Array<String> (Reference gallery URLs)
+│   │   ├── images: Array<String>
 │   │   ├── specifications: Array<{ key: String, value: String }>
 │   │   ├── stock: Number
-│   │   ├── companyId: ObjectId (indexed, reference to merchant)
+│   │   ├── companyId: ObjectId (indexed, merchant reference)
 │   │   ├── companyName: String
-│   │   ├── rating: Number (aggregated from reviews, 0 if no reviews)
-│   │   └── numReviews: Number (count of published customer reviews)
+│   │   ├── rating: Number (aggregated from reviews)
+│   │   └── numReviews: Number
 │   │
 │   ├── reviews
 │   │   ├── _id: ObjectId
 │   │   ├── productId: ObjectId (indexed)
 │   │   ├── userId: ObjectId (indexed)
 │   │   ├── userName: String
-│   │   ├── orderId: ObjectId (reference to verified purchase order)
+│   │   ├── orderId: ObjectId (verified purchase reference)
 │   │   ├── isVerifiedPurchase: Boolean
 │   │   ├── rating: Number (1 to 5)
-│   │   ├── title: String (headline)
-│   │   ├── comment: String (detailed review body)
-│   │   ├── photos: Array<String> (up to 5 Cloudinary URLs)
+│   │   ├── title: String
+│   │   ├── comment: String
+│   │   ├── photos: Array<String>
 │   │   ├── helpfulVotes: Number
-│   │   ├── helpfulUserIds: Array<ObjectId>
 │   │   ├── merchantReply: Object ({ comment, repliedAt, companyId, companyName })
 │   │   └── status: String (enum: ['published', 'flagged', 'hidden'])
 │   │
@@ -253,17 +833,11 @@ MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
 │       ├── description: String
 │       ├── discountType: String (enum: ['percentage', 'fixed'])
 │       ├── discountValue: Number
-│       ├── minPurchaseAmount: Number (minimum cart subtotal required)
-│       ├── maxDiscountAmount: Number (cap for percentage discounts)
-│       ├── companyId: ObjectId (null for platform-wide, merchant ID for store-specific)
-│       ├── companyName: String
-│       ├── applicableProducts: Array<ObjectId> (empty for storewide promo)
-│       ├── startDate: Date
-│       ├── endDate: Date (expiration date)
-│       ├── usageLimit: Number (total redemption capacity)
-│       ├── userUsageLimit: Number (redemptions allowed per customer)
-│       ├── usageCount: Number
-│       ├── totalDiscountGiven: Number
+│       ├── minPurchaseAmount: Number
+│       ├── maxDiscountAmount: Number
+│       ├── companyId: ObjectId (null for platform-wide, merchant ID for store)
+│       ├── usageLimit: Number
+│       ├── userUsageLimit: Number
 │       ├── usedBy: Array<{ userId, orderId, discountAmount, usedAt }>
 │       └── isActive: Boolean (indexed)
 │
@@ -293,13 +867,13 @@ MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
 
 ---
 
-## API Specification
+## Current API Specifications
 
 All endpoints are accessed via the API Gateway base path: `http://localhost:5000/api`
 
 ### 1. Authentication (`/api/auth`)
 | Method | Endpoint | Description | Auth Required | Rate Limited |
-| ------ | -------- | ----------- | ------------- | ------------ |
+| :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/health` | Gateway & Service status | No | No |
 | `POST` | `/auth/register` | Register customer or merchant account | No | Yes (10/15m) |
 | `POST` | `/auth/login` | Authenticate with email & password | No | Yes (10/15m) |
@@ -314,7 +888,7 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ### 2. Product Catalog & Specifications (`/api/products`)
 | Method | Endpoint | Description | Auth Required |
-| ------ | -------- | ----------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | `GET` | `/products` | Search & filter products (category, price, sort) | No |
 | `GET` | `/products/:id` | Get product details & specifications | No |
 | `POST` | `/products` | Create merchant product with gallery & specs | Company/Admin |
@@ -325,7 +899,7 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ### 3. Customer Reviews & Merchant Replies (`/api/reviews`)
 | Method | Endpoint | Description | Auth Required |
-| ------ | -------- | ----------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | `GET` | `/reviews/product/:id` | Get reviews, rating breakdown & distribution | Optional |
 | `GET` | `/reviews/product/:id/my-review` | Get authenticated user's review for product | Yes |
 | `GET` | `/reviews/my-reviews/product-ids` | List all product IDs reviewed by user | Yes |
@@ -340,7 +914,7 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ### 4. Promotional Coupons & Discounts (`/api/coupons`)
 | Method | Endpoint | Description | Auth Required |
-| ------ | -------- | ----------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | `GET` | `/coupons/available` | Get active available coupons for cart/store | Optional |
 | `POST` | `/coupons/validate` | Validate promo code against cart items & calculate discount | Optional |
 | `POST` | `/coupons` | Create new store or platform coupon campaign | Company/Admin |
@@ -352,7 +926,7 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ### 5. Shopping Cart (`/api/cart`)
 | Method | Endpoint | Description | Auth Required |
-| ------ | -------- | ----------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | `GET` | `/cart` | Get active shopping cart | Optional |
 | `POST` | `/cart/items` | Add item or increment quantity | Optional |
 | `PUT` | `/cart/items/:id` | Update item quantity | Optional |
@@ -361,7 +935,7 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ### 6. Order Management & Tracking (`/api/orders`)
 | Method | Endpoint | Description | Auth Required |
-| ------ | -------- | ----------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | `POST` | `/orders` | Place new order with dynamic coupon discount | Yes |
 | `GET` | `/orders/mine` | Get customer order history with review status | Yes |
 | `GET` | `/orders/:id` | Get order tracking & fulfillment timeline | Yes |
@@ -371,17 +945,16 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 
 ---
 
-## Local Development & Setup
+## Local Development & Setup Guide
 
 ### Prerequisites
 * **Node.js**: v18.0.0 or higher
 * **npm**: v9.0.0 or higher
-* **MongoDB Atlas** cluster URI
-* **Upstash Redis** (or local Redis) URI
-* **Cloudinary** account credentials
+* **MongoDB Atlas** cluster URI (or local MongoDB)
+* **Upstash Redis** (or local Redis instance)
+* **Cloudinary** credentials (for media galleries)
 
 ### 1. Installation
-
 ```bash
 # Install Gateway dependencies
 cd gateway && npm install && cd ..
@@ -394,7 +967,6 @@ cd client && npm install && cd ..
 ```
 
 ### 2. Environment Configuration
-
 ```bash
 cp gateway/.env.example gateway/.env
 cp services/auth-service/.env.example services/auth-service/.env
@@ -405,8 +977,7 @@ cp client/.env.example client/.env
 ```
 
 ### 3. Running Microservices Locally
-
-Start each service in a dedicated terminal window:
+Start each service in a dedicated terminal:
 
 ```bash
 # Terminal 1: Auth Microservice (Port 5001)
@@ -428,12 +999,9 @@ npm run gateway
 npm run client
 ```
 
-Navigate to `http://localhost:5173` to access the application.
+Access the frontend application at: `http://localhost:5173`
 
----
-
-## Verification & Build Validation
-
+### 4. Build & Syntax Verification
 ```bash
 # Verify frontend TypeScript types and Vite bundle
 npm run build:client
