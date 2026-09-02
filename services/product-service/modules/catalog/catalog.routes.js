@@ -15,11 +15,11 @@ import {
   updateStorefrontSettings,
   applyBulkDiscount,
   syncProductRating,
-} from '../controllers/productController.js';
-import { requireCompany } from '../middleware/authCheck.js';
-import searchRoutes from '../modules/search-module/searchRoutes.js';
-import recommendationRoutes from '../modules/recommendation-module/recommendationRoutes.js';
-import assistantRoutes from '../modules/ai-assistant/assistantRoutes.js';
+} from './catalog.controller.js';
+import { requireCompany } from '../../middleware/authCheck.js';
+import searchRoutes from '../search-module/searchRoutes.js';
+import recommendationRoutes from '../recommendation-module/recommendationRoutes.js';
+import assistantRoutes from '../ai-assistant/assistantRoutes.js';
 
 const router = express.Router();
 
@@ -31,7 +31,6 @@ router.use('/recommendations', recommendationRoutes);
 
 // AI Shopping Assistant Concierge Routes
 router.use('/ai-assistant', assistantRoutes);
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 500 * 1024 }, // 500 KB limit
