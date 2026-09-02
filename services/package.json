@@ -11,7 +11,16 @@
     "dev:cart": "nodemon cart-service/server.js",
     "start:cart": "node cart-service/server.js",
     "dev:order": "nodemon order-service/server.js",
-    "start:order": "node order-service/server.js"
+    "start:order": "node order-service/server.js",
+    "dev:payment": "nodemon payment-service/server.js",
+    "start:payment": "node payment-service/server.js",
+    "dev:wishlist": "nodemon wishlist-service/server.js",
+    "start:wishlist": "node wishlist-service/server.js",
+    "dev:inventory": "nodemon inventory-service/server.js",
+    "start:inventory": "node inventory-service/server.js",
+    "dev:notification": "nodemon notification-worker/worker.js",
+    "start:notification": "node notification-worker/worker.js",
+    "kafka:init": "node shared/kafka/admin.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -23,6 +32,7 @@
     "google-auth-library": "^11.0.2",
     "ioredis": "^5.9.3",
     "jsonwebtoken": "^9.0.3",
+    "kafkajs": "^2.2.4",
     "mongoose": "^9.9.4",
     "morgan": "^1.12.0",
     "multer": "^2.3.0"

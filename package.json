@@ -9,7 +9,15 @@
     "product-service": "npm run dev:product --prefix services",
     "cart-service": "npm run dev:cart --prefix services",
     "order-service": "npm run dev:order --prefix services",
+    "payment-service": "npm run dev:payment --prefix services",
+    "wishlist-service": "npm run dev:wishlist --prefix services",
+    "inventory-service": "npm run dev:inventory --prefix services",
+    "notification-service": "npm run dev:notification --prefix services",
+    "kafka:up": "docker compose -f docker-compose.kafka.yml up -d",
+    "kafka:down": "docker compose -f docker-compose.kafka.yml down",
+    "kafka:init": "npm run kafka:init --prefix services",
     "client": "npm run dev --prefix client",
-    "build:client": "npm run build --prefix client"
+    "build:client": "npm run build --prefix client",
+    "build:all": "npm run build:client"
   }
 }
