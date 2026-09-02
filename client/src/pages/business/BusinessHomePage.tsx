@@ -173,7 +173,7 @@ export const BusinessHomePage: React.FC = () => {
     description: '',
     announcement: '',
     flashSaleActive: false,
-    flashSaleTitle: '⚡ Limited-Time Store Flash Sale',
+    flashSaleTitle: 'Limited-Time Store Flash Sale',
     flashSaleDescription: 'Promotional discounts across verified brand inventory',
     flashSaleDiscount: 20,
     flashSaleEndsAt: '',
@@ -297,7 +297,7 @@ export const BusinessHomePage: React.FC = () => {
           description: sf.description || '',
           announcement: sf.announcement || '',
           flashSaleActive: Boolean(sf.flashSale?.isActive),
-          flashSaleTitle: sf.flashSale?.title || '⚡ Limited-Time Store Flash Sale',
+          flashSaleTitle: sf.flashSale?.title || 'Limited-Time Store Flash Sale',
           flashSaleDescription: sf.flashSale?.description || '',
           flashSaleDiscount: sf.flashSale?.discountPercentage || 20,
           flashSaleEndsAt: sf.flashSale?.endsAt
@@ -432,7 +432,7 @@ export const BusinessHomePage: React.FC = () => {
   const handleOpenFulfillment = (order: Order) => {
     setSelectedFulfillmentOrder(order);
     setFulfillmentForm({
-      status: order.orderStatus,
+      status: (order.orderStatus || order.status || 'placed') as OrderStatus,
       carrier: order.fulfillment?.carrier || 'NovaExpress',
       trackingNumber: order.fulfillment?.trackingNumber || '',
       estimatedDelivery: order.fulfillment?.estimatedDelivery
@@ -1403,7 +1403,7 @@ export const BusinessHomePage: React.FC = () => {
                           ) : null}
                           {prod.isFlashSale && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500 text-white uppercase tracking-wider mt-1">
-                              ⚡ Flash Deal
+                              Flash Deal
                             </span>
                           )}
                         </td>
@@ -2159,7 +2159,7 @@ export const BusinessHomePage: React.FC = () => {
                         onChange={(e) =>
                           setStorefrontForm((prev) => ({ ...prev, announcement: e.target.value }))
                         }
-                        placeholder="e.g. 🎉 FREE EXPEDITED SHIPPING ON ALL ORDERS THIS WEEKEND!"
+                        placeholder="e.g. FREE EXPEDITED SHIPPING ON ALL ORDERS THIS WEEKEND!"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
                       />
                     </div>
@@ -2234,7 +2234,7 @@ export const BusinessHomePage: React.FC = () => {
                               flashSaleTitle: e.target.value,
                             }))
                           }
-                          placeholder="⚡ Midnight Super Sale - Up to 40% OFF"
+                          placeholder="Midnight Super Sale - Up to 40% OFF"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 bg-white text-xs text-zinc-900 focus:outline-none focus:border-amber-500 font-bold"
                         />
                       </div>
@@ -2381,7 +2381,7 @@ export const BusinessHomePage: React.FC = () => {
                         }
                         className="w-4 h-4 accent-amber-500 rounded"
                       />
-                      <span>Tag as ⚡ Flash Sale Deal</span>
+                      <span>Tag as Flash Sale Deal</span>
                     </label>
                   </div>
                 </div>
@@ -4081,7 +4081,7 @@ export const BusinessHomePage: React.FC = () => {
                                 className="px-2 py-1 rounded bg-white text-zinc-950 hover:bg-indigo-50 text-[10px] font-bold shadow-xs cursor-pointer"
                                 title="Make Primary Cover"
                               >
-                                ★ Cover
+                                Cover
                               </button>
                             ) : (
                               <span className="text-[10px] text-white font-bold">Primary</span>
@@ -4166,11 +4166,11 @@ export const BusinessHomePage: React.FC = () => {
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      { id: 'electronics', label: '⚡ Electronics' },
-                      { id: 'fashion', label: '👗 Fashion' },
-                      { id: 'home', label: '🏡 Home & Living' },
-                      { id: 'beauty', label: '✨ Beauty' },
-                      { id: 'sports', label: '🏃 Sports' },
+                      { id: 'electronics', label: 'Electronics' },
+                      { id: 'fashion', label: 'Fashion' },
+                      { id: 'home', label: 'Home & Living' },
+                      { id: 'beauty', label: 'Beauty' },
+                      { id: 'sports', label: 'Sports' },
                     ].map((tpl) => (
                       <button
                         key={tpl.id}
@@ -4392,7 +4392,7 @@ export const BusinessHomePage: React.FC = () => {
                     }
                     className="px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-xs font-bold text-zinc-700 transition-colors cursor-pointer"
                   >
-                    🎲 Generate
+                    Generate
                   </button>
                 </div>
               </div>
