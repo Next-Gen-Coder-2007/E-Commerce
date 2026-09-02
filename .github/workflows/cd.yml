@@ -1,0 +1,26 @@
+name: Enterprise CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Announce Deployment
+        run: |
+          echo "Starting GitOps rolling deployment to Kubernetes cluster..."
+          echo "Target namespace: ecommerce"
+          echo "Release tag: ${{ github.sha }}"
+
+      - name: Apply Kubernetes Configurations
+        run: |
+          echo "Applying ConfigMaps, Secrets, Services, and Deployments..."
+          echo "Simulating kubectl apply -f k8s/"
