@@ -15,8 +15,17 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { isRedisReady } from './config/redis.js';
+import {
+  createMetricsRegistry,
+  metricsMiddleware,
+  traceMiddleware,
+  createLogger,
+} from '../shared/telemetry/index.js';
 
 connectDB();
+
+const metrics = createMetricsRegistry('auth-service');
+const logger = createLogger('auth-service');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -24,29 +33,33 @@ const PORT = process.env.PORT || 5001;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
+app.use(traceMiddleware('auth-service'));
+app.use(metricsMiddleware(metrics));
 
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.get('/health', (req, res) => {
+// Prometheus Metrics Exporter
+app.get('/metrics', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.status(200).send(metrics.toPrometheusFormat());
+});
+
+const healthHandler = (req, res) => {
   res.status(200).json({
     service: 'auth-service',
     status: 'ok',
     redis: isRedisReady() ? 'connected' : 'offline/fallback',
     timestamp: new Date().toISOString(),
   });
-});
+};
 
-app.get('/api/auth/health', (req, res) => {
-  res.status(200).json({
-    service: 'auth-service',
-    status: 'ok',
-    redis: isRedisReady() ? 'connected' : 'offline/fallback',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
+app.get('/api/auth/health', healthHandler);
 
+// Standard Routes
 app.use('/api/auth', authRoutes);
 app.use('/', authRoutes);
 
