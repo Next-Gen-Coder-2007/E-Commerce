@@ -24,6 +24,8 @@ export const getMyOrdersApi = async (params?: {
   return data;
 };
 
+export const getOrdersApi = getMyOrdersApi;
+
 export const getOrderByIdApi = async (
   idOrOrderNumber: string
 ): Promise<OrderDetailResponse> => {
@@ -85,3 +87,30 @@ export const trackOrderApi = async (
   );
   return data;
 };
+
+export interface SagaAuditStep {
+  step: string;
+  status: 'PENDING' | 'STARTED' | 'COMPLETED' | 'FAILED';
+  timestamp: string;
+  details?: Record<string, any>;
+}
+
+export interface SagaCheckoutResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    sagaId: string;
+    order: any;
+    reservationId?: string;
+    transactionId?: string;
+    auditSteps: SagaAuditStep[];
+  };
+}
+
+export const checkoutWithSagaApi = async (
+  payload: CreateOrderPayload
+): Promise<SagaCheckoutResponse> => {
+  const { data } = await api.post<SagaCheckoutResponse>('/api/orders/checkout-saga', payload);
+  return data;
+};
+

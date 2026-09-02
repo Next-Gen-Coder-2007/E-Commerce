@@ -104,6 +104,9 @@ export interface Order {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  totalPrice?: number;
+  totalAmount?: number;
+  status?: OrderStatus;
 }
 
 export interface CreateOrderPayload {

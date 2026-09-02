@@ -12,6 +12,7 @@ export interface Product {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category: string;
+  brand?: string;
   stock: number;
   image: string;
   images?: string[];
@@ -33,6 +34,7 @@ export interface CreateProductInput {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category: string;
+  brand?: string;
   stock: number;
   image?: string;
   images?: string[];
@@ -47,6 +49,7 @@ export interface UpdateProductInput {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category?: string;
+  brand?: string;
   stock?: number;
   image?: string;
   images?: string[];
@@ -57,6 +60,7 @@ export interface UpdateProductInput {
 export interface ProductFilterParams {
   search?: string;
   category?: string;
+  brand?: string;
   companyId?: string;
   companyName?: string;
   minPrice?: number | string;
@@ -79,11 +83,12 @@ export interface StorefrontSettings {
   _id?: string;
   companyId: string;
   companyName: string;
-  bannerImage: string;
-  tagline: string;
-  description: string;
-  announcement: string;
-  flashSale: {
+  bannerImage?: string;
+  bannerUrl?: string;
+  tagline?: string;
+  description?: string;
+  announcement?: string;
+  flashSale?: {
     isActive: boolean;
     title: string;
     description: string;

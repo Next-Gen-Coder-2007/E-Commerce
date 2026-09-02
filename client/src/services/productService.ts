@@ -84,10 +84,13 @@ export const getProductByIdApi = async (
 export const getCategoriesApi = async (): Promise<{
   success: boolean;
   categories: string[];
+  categoryCounts?: Array<{ category: string; count: number }>;
 }> => {
-  const response = await api.get<{ success: boolean; categories: string[] }>(
-    '/products/categories'
-  );
+  const response = await api.get<{
+    success: boolean;
+    categories: string[];
+    categoryCounts?: Array<{ category: string; count: number }>;
+  }>('/products/categories');
   return response.data;
 };
 
@@ -178,4 +181,87 @@ export const uploadMultipleProductImagesApi = async (
   }
 
   return urls;
+};
+
+export interface FacetedSearchParams {
+  query?: string;
+  category?: string | string[];
+  brand?: string | string[];
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  inStockOnly?: boolean;
+  minDiscount?: number;
+  companyId?: string;
+  sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'discount';
+  page?: number;
+  limit?: number;
+}
+
+export interface FacetedSearchResponse {
+  success: boolean;
+  data: {
+    products: Product[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasMore: boolean;
+    };
+    facets: {
+      brands: { name: string; count: number }[];
+      categories: { name: string; count: number }[];
+      priceRange: { min: number; max: number };
+      inStockCount: number;
+      totalMatches: number;
+      ratings: Record<string, number>;
+      discounts: Record<string, number>;
+    };
+    searchTelemetry?: {
+      latencyMs: number;
+      engine: string;
+    };
+  };
+}
+
+export interface AutocompleteResponse {
+  success: boolean;
+  data: {
+    query: string;
+    suggestions: string[];
+    categories: string[];
+    products: Array<{
+      _id: string;
+      title: string;
+      price: number;
+      image?: string;
+      category?: string;
+      brand?: string;
+      rating?: number;
+      discountPercentage?: number;
+    }>;
+    isFuzzyMatch?: boolean;
+    searchTelemetry?: {
+      latencyMs: number;
+      engine: string;
+    };
+  };
+}
+
+export const searchFacetedApi = async (
+  params?: FacetedSearchParams
+): Promise<FacetedSearchResponse> => {
+  const response = await api.get<FacetedSearchResponse>('/api/products/search/faceted', { params });
+  return response.data;
+};
+
+export const searchAutocompleteApi = async (
+  query: string,
+  limit: number = 6
+): Promise<AutocompleteResponse> => {
+  const response = await api.get<AutocompleteResponse>('/api/products/search/autocomplete', {
+    params: { q: query, limit },
+  });
+  return response.data;
 };
