@@ -6,7 +6,7 @@ import { authGatewayRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.get('/health', (req, res) => {
+const healthResponse = (req, res) => {
   const serviceStatuses = Object.entries(serviceRegistry).reduce(
     (acc, [key, svc]) => {
       acc[key] = {
@@ -26,7 +26,9 @@ router.get('/health', (req, res) => {
     redisRateLimiter: isRedisReady() ? 'connected' : 'offline/fallback',
     registeredServices: serviceStatuses,
   });
-});
+};
+
+router.get('/health', healthResponse);
 
 router.get('/gateway/services', (req, res) => {
   res.status(200).json({
@@ -35,6 +37,11 @@ router.get('/gateway/services', (req, res) => {
   });
 });
 
+// ==========================================
+// Microservice Proxy Routes
+// ==========================================
+
+// Auth Service
 router.use(
   '/auth',
   authGatewayRateLimiter,
@@ -45,6 +52,7 @@ router.use(
   })
 );
 
+// Products & Catalog Service
 router.use(
   '/products',
   createMicroserviceProxy({
@@ -55,6 +63,7 @@ router.use(
   })
 );
 
+// Shopping Cart Service
 router.use(
   '/cart',
   createMicroserviceProxy({
@@ -64,6 +73,18 @@ router.use(
   })
 );
 
+// Wishlist Service
+router.use(
+  '/wishlist',
+  createMicroserviceProxy({
+    serviceKey: 'wishlist',
+    serviceName: serviceRegistry.wishlist.name,
+    instances: serviceRegistry.wishlist.instances,
+    pathRewrite: (path) => `/wishlist${path}`,
+  })
+);
+
+// Order Fulfillment Service
 router.use(
   '/orders',
   createMicroserviceProxy({
@@ -73,6 +94,29 @@ router.use(
   })
 );
 
+// Payment Service
+router.use(
+  '/payments',
+  createMicroserviceProxy({
+    serviceKey: 'payments',
+    serviceName: serviceRegistry.payments.name,
+    instances: serviceRegistry.payments.instances,
+    pathRewrite: (path) => `/payments${path}`,
+  })
+);
+
+// Inventory Service
+router.use(
+  '/inventory',
+  createMicroserviceProxy({
+    serviceKey: 'inventory',
+    serviceName: serviceRegistry.inventory.name,
+    instances: serviceRegistry.inventory.instances,
+    pathRewrite: (path) => `/inventory${path}`,
+  })
+);
+
+// Customer Reviews Service
 router.use(
   '/reviews',
   createMicroserviceProxy({
@@ -83,6 +127,7 @@ router.use(
   })
 );
 
+// Promotional Coupons Service
 router.use(
   '/coupons',
   createMicroserviceProxy({

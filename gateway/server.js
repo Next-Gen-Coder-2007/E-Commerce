@@ -17,6 +17,11 @@ import { correlationIdMiddleware } from './middleware/logging.js';
 import { globalRateLimiter } from './middleware/rateLimiter.js';
 import { attachAuthContext } from './middleware/authGateway.js';
 import { gatewayNotFound, gatewayErrorHandler } from './middleware/errorMiddleware.js';
+import {
+  gatewayTracer,
+  gatewayMetricsMiddleware,
+  metricsEndpointHandler,
+} from './middleware/telemetry.js';
 import gatewayRoutes from './routes/index.js';
 
 const app = express();
@@ -48,6 +53,8 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(gatewayTracer);
+app.use(gatewayMetricsMiddleware);
 app.use(correlationIdMiddleware);
 app.use(globalRateLimiter);
 app.use(attachAuthContext);
@@ -55,6 +62,41 @@ app.use(attachAuthContext);
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
+
+// Prometheus Metrics Exporter
+app.get('/metrics', metricsEndpointHandler);
+app.get('/api/metrics', metricsEndpointHandler);
+
+// OpenAPI Spec & Interactive Swagger UI
+app.get('/openapi.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'docs', 'openapi.json'));
+});
+app.get(['/docs', '/api-docs'], (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NovaCommerce Enterprise API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <style>body { margin: 0; background: #fafafa; }</style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: '/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+        layout: 'BaseLayout'
+      });
+    };
+  </script>
+</body>
+</html>`);
+});
 
 app.use('/api', gatewayRoutes);
 

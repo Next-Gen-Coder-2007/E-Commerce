@@ -1,0 +1,250 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NovaCommerce Enterprise Distributed Marketplace API",
+    "description": "Production-grade microservices API specification with Saga Distributed Orchestration, Kafka KRaft Event Bus, AI Vector Search, Real-Time Fraud Scoring, and Resilient Circuit Breakers.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "NovaCommerce Architecture Team",
+      "email": "architecture@novacommerce.io"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "API Gateway Entrypoint"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "User & Merchant Identity, JWT Tokens, Role Verification" },
+    { "name": "Products & Discovery", "description": "Product Catalog, Faceted Filter Search, Dynamic Categories" },
+    { "name": "AI Search & Recommendations", "description": "64-dim Dense Vector Embeddings, RRF Hybrid Search, AI Shopping Concierge" },
+    { "name": "Cart", "description": "Shopping Cart Session Management" },
+    { "name": "Wishlist", "description": "Wishlist Items, Shareable Lists & Price Drop Tracking" },
+    { "name": "Orders & Saga", "description": "Saga Distributed Transaction Orchestration, Compensation & Timeline" },
+    { "name": "Payments & Fraud", "description": "Idempotent Payment Processing & Real-Time Fraud Risk Scoring" },
+    { "name": "Inventory", "description": "Distributed Two-Phase Stock Reservations & Commitments" },
+    { "name": "Admin Platform", "description": "Global User Moderation, Merchant Approvals, Order Ledger" }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new Customer or Merchant account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" },
+                  "role": { "type": "string", "enum": ["user", "company", "admin"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User successfully registered" },
+          "400": { "description": "Validation failure or email already in use" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Authenticate user and issue JWT cookie/token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": ["Products & Discovery"],
+        "summary": "Get paginated products with filtering and sorting",
+        "parameters": [
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "brand", "in": "query", "schema": { "type": "string" } },
+          { "name": "minPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "maxPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["newest", "price_asc", "price_desc", "rating"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 12 } }
+        ],
+        "responses": {
+          "200": { "description": "List of paginated products" }
+        }
+      }
+    },
+    "/api/products/categories": {
+      "get": {
+        "tags": ["Products & Discovery"],
+        "summary": "Get dynamic distinct categories with live inventory counts",
+        "responses": {
+          "200": { "description": "Array of active category strings and aggregate counts" }
+        }
+      }
+    },
+    "/api/products/search/faceted": {
+      "get": {
+        "tags": ["Products & Discovery"],
+        "summary": "Execute sub-50ms faceted search with multi-attribute drilldown aggregations",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "brands", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Faceted products with facet breakdown counts" }
+        }
+      }
+    },
+    "/api/products/recommendations/for-you": {
+      "get": {
+        "tags": ["AI Search & Recommendations"],
+        "summary": "Get personalized multi-signal AI recommendations",
+        "responses": {
+          "200": { "description": "Curated recommendations with match justification tags" }
+        }
+      }
+    },
+    "/api/products/recommendations/frequently-bought-together/{productId}": {
+      "get": {
+        "tags": ["AI Search & Recommendations"],
+        "summary": "Get bundle recommendations with dynamic bundle savings",
+        "parameters": [
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Complementary bundle items" }
+        }
+      }
+    },
+    "/api/products/ai-assistant/chat": {
+      "post": {
+        "tags": ["AI Search & Recommendations"],
+        "summary": "Conversational AI Shopping Concierge with constraint extraction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": { "type": "string" },
+                  "history": { "type": "array", "items": { "type": "object" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Conversational reply with grounded product cards" }
+        }
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "tags": ["Orders & Saga"],
+        "summary": "Create order and trigger distributed Saga Orchestrator",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["items", "shippingAddress", "paymentMethod"],
+                "properties": {
+                  "items": { "type": "array", "items": { "type": "object" } },
+                  "shippingAddress": { "type": "object" },
+                  "billingAddress": { "type": "object" },
+                  "paymentMethod": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order created and Saga dispatched" }
+        }
+      }
+    },
+    "/api/payments/charge": {
+      "post": {
+        "tags": ["Payments & Fraud"],
+        "summary": "Idempotent payment processing with simulated card gateway",
+        "parameters": [
+          { "name": "x-idempotency-key", "in": "header", "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["orderId", "amount"],
+                "properties": {
+                  "orderId": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "currency": { "type": "string", "default": "USD" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Payment succeeded" },
+          "402": { "description": "Payment failed / card declined" }
+        }
+      }
+    },
+    "/api/payments/fraud/evaluate": {
+      "post": {
+        "tags": ["Payments & Fraud"],
+        "summary": "Real-time 0-100 transaction risk evaluation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": { "type": "number" },
+                  "email": { "type": "string" },
+                  "ordersInLastHour": { "type": "integer" },
+                  "shippingAddress": { "type": "object" },
+                  "billingAddress": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Risk score, risk level, decision (APPROVE, REVIEW, REJECT)" }
+        }
+      }
+    }
+  }
+}
