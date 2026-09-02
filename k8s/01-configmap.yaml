@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+data:
+  NODE_ENV: "production"
+  KAFKA_BROKERS: "kafka-service:9092"
+  KAFKA_ENABLED: "true"
+  REDIS_URL: "redis://redis-service:6379"
+  
+  # Service Discovery Internal DNS Endpoints
+  AUTH_SERVICE_URL: "http://auth-service:5001"
+  PRODUCT_SERVICE_URL: "http://product-service:5002"
+  CART_SERVICE_URL: "http://cart-service:5003"
+  ORDER_SERVICE_URL: "http://order-service:5004"
+  PAYMENT_SERVICE_URL: "http://payment-service:5005"
+  WISHLIST_SERVICE_URL: "http://wishlist-service:5006"
+  INVENTORY_SERVICE_URL: "http://inventory-service:5007"
+  
+  # CORS and Ingress domains
+  CLIENT_ORIGIN: "https://novacommerce.local,http://novacommerce.local"
