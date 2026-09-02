@@ -74,3 +74,21 @@ export const requireMerchantOrAdmin = (req, res, next) => {
 
   next();
 };
+
+export const requireAdmin = (req, res, next) => {
+  if (!req.user || !req.user.userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required. Please sign in to proceed.',
+    });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: `Forbidden. Role '${req.user.role}' is not authorized for administrator operations.`,
+    });
+  }
+
+  next();
+};

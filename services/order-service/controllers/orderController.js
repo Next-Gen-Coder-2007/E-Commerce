@@ -2,6 +2,14 @@ import mongoose from 'mongoose';
 import crypto from 'crypto';
 import Order from '../models/Order.js';
 import redisClient, { isRedisReady } from '../config/redis.js';
+import couponClient from '../clients/couponClient.js';
+import { sendSuccess, sendError } from '../utils/responseEnvelope.js';
+import {
+  publishOrderCreated,
+  publishOrderConfirmed,
+  publishOrderCancelled,
+} from '../events/orderProducer.js';
+import { executeCheckoutSaga } from '../saga/checkoutSaga.js';
 
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002';
 
@@ -125,26 +133,17 @@ export const createOrder = async (req, res, next) => {
     const normalizedCoupon = (couponCode || '').trim().toUpperCase();
 
     if (normalizedCoupon) {
-      // 1. Query dynamic Coupon Service
-      try {
-        const couponRes = await fetch(`${PRODUCT_SERVICE_URL}/api/coupons/validate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: normalizedCoupon,
-            cartItems: sanitizedItems,
-            subtotal: itemsPrice,
-            userId,
-          }),
-        });
-        if (couponRes.ok) {
-          const couponData = await couponRes.json();
-          if (couponData.isValid && couponData.discountAmount > 0) {
-            discountAmount = Number(couponData.discountAmount);
-          }
-        }
-      } catch (couponErr) {
-        console.warn(`[Order Service] Dynamic coupon validation warning: ${couponErr.message}`);
+      // 1. Query dynamic Coupon Service via resilient client
+      const couponResult = await couponClient.validateCoupon({
+        code: normalizedCoupon,
+        cartItems: sanitizedItems,
+        subtotal: itemsPrice,
+        userId,
+        correlationId: req.headers['x-correlation-id'],
+      });
+
+      if (couponResult.isValid && couponResult.discountAmount > 0) {
+        discountAmount = Number(couponResult.discountAmount);
       }
 
       // 2. Legacy fallback
@@ -241,20 +240,13 @@ export const createOrder = async (req, res, next) => {
 
     // If a coupon was applied and had a discount, register its redemption
     if (normalizedCoupon && discountAmount > 0) {
-      try {
-        await fetch(`${PRODUCT_SERVICE_URL}/api/coupons/redeem`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: normalizedCoupon,
-            userId,
-            orderId: savedOrder._id,
-            discountAmount,
-          }),
-        });
-      } catch (redeemErr) {
-        console.warn(`[Order Service] Coupon redemption logging note: ${redeemErr.message}`);
-      }
+      await couponClient.redeemCoupon({
+        code: normalizedCoupon,
+        userId,
+        orderId: savedOrder._id,
+        discountAmount,
+        correlationId: req.headers['x-correlation-id'],
+      });
     }
 
     const companyIds = [
@@ -263,6 +255,12 @@ export const createOrder = async (req, res, next) => {
     for (const compId of companyIds) {
       await invalidateOrderCaches(userId, savedOrder._id, compId);
     }
+
+    // Publish ORDER_CREATED event to Kafka event backbone
+    publishOrderCreated(savedOrder, {
+      correlationId: req.headers['x-correlation-id'],
+      traceId: req.headers['x-trace-id'],
+    }).catch((err) => console.warn('[Order] Kafka publish error:', err.message));
 
     return res.status(201).json({
       success: true,
@@ -826,5 +824,125 @@ export const checkUserPurchasedProduct = async (req, res, next) => {
     });
   } catch (error) {
     return res.status(200).json({ success: true, hasPurchased: false });
+  }
+};
+
+export const checkoutWithSaga = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    const userEmail = req.user?.email || req.body.customer?.email;
+    const userName = req.user?.name || req.body.customer?.name;
+
+    if (!userId) {
+      return sendError(res, {
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required for checkout saga',
+      });
+    }
+
+    const {
+      orderItems,
+      shippingAddress,
+      shippingMethod = 'standard',
+      paymentMethod = 'mock_instant',
+      paymentDetails = {},
+      couponCode = '',
+      notes = '',
+    } = req.body;
+
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      return sendError(res, {
+        statusCode: 400,
+        code: 'INVALID_ITEMS',
+        message: 'Order must contain at least one item',
+      });
+    }
+
+    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.addressLine1) {
+      return sendError(res, {
+        statusCode: 400,
+        code: 'INVALID_ADDRESS',
+        message: 'Valid shipping address is required',
+      });
+    }
+
+    const sanitizedItems = orderItems.map((item) => ({
+      productId: item.productId || item._id,
+      title: item.title,
+      price: Number(item.price),
+      quantity: Math.max(1, parseInt(item.quantity, 10) || 1),
+      image: item.image || '',
+      category: item.category || 'general',
+      companyId: item.companyId || (item.company && item.company._id) || undefined,
+      companyName: item.companyName || (item.company && item.company.name) || 'Direct Supplier',
+    }));
+
+    const itemsPrice = sanitizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shippingPrice = shippingMethod === 'express' ? 14.99 : itemsPrice > 50 ? 0 : 4.99;
+    const taxPrice = Number((itemsPrice * 0.08).toFixed(2));
+    const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2));
+
+    const orderNumber = generateOrderNumber();
+
+    const newOrder = new Order({
+      orderNumber,
+      userId,
+      customer: {
+        name: shippingAddress.fullName || userName || 'Customer',
+        email: userEmail || 'customer@example.com',
+        phone: shippingAddress.phone || '',
+      },
+      orderItems: sanitizedItems,
+      shippingAddress,
+      shippingMethod,
+      paymentInfo: {
+        method: paymentMethod,
+        status: 'pending',
+      },
+      pricing: {
+        itemsPrice: Number(itemsPrice.toFixed(2)),
+        shippingPrice: Number(shippingPrice.toFixed(2)),
+        taxPrice,
+        discountAmount: 0,
+        totalPrice,
+      },
+      orderStatus: 'PENDING',
+      notes: notes || '',
+    });
+
+    const sagaResult = await executeCheckoutSaga(newOrder, {
+      correlationId: req.headers['x-correlation-id'],
+      traceId: req.headers['x-trace-id'],
+      paymentMethod,
+      paymentDetails,
+    });
+
+    if (!sagaResult.success) {
+      return sendError(res, {
+        statusCode: sagaResult.code === 'INSUFFICIENT_STOCK' ? 409 : 402,
+        code: sagaResult.code || 'SAGA_FAILED',
+        message: sagaResult.message || 'Checkout saga failed and compensating rollbacks executed',
+        data: {
+          sagaId: sagaResult.sagaId,
+          order: sagaResult.order,
+          auditSteps: sagaResult.auditSteps,
+        },
+      });
+    }
+
+    return sendSuccess(res, {
+      statusCode: 201,
+      message: 'Checkout saga completed successfully. Order confirmed.',
+      data: {
+        sagaId: sagaResult.sagaId,
+        order: sagaResult.order,
+        reservationId: sagaResult.reservationId,
+        transactionId: sagaResult.transactionId,
+        auditSteps: sagaResult.auditSteps,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };
