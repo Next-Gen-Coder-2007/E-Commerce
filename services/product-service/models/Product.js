@@ -40,6 +40,21 @@ const productSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    brand: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    embedding: {
+      type: [Number],
+      default: [],
+    },
     stock: {
       type: Number,
       required: [true, 'Please provide stock inventory count'],
