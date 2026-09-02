@@ -1,0 +1,403 @@
+version: '3.8'
+
+networks:
+  ecommerce-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  redis-data:
+  kafka-data:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # ==========================================
+  # Core Infrastructure Layer
+  # ==========================================
+  mongo:
+    image: mongo:7.0
+    container_name: ecommerce-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: ecommerce
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - ecommerce-net
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecommerce-net
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ecommerce-kafka
+    restart: unless-stopped
+    ports:
+      - '9092:9092'
+      - '9094:9094'
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9094'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092,DOCKER://kafka:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,DOCKER:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: '4L62EnnTQgah3K45mNqwQQ'
+    volumes:
+      - kafka-data:/tmp/kraft-combined-logs
+    networks:
+      - ecommerce-net
+    healthcheck:
+      test: ['CMD-SHELL', 'kafka-topics --bootstrap-server localhost:9092 --list']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ecommerce-kafka-ui
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kraft-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  # ==========================================
+  # Observability & Monitoring Layer (Phase 7)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: ecommerce-prometheus
+    restart: unless-stopped
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - ecommerce-net
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: ecommerce-grafana
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - ecommerce-net
+
+  # ==========================================
+  # Microservices Layer
+  # ==========================================
+  auth-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: auth-service
+        SERVICE_PORT: 5001
+    container_name: ecommerce-auth-service
+    restart: unless-stopped
+    ports:
+      - '5001:5001'
+    environment:
+      PORT: 5001
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_auth
+      JWT_SECRET: production_jwt_secret_key_change_in_k8s
+      JWT_EXPIRES_IN: 7d
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  product-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: product-service
+        SERVICE_PORT: 5002
+    container_name: ecommerce-product-service
+    restart: unless-stopped
+    ports:
+      - '5002:5002'
+    environment:
+      PORT: 5002
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_products
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  cart-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: cart-service
+        SERVICE_PORT: 5003
+    container_name: ecommerce-cart-service
+    restart: unless-stopped
+    ports:
+      - '5003:5003'
+    environment:
+      PORT: 5003
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_cart
+      REDIS_URL: redis://redis:6379
+      PRODUCT_SERVICE_URL: http://product-service:5002
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  order-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: order-service
+        SERVICE_PORT: 5004
+    container_name: ecommerce-order-service
+    restart: unless-stopped
+    ports:
+      - '5004:5004'
+    environment:
+      PORT: 5004
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_orders
+      REDIS_URL: redis://redis:6379
+      INVENTORY_SERVICE_URL: http://inventory-service:5007
+      PAYMENT_SERVICE_URL: http://payment-service:5005
+      PRODUCT_SERVICE_URL: http://product-service:5002
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  payment-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: payment-service
+        SERVICE_PORT: 5005
+    container_name: ecommerce-payment-service
+    restart: unless-stopped
+    ports:
+      - '5005:5005'
+    environment:
+      PORT: 5005
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_payments
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  wishlist-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: wishlist-service
+        SERVICE_PORT: 5006
+    container_name: ecommerce-wishlist-service
+    restart: unless-stopped
+    ports:
+      - '5006:5006'
+    environment:
+      PORT: 5006
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_wishlist
+      REDIS_URL: redis://redis:6379
+      PRODUCT_SERVICE_URL: http://product-service:5002
+      CART_SERVICE_URL: http://cart-service:5003
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  inventory-service:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: inventory-service
+        SERVICE_PORT: 5007
+    container_name: ecommerce-inventory-service
+    restart: unless-stopped
+    ports:
+      - '5007:5007'
+    environment:
+      PORT: 5007
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/ecommerce_inventory
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  notification-worker:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_NAME: notification-worker
+        SERVICE_PORT: 5010
+    container_name: ecommerce-notification-worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ENABLED: 'true'
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+
+  # ==========================================
+  # Edge Gateway & Frontend Client Layer
+  # ==========================================
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: ecommerce-gateway
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      AUTH_SERVICE_URL: http://auth-service:5001
+      PRODUCT_SERVICE_URL: http://product-service:5002
+      CART_SERVICE_URL: http://cart-service:5003
+      ORDER_SERVICE_URL: http://order-service:5004
+      PAYMENT_SERVICE_URL: http://payment-service:5005
+      WISHLIST_SERVICE_URL: http://wishlist-service:5006
+      INVENTORY_SERVICE_URL: http://inventory-service:5007
+      REDIS_URL: redis://redis:6379
+      CLIENT_ORIGIN: http://localhost:5173,http://localhost:80,http://localhost
+    depends_on:
+      - auth-service
+      - product-service
+      - cart-service
+      - order-service
+      - payment-service
+      - wishlist-service
+      - inventory-service
+    networks:
+      - ecommerce-net
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ecommerce-client
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '5173:80'
+    depends_on:
+      - gateway
+    networks:
+      - ecommerce-net
