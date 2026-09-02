@@ -11,27 +11,28 @@ An enterprise-grade, event-driven distributed e-commerce marketplace platform en
    - [Event-Driven Architecture (Apache Kafka)](#1-event-driven-architecture-apache-kafka)
    - [Dedicated Inventory Service (Two-Phase Reservation)](#2-dedicated-inventory-service-two-phase-reservation)
    - [Payment Service & Idempotency Key Architecture](#3-payment-service--idempotency-key-architecture)
-   - [Distributed Transactions: Saga Pattern & Compensation](#4-distributed-transactions-saga-pattern--compensation)
-   - [Transactional Outbox Pattern (Dual-Write Prevention)](#5-transactional-outbox-pattern-dual-write-prevention)
-   - [Deterministic Order State Machine](#6-deterministic-order-state-machine)
-   - [Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)](#7-fault-tolerance-circuit-breakers-retries--dead-letter-queues-dlq)
-   - [Advanced Redis Infrastructure](#8-advanced-redis-infrastructure)
+   - [Wishlist & Saved Items Microservice](#4-wishlist--saved-items-microservice)
+   - [Distributed Transactions: Saga Pattern & Compensation](#5-distributed-transactions-saga-pattern--compensation)
+   - [Transactional Outbox Pattern (Dual-Write Prevention)](#6-transactional-outbox-pattern-dual-write-prevention)
+   - [Deterministic Order State Machine](#7-deterministic-order-state-machine)
+   - [Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)](#8-fault-tolerance-circuit-breakers-retries--dead-letter-queues-dlq)
+   - [Advanced Redis Infrastructure](#9-advanced-redis-infrastructure)
 4. [AI, Search & Marketplace Capabilities](#ai-search--marketplace-capabilities)
-   - [OpenSearch & Faceted Search](#9-opensearch--faceted-search)
-   - [AI Semantic Search & Hybrid Ranking](#10-ai-semantic-search--hybrid-ranking)
-   - [Real-Time Recommendation Engine Pipeline](#11-real-time-recommendation-engine-pipeline)
-   - [AI Shopping Assistant & Fraud Risk Engine](#12-ai-shopping-assistant--fraud-risk-engine)
-   - [Multi-Seller Marketplace Architecture & Buy-Box Algorithm](#13-multi-seller-marketplace-architecture--buy-box-algorithm)
+   - [OpenSearch & Faceted Search](#10-opensearch--faceted-search)
+   - [AI Semantic Search & Hybrid Ranking](#11-ai-semantic-search--hybrid-ranking)
+   - [Real-Time Recommendation Engine (with Wishlist Intent Weighting)](#12-real-time-recommendation-engine-with-wishlist-intent-weighting)
+   - [AI Shopping Assistant & Fraud Risk Engine](#13-ai-shopping-assistant--fraud-risk-engine)
+   - [Multi-Seller Marketplace Architecture & Buy-Box Algorithm](#14-multi-seller-marketplace-architecture--buy-box-algorithm)
 5. [Observability, Security & DevOps Engineering](#observability-security--devops-engineering)
-   - [OpenTelemetry Distributed Tracing & Telemetry Flow](#14-opentelemetry-distributed-tracing--telemetry-flow)
-   - [Centralized Structured Logging](#15-centralized-structured-logging)
-   - [Docker & Kubernetes Orchestration](#16-docker--kubernetes-orchestration)
-   - [Automated CI/CD Pipeline](#17-automated-cicd-pipeline)
-   - [Security Hardening & OWASP Compliance](#18-security-hardening--owasp-compliance)
+   - [OpenTelemetry Distributed Tracing & Telemetry Flow](#15-opentelemetry-distributed-tracing--telemetry-flow)
+   - [Centralized Structured Logging](#16-centralized-structured-logging)
+   - [Docker & Kubernetes Orchestration](#17-docker--kubernetes-orchestration)
+   - [Automated CI/CD Pipeline](#18-automated-cicd-pipeline)
+   - [Security Hardening & OWASP Compliance](#19-security-hardening--owasp-compliance)
 6. [Strategic Priority & Resume Value Matrix](#strategic-priority--resume-value-matrix)
 7. [12-Phase Implementation Roadmap](#12-phase-implementation-roadmap)
-8. [Current Project Structure & Database Schema](#current-project-structure--database-schema)
-9. [Current API Specifications](#current-api-specifications)
+8. [Project Structure & Database Architecture (Database-per-Service)](#project-structure--database-architecture-database-per-service)
+9. [API Specifications](#api-specifications)
 10. [Local Development & Setup Guide](#local-development--setup-guide)
 
 ---
@@ -45,7 +46,7 @@ This platform is architected to demonstrate distributed-systems engineering, hig
 * **Event-Driven Asynchrony**: Asynchronous message pipelines using Apache Kafka for decoupling, retries, and high-throughput background processing.
 * **Consistency & Reliability**: Distributed Sagas with compensating transactions, Transactional Outbox pattern, and strict idempotency keys.
 * **Full-Stack Observability**: End-to-end distributed tracing (OpenTelemetry), metric aggregation (Prometheus + Grafana), and correlation-ID structured logging.
-* **AI & Search Innovations**: Hybrid vector + keyword search, real-time personalization, checkout fraud scoring, and conversational shopping agents.
+* **AI & Search Innovations**: Hybrid vector + keyword search, multi-signal recommendation engine (incorporating wishlist and clickstream intent), checkout fraud scoring, and conversational shopping agents.
 * **Container & Cloud Native**: Dockerized services orchestrated with Kubernetes (Deployments, Services, ConfigMaps, Secrets, Ingress, HPA).
 
 ---
@@ -96,7 +97,7 @@ flowchart TD
 ---
 
 ### 2. Target Enterprise Marketplace Topology
-The target production architecture incorporates dedicated Inventory and Payment services, an Apache Kafka event backbone, OpenSearch indexing, an AI/ML intelligence layer, full OpenTelemetry observability, and Kubernetes orchestration:
+The target production architecture incorporates dedicated Inventory, Payment, and Wishlist services, an Apache Kafka event backbone, OpenSearch indexing, an AI/ML intelligence layer, full OpenTelemetry observability, and Kubernetes orchestration:
 
 ```mermaid
 flowchart TD
@@ -115,6 +116,7 @@ flowchart TD
         AuthSvc["Auth Service\n(Port 5001)"]
         CatalogSvc["Catalog Service\n(Port 5002)"]
         CartSvc["Cart Service\n(Port 5003)"]
+        WishlistSvc["Wishlist Service\n(Port 5006)"]
         OrderSvc["Order Service\n(Port 5004)"]
         PaymentSvc["Payment Service\n(Port 5005)"]
     end
@@ -123,6 +125,7 @@ flowchart TD
         AuthDB[("MongoDB: auth")]
         CatalogDB[("MongoDB: products")]
         CartRedis[("Upstash Redis: cart & sessions")]
+        WishlistDB[("MongoDB: wishlist\nSaved Items & Shared Lists")]
         OrderDB[("MongoDB: orders")]
         PaymentDB[("MongoDB: payments")]
     end
@@ -131,18 +134,19 @@ flowchart TD
         OrderOutbox["Order Outbox Poller / CDC"]
         PaymentOutbox["Payment Outbox Poller / CDC"]
         CatalogOutbox["Catalog Outbox Poller / CDC"]
+        WishlistOutbox["Wishlist Outbox Poller / CDC"]
     end
 
     subgraph EventBackbone["Apache Kafka Event Backbone"]
-        KafkaBrokers{{"Kafka Brokers (Cluster / KRaft)\nTopics: order.events, payment.events, inventory.events, catalog.events"}}
+        KafkaBrokers{{"Kafka Brokers (Cluster / KRaft)\nTopics: order.events, payment.events, inventory.events, wishlist.events, catalog.events"}}
     end
 
     subgraph AsyncWorkers["Asynchronous Event Consumers"]
         InvWorker["Inventory Service\n(Two-Phase Stock Allocation)"]
         SearchWorker["Search Indexing Pipeline\n(Kafka Connect / Worker)"]
-        NotifWorker["Notification Worker\n(Email / SMS / Webhooks)"]
+        NotifWorker["Notification Worker\n(Price Drops, Restocks, SMS, Emails)"]
         AnalyticsWorker["Real-Time Analytics Pipeline\n(ClickHouse / Data Lake)"]
-        AIWorker["AI / ML Recommendation\n& Fraud Scoring Engine"]
+        AIWorker["AI / ML Recommendation Engine\n(Collaborative Filtering & Vector Sim)"]
     end
 
     subgraph SearchAICluster["Search & Intelligence Storage"]
@@ -155,18 +159,21 @@ flowchart TD
     Gateway --> AuthSvc
     Gateway --> CatalogSvc
     Gateway --> CartSvc
+    Gateway --> WishlistSvc
     Gateway --> OrderSvc
     Gateway --> PaymentSvc
     
     AuthSvc --> AuthDB
     CatalogSvc --> CatalogDB
     CartSvc --> CartRedis
+    WishlistSvc --> WishlistDB
     OrderSvc --> OrderDB
     PaymentSvc --> PaymentDB
 
     OrderDB --> OrderOutbox --> KafkaBrokers
     PaymentDB --> PaymentOutbox --> KafkaBrokers
     CatalogDB --> CatalogOutbox --> KafkaBrokers
+    WishlistDB --> WishlistOutbox --> KafkaBrokers
 
     KafkaBrokers --> InvWorker --> WarehouseDB
     KafkaBrokers --> SearchWorker --> OpenSearch
@@ -194,24 +201,28 @@ flowchart TD
         NotifConsumer["Notification Service\nConsumer Group: 'notification-workers'"]
         AnalyticsConsumer["Analytics Service\nConsumer Group: 'analytics-pipeline'"]
         SearchConsumer["Search Indexer\nConsumer Group: 'search-sync'"]
+        AIConsumer["Recommendation Engine\nConsumer Group: 'ai-recommendations'"]
     end
 
     KafkaTopic --> InvConsumer
     KafkaTopic --> NotifConsumer
     KafkaTopic --> AnalyticsConsumer
     KafkaTopic --> SearchConsumer
+    KafkaTopic --> AIConsumer
 
     InvConsumer -- "3a. Reserve Stock" --> WarehouseDB[("Warehouse DB")]
     NotifConsumer -- "3b. Send Confirmation Email" --> SendGrid["Email / SMS Provider"]
     AnalyticsConsumer -- "3c. Track GMV & Funnel" --> AnalyticsStore[("Analytics Store")]
     SearchConsumer -- "3d. Update In-Stock Status" --> OpenSearchCluster[("OpenSearch")]
+    AIConsumer -- "3e. Update User Purchase Vector" --> VectorStore[("Vector DB")]
 ```
 
 #### Key Kafka Topics & Event Schemas
 * `order.created`, `order.cancelled`, `order.fulfilled`
 * `payment.initiated`, `payment.completed`, `payment.failed`, `payment.refunded`
 * `inventory.reserved`, `inventory.reservation_failed`, `inventory.released`, `inventory.committed`
-* `catalog.product_updated`, `catalog.stock_changed`
+* `wishlist.item_added`, `wishlist.item_removed`, `wishlist.price_dropped`
+* `catalog.product_updated`, `catalog.stock_replenished`, `catalog.price_changed`
 * `notification.dispatch_requested`
 
 ---
@@ -292,7 +303,51 @@ sequenceDiagram
 
 ---
 
-### 4. Distributed Transactions: Saga Pattern & Compensation
+### 4. Wishlist & Saved Items Microservice
+The **Wishlist Service** manages user aspirational intent, saved items, price tracking, and social sharing:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                       Wishlist Model                        │
+├─────────────────────────────────────────────────────────────┤
+│  userId           : ObjectId("65a1e8c9...")                 │
+│  items            : [ { productId, priceAtAdd, inStock } ]  │
+│  isPublic         : Boolean (true for sharable registry)    │
+│  shareToken       : "wsh_share_8f92-a12b"                   │
+│  totalItems       : Number                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Core Subsystem Interactions:
+1. **Move-to-Cart Orchestration**: Supports 1-click atomic transition from Wishlist into the active Cart session without race conditions.
+2. **Price Drop Detection & Alerting**: When `catalog.price_changed` is received over Kafka, the Wishlist Worker checks if the new price is lower than `priceAtAdd`, automatically emitting `wishlist.price_dropped` to trigger personalized email/push alerts.
+3. **Back-in-Stock Alerts**: When `catalog.stock_replenished` is emitted, the Wishlist Worker matches users who wishlisted the item and publishes notification events.
+4. **Shared Public Wishlists**: Generates secure, unguessable UUID `shareToken` URLs enabling public viewing (e.g. gift registries) without exposing account credentials.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Merchant
+    participant Catalog as Catalog Service
+    participant Kafka as Apache Kafka
+    participant WishlistWorker as Wishlist Worker
+    participant WishlistDB as Wishlist DB
+    participant NotifSvc as Notification Service
+    actor Customer
+
+    Merchant->>Catalog: Update Product Price / Restock
+    Catalog->>Kafka: Publish catalog.price_changed (or catalog.stock_replenished)
+    Kafka->>WishlistWorker: Consume event { productId, newPrice, inStock: true }
+    WishlistWorker->>WishlistDB: Find all users with productId in items & priceAtAdd > newPrice
+    WishlistDB-->>WishlistWorker: Returns matching user wishlists
+    WishlistWorker->>Kafka: Publish wishlist.price_dropped { userId, productId, oldPrice, newPrice }
+    Kafka->>NotifSvc: Consume price drop event
+    NotifSvc-->>Customer: Push Alert: "Price Dropped! Item in your wishlist is now on sale"
+```
+
+---
+
+### 5. Distributed Transactions: Saga Pattern & Compensation
 Since distributed transactions across independent microservices cannot use monolithic ACID locks without causing distributed deadlocks, an **Orchestrated Saga Pattern** is implemented.
 
 ```mermaid
@@ -328,7 +383,7 @@ stateDiagram-v2
 
 ---
 
-### 5. Transactional Outbox Pattern (Dual-Write Prevention)
+### 6. Transactional Outbox Pattern (Dual-Write Prevention)
 Publishing an event directly to Kafka right after `database.save()` can fail if the process crashes or Kafka is momentarily unreachable, leaving the database updated but no event emitted (Dual-Write Hazard).
 
 ```mermaid
@@ -353,7 +408,7 @@ flowchart TD
 
 ---
 
-### 6. Deterministic Order State Machine
+### 7. Deterministic Order State Machine
 Enforces strict unidirectional transitions, disallowing illegal state mutations (such as transitioning `DELIVERED -> PROCESSING` or `CANCELLED -> SHIPPED`):
 
 ```mermaid
@@ -381,7 +436,7 @@ stateDiagram-v2
 
 ---
 
-### 7. Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)
+### 8. Fault Tolerance: Circuit Breakers, Retries & Dead Letter Queues (DLQ)
 * **Circuit Breakers (Opossum)**: Protects downstream service calls (Payment, Shipping APIs). Transitions from `CLOSED -> OPEN -> HALF-OPEN` when error thresholds exceed 50% over a 10s rolling window, failing fast with a fallback response rather than exhausting system threads.
 * **Exponential Backoff Retries**: Transient failures are retried at `100ms`, `400ms`, `1600ms` with jitter.
 * **Dead Letter Queues (DLQ)**: Poison pills or events that fail processing after max retries are published to `*-dlq` topics (`payment-dlq`, `inventory-dlq`) with full error stack traces and metadata for operator review and replay.
@@ -415,19 +470,19 @@ stateDiagram-v2
 
 ---
 
-### 8. Advanced Redis Infrastructure
+### 9. Advanced Redis Infrastructure
 Redis is leveraged beyond basic key-value caching:
 * **Distributed Locks (Redlock)**: Ensures single-worker execution during inventory checkout and cron coupon recalculation.
 * **Sliding Window Rate Limiter**: Redis Sorted Sets (`ZREMRANGEBYSCORE`, `ZADD`, `ZCARD`) for precise per-IP and per-User rate limits.
 * **Idempotency Store**: Atomic `SET key val NX EX 86400` caching API execution results.
 * **Real-time Product Caching**: Multi-tier cache invalidation with stale-while-revalidate policies.
-* **Cart Acceleration**: Sub-5ms session carts for guest and logged-in users with write-back persistence.
+* **Cart & Wishlist Session Acceleration**: Sub-5ms response times for guest and logged-in users with write-back persistence.
 
 ---
 
 ## AI, Search & Marketplace Capabilities
 
-### 9. OpenSearch & Faceted Search
+### 10. OpenSearch & Faceted Search
 MongoDB text indexes are replaced with an **OpenSearch** cluster synchronized in near real-time via Kafka CDC streams:
 * **Fuzzy & Typo Tolerance**: Handles search queries like `"iphon 17"` -> `"iPhone 17"`, `"runing shos"` -> `"running shoes"`.
 * **Multi-Attribute Faceting**: Instant faceted aggregations across Brand, Category, Price Range, Customer Rating, Merchant Badge, Discount %, and Warehouse Availability.
@@ -435,7 +490,7 @@ MongoDB text indexes are replaced with an **OpenSearch** cluster synchronized in
 
 ---
 
-### 10. AI Semantic Search & Hybrid Ranking
+### 11. AI Semantic Search & Hybrid Ranking
 Combines dense vector embeddings with sparse BM25 keyword matching using Reciprocal Rank Fusion (RRF):
 
 ```mermaid
@@ -462,41 +517,47 @@ flowchart TD
 
 ---
 
-### 11. Real-Time Recommendation Engine Pipeline
-* **Collaborative Filtering & Co-occurrence**: `"Frequently Bought Together"`, `"Customers Who Viewed This Also Bought"`.
-* **Content-Based Vector Similarity**: Cosine distance across product description and spec embeddings for `"You May Also Like"`.
-* **Session-Aware Re-ranking**: Real-time Kafka clickstream ingest dynamically re-ranks home feed based on active in-session category affinity.
+### 12. Real-Time Recommendation Engine (with Wishlist Intent Weighting)
+The recommendation pipeline aggregates user behavior across multiple signals, applying explicit intent weighting where **Wishlist Additions** represent a strong long-term purchase intent:
+
+| Signal Type | Weight | Semantic Significance |
+| :--- | :---: | :--- |
+| **Product View / Click** | `1.0` | Transient browsing interest |
+| **Add to Cart** | `3.0` | High short-term checkout intent |
+| **Add to Wishlist** | `4.0` | Strong aspirational & persistent brand/product affinity |
+| **Completed Order** | `5.0` | Confirmed transaction (feeds collaborative filtering) |
 
 ```mermaid
 flowchart LR
-    subgraph EventIngest["Real-Time User Activity"]
-        UserClick["User Click / View"] --> ClickKafka{{"Kafka: user.events"}}
-        UserAddCart["Add to Cart"] --> ClickKafka
-        UserPurchase["Order Placed"] --> ClickKafka
+    subgraph EventIngest["Multi-Signal User Activity Stream"]
+        UserClick["User Click / View\n(Weight: 1.0)"] --> ClickKafka{{"Kafka: user.events"}}
+        UserAddCart["Add to Cart\n(Weight: 3.0)"] --> ClickKafka
+        UserWishlist["Add to Wishlist\n(Weight: 4.0 - High Intent)"] --> ClickKafka
+        UserPurchase["Order Placed\n(Weight: 5.0)"] --> ClickKafka
     end
 
     subgraph ProcessingPipeline["Recommendation Workers"]
         ClickKafka --> StreamProcessor["Flink / Spark / Node.js Stream Processor"]
-        StreamProcessor --> SessionAffinity["In-Session Category Affinity\n(Redis Active Profile)"]
-        StreamProcessor --> ItemCoOccurrence["Item Co-Occurrence Matrix\n(Frequently Bought Together)"]
+        StreamProcessor --> SessionAffinity["Category & Brand Affinity Vector\n(Boosted by Wishlist Items)"]
+        StreamProcessor --> ItemCoOccurrence["Item Co-Occurrence Matrix\n('Users who Wishlisted X bought Y')"]
     end
 
     subgraph RecommendationOutput["Served UI Recommendation Widgets"]
-        SessionAffinity --> ReRankFeed["Personalized Home Feed"]
+        SessionAffinity --> ReRankFeed["Personalized Home Feed & 'For You' Carousel"]
         ItemCoOccurrence --> FreqBought["Frequently Bought Together Widget"]
-        VectorSim["Product Embedding Similarity"] --> YouMayLike["'You May Also Like' Slider"]
+        VectorSim["Product Vector Similarity (kNN)"] --> YouMayLike["'You May Also Like' & Similar Items Slider"]
     end
 ```
 
 ---
 
-### 12. AI Shopping Assistant & Fraud Risk Engine
+### 13. AI Shopping Assistant & Fraud Risk Engine
 * **Conversational Shopping Assistant**: LangChain/LlamaIndex powered assistant that takes complex user prompts (*"Find me a mechanical keyboard under $100 with hot-swappable switches and quiet linear switches"*), parses criteria into structured API parameters, and presents rich interactive product cards.
 * **Fraud & Risk Scoring Engine**: Calculates risk score (0.0 to 1.0) during checkout based on IP geolocation discrepancies, card attempt velocity, account age, and order value anomaly detection. High-risk transactions (>0.80) trigger automated 3D-Secure challenges or merchant review flags.
 
 ---
 
-### 13. Multi-Seller Marketplace Architecture & Buy-Box Algorithm
+### 14. Multi-Seller Marketplace Architecture & Buy-Box Algorithm
 Enables multiple merchants to sell against a single canonical product catalog entry (Amazon/Flipkart model):
 * **Canonical Catalog**: Master SKU with shared specifications, images, and verified reviews.
 * **Seller Offers**: Individual merchants provide competitive Offer entities with `{ price, stock, shippingCost, estimatedDeliveryDays, sellerRating }`.
@@ -521,7 +582,7 @@ flowchart TD
 
 ## Observability, Security & DevOps Engineering
 
-### 14. OpenTelemetry Distributed Tracing & Telemetry Flow
+### 15. OpenTelemetry Distributed Tracing & Telemetry Flow
 * **Distributed Tracing (OpenTelemetry)**: Propagates W3C `traceparent` headers through API Gateway, microservices, and Kafka event headers. Provides complete flame graphs with individual span breakdowns (Gateway -> Order -> Payment -> Kafka -> Inventory).
 * **Prometheus Metrics**: Exposes `/metrics` on all services tracking request rates, HTTP latency (p50, p95, p99), Kafka consumer lag, Redis hit/miss rates, active database connections, and business KPIs (Orders/min, Payment Failure %).
 * **Grafana Dashboards**: Pre-built dashboards for system health, service mesh latency, and marketplace revenue telemetry.
@@ -558,7 +619,7 @@ sequenceDiagram
 
 ---
 
-### 15. Centralized Structured Logging
+### 16. Centralized Structured Logging
 Every service emits standardized, machine-readable JSON logs:
 
 ```json
@@ -580,7 +641,7 @@ Logs are shipped via Fluent Bit / OpenTelemetry Collector directly to OpenSearch
 
 ---
 
-### 16. Docker & Kubernetes Orchestration
+### 17. Docker & Kubernetes Orchestration
 Each microservice is containerized with multi-stage Docker builds and orchestrated in Kubernetes:
 * **Deployments**: Declarative replicas with zero-downtime rolling updates.
 * **Horizontal Pod Autoscaling (HPA)**: Automatic pod scaling (3 -> 10 replicas) based on CPU/Memory and custom Prometheus metrics (e.g. Kafka consumer lag > 500).
@@ -589,7 +650,7 @@ Each microservice is containerized with multi-stage Docker builds and orchestrat
 
 ---
 
-### 17. Automated CI/CD Pipeline
+### 18. Automated CI/CD Pipeline
 GitHub Actions pipeline executing on every pull request and push to `main`:
 
 ```mermaid
@@ -622,7 +683,7 @@ flowchart LR
 
 ---
 
-### 18. Security Hardening & OWASP Compliance
+### 19. Security Hardening & OWASP Compliance
 * **Token Rotation**: Secure HTTP-only cookies with short-lived JWT access tokens and Redis-backed refresh token rotation with reuse detection.
 * **RBAC & Authorization**: Granular role-based access control (`customer`, `company`, `support`, `admin`, `super-admin`).
 * **Injection Defense**: Parameterized Mongoose queries, strict schema sanitization against NoSQL injection, and DOMPurify for user-generated content.
@@ -640,16 +701,17 @@ flowchart LR
 | 🔴 **Priority 4** | **Distributed Saga Orchestration** | Compensating transaction flows, failure recovery, checkout coordinator | ⭐⭐⭐⭐⭐ |
 | 🔴 **Priority 5** | **Transactional Outbox Pattern** | Atomic outbox table + CDC worker, zero dual-write event anomalies | ⭐⭐⭐⭐⭐ |
 | 🔴 **Priority 6** | **OpenSearch & Faceted Search** | Typo-tolerance, faceted search, sub-15ms search-as-you-type autocomplete | ⭐⭐⭐⭐⭐ |
-| 🟠 **Priority 7** | **Docker & Kubernetes (K8s)** | Deployments, Services, Ingress, ConfigMaps, Secrets, HPA autoscaling | ⭐⭐⭐⭐⭐ |
-| 🟠 **Priority 8** | **OpenTelemetry Distributed Tracing**| W3C trace propagation across Gateway, services, and Kafka spans | ⭐⭐⭐⭐⭐ |
-| 🟠 **Priority 9** | **Prometheus & Grafana Telemetry** | p95/p99 latency tracking, Kafka consumer lag, system health dashboards | ⭐⭐⭐⭐ |
-| 🟠 **Priority 10**| **Automated CI/CD Pipeline** | GitHub Actions: Lint, Jest, Supertest, Playwright, Docker, Security scan | ⭐⭐⭐⭐ |
-| 🟠 **Priority 11**| **Resilience & Fault Tolerance** | Opossum circuit breakers, exponential retries with jitter, Dead Letter Queues | ⭐⭐⭐⭐⭐ |
-| 🟡 **Priority 12**| **AI Semantic Vector Search** | Text embeddings, hybrid vector + keyword ranking (RRF) | ⭐⭐⭐⭐⭐ |
-| 🟡 **Priority 13**| **Real-time Recommendations** | Collaborative filtering, content similarity, in-session dynamic re-ranking | ⭐⭐⭐⭐⭐ |
-| 🟡 **Priority 14**| **AI Assistant & Fraud Engine** | Natural language shopping agent, checkout risk scoring heuristics | ⭐⭐⭐⭐ |
-| 🟡 **Priority 15**| **Marketplace Seller Architecture**| Multi-seller offer buy-box algorithm, warehouse logistics & tracking | ⭐⭐⭐⭐ |
-| 🟡 **Priority 16**| **Admin & Compliance Platform** | Unified back-office analytics, RBAC, merchant audits, refund studio | ⭐⭐⭐ |
+| 🟠 **Priority 7** | **Wishlist & Price-Drop Engine** | Microservice, Move-to-cart orchestration, Kafka price drop & restock stream | ⭐⭐⭐⭐ |
+| 🟠 **Priority 8** | **Docker & Kubernetes (K8s)** | Deployments, Services, Ingress, ConfigMaps, Secrets, HPA autoscaling | ⭐⭐⭐⭐⭐ |
+| 🟠 **Priority 9** | **OpenTelemetry Distributed Tracing**| W3C trace propagation across Gateway, services, and Kafka spans | ⭐⭐⭐⭐⭐ |
+| 🟠 **Priority 10**| **Prometheus & Grafana Telemetry** | p95/p99 latency tracking, Kafka consumer lag, system health dashboards | ⭐⭐⭐⭐ |
+| 🟠 **Priority 11**| **Automated CI/CD Pipeline** | GitHub Actions: Lint, Jest, Supertest, Playwright, Docker, Security scan | ⭐⭐⭐⭐ |
+| 🟠 **Priority 12**| **Resilience & Fault Tolerance** | Opossum circuit breakers, exponential retries with jitter, Dead Letter Queues | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 13**| **AI Semantic Vector Search** | Text embeddings, hybrid vector + keyword ranking (RRF) | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 14**| **Multi-Signal Recommendation Engine** | Collaborative filtering, content similarity, Wishlist intent weighting | ⭐⭐⭐⭐⭐ |
+| 🟡 **Priority 15**| **AI Assistant & Fraud Engine** | Natural language shopping agent, checkout risk scoring heuristics | ⭐⭐⭐⭐ |
+| 🟡 **Priority 16**| **Marketplace Seller Architecture**| Multi-seller offer buy-box algorithm, warehouse logistics & tracking | ⭐⭐⭐⭐ |
+| 🟡 **Priority 17**| **Admin & Compliance Platform** | Unified back-office analytics, RBAC, merchant audits, refund studio | ⭐⭐⭐ |
 
 ---
 
@@ -660,8 +722,8 @@ The evolution from the current working foundation to the enterprise distributed 
 ```mermaid
 flowchart TD
     subgraph Foundation["Phase 1-4: Core Distributed Architecture"]
-        P1["Phase 1: Domain Boundaries & API v1 Standard"] --> P2["Phase 2: Dedicated Inventory & Payment (Idempotency)"]
-        P2 --> P3["Phase 3: Apache Kafka Event-Driven Backbone"]
+        P1["Phase 1: Domain Boundaries & API v1 Standard"] --> P2["Phase 2: Inventory, Payment & Wishlist Services"]
+        P2 --> P3["Phase 3: Apache Kafka Event-Driven Backbone & Topic Topology"]
         P3 --> P4["Phase 4: Saga Distributed Transactions + Transactional Outbox"]
     end
 
@@ -673,7 +735,7 @@ flowchart TD
     end
 
     subgraph IntelligenceResilience["Phase 9-12: AI Intelligence & Production Readiness"]
-        P8 --> P9["Phase 9: AI Semantic Vector Search & Hybrid Ranking"]
+        P8 --> P9["Phase 9: AI Semantic Search & Multi-Signal Recommendations (Wishlist Affinity)"]
         P9 --> P10["Phase 10: AI Shopping Assistant & Fraud Risk Scoring"]
         P10 --> P11["Phase 11: Resilience (Circuit Breakers, DLQ) & k6 Load Testing"]
         P11 --> P12["Phase 12: Production OpenAPI/Swagger Docs, ADRs & System Design Portfolio"]
@@ -687,20 +749,21 @@ flowchart TD
 * Refactor synchronous cross-service calls in `order-service` to prepare for asynchronous event pipelines.
 * Introduce strict API versioning (`/api/v1/*`) and standardized JSON error response envelopes.
 
-#### Phase 2: Dedicated Inventory & Payment Services
+#### Phase 2: Inventory, Payment & Wishlist Microservices
 * Extract inventory logic into a standalone **Inventory Microservice** with `totalStock`, `reservedStock`, and `availableStock`.
 * Implement the atomic `reserve()`, `release()`, and `commit()` methods with TTL expiration.
 * Build a standalone **Payment Microservice** with Stripe/PayPal webhook integration and Redis-backed `Idempotency-Key` verification.
+* Implement a standalone **Wishlist Microservice** managing user saved items, UUID public share tokens, and atomic Move-to-Cart orchestration.
 
 #### Phase 3: Apache Kafka Event-Driven Backbone
 * Provision Apache Kafka and Zookeeper / KRaft cluster via Docker.
-* Create core topics (`order.events`, `payment.events`, `inventory.events`, `notification.events`).
+* Create core topics (`order.events`, `payment.events`, `inventory.events`, `wishlist.events`, `catalog.events`, `notification.events`).
 * Build robust Kafka producer and consumer wrappers with partition key strategies (e.g., partitioning by `orderId` or `userId` for strict ordering).
 
 #### Phase 4: Saga Distributed Transactions & Transactional Outbox
 * Implement the **Saga Orchestrator** in `order-service` to coordinate checkout workflows across Order, Inventory, and Payment.
 * Implement compensating actions (`releaseInventory`, `cancelOrder`, `refundPayment`) for failure handling.
-* Implement the **Transactional Outbox Pattern** in Order and Payment services with a background CDC poller to prevent dual-write inconsistencies.
+* Implement the **Transactional Outbox Pattern** in Order, Payment, and Wishlist services with a background CDC poller to prevent dual-write inconsistencies.
 
 #### Phase 5: OpenSearch & High-Performance Faceted Search
 * Deploy an OpenSearch cluster and establish continuous indexing from MongoDB via Kafka event consumers.
@@ -721,12 +784,12 @@ flowchart TD
 #### Phase 8: CI/CD Pipeline & Automated Testing
 * Set up GitHub Actions CI workflow for linting, type-checking, and vulnerability scanning.
 * Build unit tests (Jest) and integration test suites (Supertest + Testcontainers for MongoDB, Redis, Kafka).
-* Implement end-to-end Playwright tests covering critical user flows (Register -> Search -> Add to Cart -> Checkout -> Payment -> Order Tracking).
+* Implement end-to-end Playwright tests covering critical user flows (Register -> Search -> Add to Wishlist/Cart -> Checkout -> Payment -> Order Tracking).
 
-#### Phase 9: AI Semantic Vector Search & Recommendations
+#### Phase 9: AI Semantic Vector Search & Multi-Signal Recommendations
 * Generate vector embeddings for product titles and descriptions using OpenAI / open-source embedding models.
 * Implement kNN vector search in OpenSearch / Milvus and combine with BM25 keyword matching via Reciprocal Rank Fusion (RRF).
-* Build collaborative filtering and content-based recommendation services for `"Frequently Bought Together"` and `"You May Also Like"`.
+* Build multi-signal recommendation engine combining completed purchases, cart additions, and **Wishlist intent weighting** (Weight: 4.0) for `"For You"` and `"Frequently Bought Together"` widgets.
 
 #### Phase 10: AI Shopping Assistant & Fraud Scoring
 * Create an AI Shopping Assistant agent with LangChain to interpret complex user shopping requirements and retrieve targeted products.
@@ -743,17 +806,17 @@ flowchart TD
 
 ---
 
-## Current Project Structure & Database Schema
+## Project Structure & Database Architecture (Database-per-Service)
 
 ### Directory Tree
 ```text
 E-Commerce/
 ├── client/                               # Frontend Single Page Application
 │   ├── src/
-│   │   ├── components/                   # UI components, cart drawer, modals & route guards
-│   │   ├── context/                      # AuthContext & CartContext (with guest session merge)
-│   │   ├── pages/                        # Consumer & Merchant pages (Storefront, Orders, Checkout)
-│   │   ├── services/                     # Axios API clients
+│   │   ├── components/                   # UI components, cart & wishlist drawers, modals & guards
+│   │   ├── context/                      # AuthContext, CartContext, WishlistContext
+│   │   ├── pages/                        # Storefront, Orders, Checkout, WishlistPage
+│   │   ├── services/                     # Axios API clients (auth, cart, wishlist, order, product)
 │   │   ├── types/                        # TypeScript domain interfaces
 │   │   ├── App.tsx                       # Client router
 │   │   └── main.tsx                      # Bootstrap entry
@@ -763,13 +826,14 @@ E-Commerce/
 ├── gateway/                              # Modular API Gateway (Port 5000)
 │   ├── config/                           # Redis & microservices registry
 │   ├── middleware/                       # Rate limiter, correlation IDs, auth gateway, load balancer
-│   ├── routes/                           # Reverse proxy routing
+│   ├── routes/                           # Reverse proxy routing (/auth, /products, /cart, /wishlist, /orders)
 │   ├── package.json
 │   └── server.js                         # Gateway server
 ├── services/                             # Microservices Directory
 │   ├── auth-service/                     # Identity & Auth Service (Port 5001)
 │   ├── product-service/                  # Catalog, Reviews & Coupons Service (Port 5002)
 │   ├── cart-service/                     # Shopping Cart Service (Port 5003)
+│   ├── wishlist-service/                 # Wishlist & Price Tracking Service (Port 5006)
 │   ├── order-service/                    # Order Fulfillment Service (Port 5004)
 │   └── package.json                      # Shared dependencies
 ├── package.json                          # Root repository orchestration
@@ -850,6 +914,16 @@ MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
 │       ├── totalItems: Number
 │       └── subtotal: Number
 │
+├── wishlist (Wishlist Microservice Database)
+│   └── wishlists
+│       ├── _id: ObjectId
+│       ├── userId: ObjectId (unique, indexed)
+│       ├── items: Array<{ productId, title, priceAtAdd, currentPrice, image, category, companyId, inStock, addedAt }>
+│       ├── isPublic: Boolean (default: false)
+│       ├── shareToken: String (unique, sparse, indexed, e.g. "wsh_8f29c4e1")
+│       ├── totalItems: Number
+│       └── updatedAt: Date
+│
 └── orders (Order Management Database)
     └── orders
         ├── _id: ObjectId
@@ -867,7 +941,7 @@ MongoDB Atlas Cluster (cluster0.1pknqka.mongodb.net)
 
 ---
 
-## Current API Specifications
+## API Specifications
 
 All endpoints are accessed via the API Gateway base path: `http://localhost:5000/api`
 
@@ -933,7 +1007,18 @@ All endpoints are accessed via the API Gateway base path: `http://localhost:5000
 | `DELETE` | `/cart/items/:id` | Remove item from cart | Optional |
 | `DELETE` | `/cart` | Clear entire shopping cart | Optional |
 
-### 6. Order Management & Tracking (`/api/orders`)
+### 6. Wishlist & Saved Items (`/api/wishlist`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/wishlist` | Fetch authenticated user's wishlist items & price updates | Yes |
+| `POST` | `/wishlist/items` | Add product to wishlist with initial `priceAtAdd` | Yes |
+| `DELETE` | `/wishlist/items/:productId` | Remove product item from wishlist | Yes |
+| `POST` | `/wishlist/items/:productId/move-to-cart` | Move item from wishlist into active cart | Yes |
+| `GET` | `/wishlist/shared/:shareToken` | Public read-only access for shared wishlist | No |
+| `PATCH` | `/wishlist/privacy` | Toggle public/private visibility and generate `shareToken` | Yes |
+| `DELETE` | `/wishlist` | Clear all items from user's wishlist | Yes |
+
+### 7. Order Management & Tracking (`/api/orders`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/orders` | Place new order with dynamic coupon discount | Yes |
