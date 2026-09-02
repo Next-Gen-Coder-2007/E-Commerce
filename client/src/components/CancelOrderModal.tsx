@@ -321,7 +321,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                     A full refund of <strong>${refundAmount.toFixed(2)}</strong> will be credited back to your <strong>{paymentMethodLabel}</strong>.
                   </p>
                   <p className="text-[11px] text-emerald-700">
-                    ⏱️ Processing Timeline: Typically reflects within <strong>3 to 5 business days</strong>.
+                    Processing Timeline: Typically reflects within <strong>3 to 5 business days</strong>.
                   </p>
                 </div>
               ) : (

@@ -1,57 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import SearchAutocomplete from './SearchAutocomplete';
 import {
   ShoppingBag,
   LogOut,
   Sparkles,
-  Search,
-  X,
   Building2,
   Package,
   MapPin,
+  Heart,
+  Shield
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const { totalItems, openCart } = useCart();
+  const { wishlistCount, toggleWishlistDrawer, priceDropCount } = useWishlist();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-
-  useEffect(() => {
-    setSearchQuery(searchParams.get('search') || '');
-  }, [searchParams]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) {
-      params.set('search', searchQuery.trim());
-    }
-    const currentCat = searchParams.get('category');
-    if (currentCat && currentCat !== 'all') {
-      params.set('category', currentCat);
-    }
-    navigate(`/?${params.toString()}`);
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    const params = new URLSearchParams(searchParams);
-    params.delete('search');
-    navigate(`/?${params.toString()}`);
-  };
-
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-zinc-200/80 transition-all">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200/80 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6 shrink-0">
@@ -60,44 +36,37 @@ export const Navbar: React.FC = () => {
                 <ShoppingBag className="w-4.5 h-4.5" />
               </div>
               <div className="flex flex-col">
-                <span className="text-base font-extrabold tracking-tight text-zinc-950 leading-none">
+                <span className="text-base font-black tracking-tight text-zinc-950 leading-none">
                   NovaCommerce
                 </span>
-                <span className="text-[10px] text-zinc-400 font-medium tracking-tight">
-                  Modern Marketplace
+                <span className="text-[10px] text-zinc-400 font-semibold tracking-tight">
+                  Marketplace
                 </span>
               </div>
             </Link>
+
+            <nav className="hidden lg:flex items-center gap-4 text-xs font-semibold text-zinc-600">
+              <Link to="/categories" className="hover:text-zinc-950 transition">
+                Categories
+              </Link>
+              <Link
+                to="/deals"
+                className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-700 font-bold transition"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                <span>Deals</span>
+              </Link>
+            </nav>
           </div>
 
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex-1 max-w-xl hidden md:flex items-center relative"
-          >
-            <div className="w-full relative flex items-center">
-              <Search className="w-4 h-4 absolute left-3.5 text-zinc-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search products, brands, categories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 rounded-xl bg-zinc-100/80 hover:bg-zinc-100 border border-zinc-200/80 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/5 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-3 text-zinc-400 hover:text-zinc-700 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </form>
+          {/* Instant Faceted Autocomplete Search */}
+          <div className="flex-1 max-w-xl hidden md:flex items-center">
+            <SearchAutocomplete />
+          </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             {loading ? (
-              <div className="h-8 w-24 bg-zinc-100 animate-pulse rounded-lg" />
+              <div className="h-8 w-24 bg-zinc-100 animate-pulse rounded-xl" />
             ) : user ? (
               <div className="flex items-center gap-2">
                 {user.role === 'company' ? (
@@ -116,8 +85,8 @@ export const Navbar: React.FC = () => {
                       className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors shadow-2xs"
                       title="Manage Account & Addresses"
                     >
-                      <MapPin className="w-3.5 h-3.5 text-zinc-700" />
-                      <span>Addresses & Account</span>
+                      <MapPin className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Addresses</span>
                     </Link>
 
                     <Link
@@ -125,25 +94,36 @@ export const Navbar: React.FC = () => {
                       className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors shadow-2xs"
                       title="My Orders & Shipments"
                     >
-                      <Package className="w-3.5 h-3.5 text-zinc-700" />
-                      <span>My Orders</span>
+                      <Package className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Orders</span>
                     </Link>
                   </>
                 )}
 
+                {user.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border bg-zinc-50 text-zinc-900 border-zinc-300 hover:bg-zinc-100 transition-colors shadow-2xs"
+                    title="Platform Administration Portal"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-zinc-700" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
                 <Link
-                  to={user.role === 'company' ? '/business' : '/profile'}
+                  to={user.role === 'company' ? '/business' : user.role === 'admin' ? '/admin' : '/profile'}
                   className="flex items-center gap-2 p-1 sm:pr-3 sm:pl-1 rounded-xl bg-zinc-50 border border-zinc-200/80 hover:bg-zinc-100/80 transition-colors"
-                  title={user.role === 'company' ? 'Merchant Dashboard' : 'Account Settings'}
+                  title={user.role === 'company' ? 'Merchant Dashboard' : user.role === 'admin' ? 'Admin Portal' : 'Account Settings'}
                 >
-                  <div className={`w-7 h-7 rounded-lg ${user.role === 'company' ? 'bg-amber-600' : 'bg-zinc-950'} text-white flex items-center justify-center font-extrabold text-xs shrink-0 select-none shadow-xs`}>
-                    {user.role === 'company' ? <Building2 className="w-3.5 h-3.5" /> : (user.name ? user.name.trim().charAt(0).toUpperCase() : 'U')}
+                  <div className={`w-7 h-7 rounded-lg ${user.role === 'company' ? 'bg-amber-600' : user.role === 'admin' ? 'bg-zinc-950' : 'bg-zinc-950'} text-white flex items-center justify-center font-extrabold text-xs shrink-0 select-none shadow-xs`}>
+                    {user.role === 'company' ? <Building2 className="w-3.5 h-3.5" /> : user.role === 'admin' ? 'A' : (user.name ? user.name.trim().charAt(0).toUpperCase() : 'U')}
                   </div>
                   <div className="hidden sm:flex flex-col text-left">
-                    <span className="text-xs font-semibold text-zinc-900 leading-tight truncate max-w-[110px]">
+                    <span className="text-xs font-bold text-zinc-900 leading-tight truncate max-w-[110px]">
                       {user.companyName || user.name}
                     </span>
-                    <span className="text-[10px] text-zinc-400 uppercase font-bold">
+                    <span className="text-[10px] text-zinc-400 uppercase font-semibold">
                       {user.role === 'company' ? 'Merchant' : user.role}
                     </span>
                   </div>
@@ -152,7 +132,7 @@ export const Navbar: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                  className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -162,7 +142,7 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/business"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border-zinc-200/80 transition-colors"
                   title="Merchant & Seller Portal"
                 >
                   <Building2 className="w-3.5 h-3.5" />
@@ -171,13 +151,13 @@ export const Navbar: React.FC = () => {
 
                 <Link
                   to="/login"
-                  className="px-3.5 py-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 rounded-lg hover:bg-zinc-100 transition-colors"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-950 rounded-xl hover:bg-zinc-100 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 rounded-lg shadow-xs transition-transform active:scale-[0.98]"
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 rounded-xl shadow-xs transition-transform active:scale-[0.98]"
                 >
                   <Sparkles className="w-3 h-3" />
                   <span>Get Started</span>
@@ -185,15 +165,50 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
+            {/* AI Shopping Concierge Launcher */}
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
+                window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-50 hover:bg-zinc-100 text-zinc-900 border border-zinc-200/80 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+              title="Open AI Shopping Assistant"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-zinc-900" />
+              <span className="hidden md:inline">AI Assistant</span>
+            </button>
+
+            {/* Wishlist Button */}
+            {user?.role !== 'company' && (
+              <button
+                type="button"
+                onClick={toggleWishlistDrawer}
+                className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-all relative cursor-pointer group"
+                title="My Wishlist & Price Tracker"
+              >
+                <Heart className="w-5 h-5 group-hover:scale-110 transition-transform text-zinc-700 group-hover:text-rose-600" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white font-mono text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
+                {priceDropCount > 0 && (
+                  <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
+                )}
+              </button>
+            )}
+
+            {/* Shopping Cart Button */}
             <button
               type="button"
               onClick={openCart}
               className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-all relative cursor-pointer group"
               title="Shopping Cart"
             >
-              <ShoppingBag className="w-5 h-5 group-hover:scale-105 transition-transform" />
+              <ShoppingBag className="w-5 h-5 group-hover:scale-105 transition-transform text-zinc-700" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-950 text-white font-mono text-[10px] font-black flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-50">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-950 text-white font-mono text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
@@ -201,29 +216,13 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        <form
-          onSubmit={handleSearchSubmit}
-          className="md:hidden pb-3 pt-1 flex items-center relative"
-        >
-          <Search className="w-4 h-4 absolute left-3.5 text-zinc-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search products, brands..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-9 py-2 rounded-xl bg-zinc-100 border border-zinc-200/80 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-zinc-900"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={handleClearSearch}
-              className="absolute right-3 text-zinc-400 hover:text-zinc-700"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </form>
+        {/* Mobile Search */}
+        <div className="md:hidden pb-3 pt-1">
+          <SearchAutocomplete />
+        </div>
       </div>
     </header>
   );
 };
+
+export default Navbar;
