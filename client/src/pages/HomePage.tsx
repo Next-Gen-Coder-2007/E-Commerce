@@ -25,9 +25,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Sliders,
+  Heart,
 } from 'lucide-react';
-import { getProductsApi } from '../services/productService';
+import { getProductsApi, getCategoriesApi } from '../services/productService';
+import { ForYouRecommendations } from '../components/recommendations/ForYouRecommendations';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
 
 const BANNERS = [
@@ -119,9 +122,19 @@ export const HomePage: React.FC = () => {
   const [addingId, setAddingId] = useState<string | null>(null);
 
   const { addToCart, items, updateQuantity, removeFromCart, actionLoading } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    getCategoriesApi()
+      .then((res) => {
+        if (res?.categories && res.categories.length > 0) {
+          setDynamicCategories(res.categories);
+        }
+      })
+      .catch((err) => console.warn('Categories API error:', err));
+  }, []);
 
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -234,15 +247,6 @@ export const HomePage: React.FC = () => {
     setSearchParams(params);
   };
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail) {
-      setNewsletterSuccess(true);
-      setNewsletterEmail('');
-      setTimeout(() => setNewsletterSuccess(false), 4000);
-    }
-  };
-
   const renderProductCard = (product: Product, idx: number) => {
     const cartItem = items.find((i) => i.productId === product._id);
     const hasDiscount =
@@ -274,6 +278,23 @@ export const HomePage: React.FC = () => {
               {product.category}
             </span>
 
+            {/* Quick Wishlist Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleWishlist(product);
+              }}
+              className={`absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                isInWishlist(product._id)
+                  ? 'bg-pink-600 text-white shadow-md shadow-pink-600/40 scale-105'
+                  : 'bg-white/80 hover:bg-white text-zinc-600 hover:text-pink-600 shadow-xs backdrop-blur-xs'
+              }`}
+              title={isInWishlist(product._id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            >
+              <Heart className={`w-3.5 h-3.5 ${isInWishlist(product._id) ? 'fill-white text-white' : ''}`} />
+            </button>
+
             {hasDiscount && (
               <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black tracking-wider shadow-md">
                 -{discountPct}% OFF
@@ -282,7 +303,7 @@ export const HomePage: React.FC = () => {
 
             {product.isFlashSale && (
               <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider shadow-md">
-                ⚡ Flash Deal
+                Flash Deal
               </span>
             )}
 
@@ -783,6 +804,8 @@ export const HomePage: React.FC = () => {
       )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 flex-1 w-full space-y-12">
+        {!isSearchOrFilterMode && <ForYouRecommendations />}
+
         {error && (
           <div className="p-4 my-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
             {error}
@@ -850,7 +873,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {['all', 'electronics', 'fashion', 'home', 'beauty', 'sports', 'books'].map((cat) => {
+              {['all', ...(dynamicCategories.length > 0 ? dynamicCategories : ['smartphones', 'laptops', 'audio', 'electronics', 'fashion', 'home', 'beauty', 'sports'])].map((cat) => {
                 const isActive = activeCategory === cat;
                 const label = cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1);
                 return (
@@ -991,146 +1014,6 @@ export const HomePage: React.FC = () => {
           </div>
         )}
       </main>
-
-      <footer className="bg-white text-zinc-600 text-xs border-t border-zinc-200/80 pt-14 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-1 space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold">
-                  <ShoppingBag className="w-4 h-4" />
-                </div>
-                <span className="text-base font-extrabold text-zinc-950 tracking-tight">
-                  NovaCommerce
-                </span>
-              </div>
-              <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-                A sleek, modern marketplace designed for seamless retail shopping, verified merchant catalogs, and instant global fulfillment.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
-                Departments
-              </span>
-              <ul className="space-y-2 text-[11px]">
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('electronics')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Consumer Electronics
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('fashion')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Fashion & Apparel
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('home')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Home & Living
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('beauty')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Beauty & Skincare
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('sports')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Sports & Outdoors
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect('books')}
-                    className="hover:text-zinc-950 transition-colors cursor-pointer"
-                  >
-                    Books & Media
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
-                Customer Care
-              </span>
-              <ul className="space-y-2 text-[11px]">
-                <li><span className="hover:text-zinc-950 transition-colors cursor-pointer">Track Your Order</span></li>
-                <li><span className="hover:text-zinc-950 transition-colors cursor-pointer">Shipping & Delivery Rates</span></li>
-                <li><span className="hover:text-zinc-950 transition-colors cursor-pointer">30-Day Returns & Exchanges</span></li>
-                <li><span className="hover:text-zinc-950 transition-colors cursor-pointer">Buyer Protection Escrow</span></li>
-                <li><span className="hover:text-zinc-950 transition-colors cursor-pointer">24/7 Priority Assistance</span></li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-zinc-950 uppercase tracking-wider">
-                Stay Updated
-              </span>
-              <p className="text-[11px] text-zinc-500 leading-relaxed">
-                Subscribe for exclusive flash deals, new designer arrivals, and catalog promotions.
-              </p>
-              <form onSubmit={handleNewsletterSubmit} className="flex">
-                <input
-                  type="email"
-                  placeholder="Enter your email..."
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  required
-                  className="flex-1 min-w-0 px-3 py-2 rounded-l-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:bg-white transition-colors"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-r-xl font-semibold text-xs transition-colors cursor-pointer shrink-0"
-                >
-                  Subscribe
-                </button>
-              </form>
-              {newsletterSuccess && (
-                <p className="text-[11px] text-emerald-600 font-medium animate-in fade-in">
-                  Thank you for subscribing to NovaCommerce deals!
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-zinc-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-400">
-            <div>
-              &copy; {new Date().getFullYear()} NovaCommerce Platform. All rights reserved.
-            </div>
-            <div className="flex items-center gap-6">
-              <span className="hover:text-zinc-700 cursor-pointer transition-colors">Privacy Policy</span>
-              <span className="hover:text-zinc-700 cursor-pointer transition-colors">Terms of Service</span>
-              <span className="hover:text-zinc-700 cursor-pointer transition-colors">Security & Trust</span>
-              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>System Operational</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {selectedProduct && (
         <div

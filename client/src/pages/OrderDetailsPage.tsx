@@ -196,8 +196,9 @@ export const OrderDetailsPage: React.FC = () => {
     );
   }
 
-  const currentStep = getStepIndex(order.orderStatus);
-  const isCancelled = order.orderStatus === 'cancelled';
+  const effectiveStatus = (order.orderStatus || order.status || 'placed') as OrderStatus;
+  const currentStep = getStepIndex(effectiveStatus);
+  const isCancelled = effectiveStatus === 'cancelled';
   const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
     weekday: 'short',
     year: 'numeric',
@@ -315,7 +316,7 @@ export const OrderDetailsPage: React.FC = () => {
                 </button>
               )}
               {!isCancelled &&
-                ['placed', 'confirmed', 'processing'].includes(order.orderStatus) && (
+                ['placed', 'confirmed', 'processing'].includes(effectiveStatus) && (
                   <button
                     type="button"
                     onClick={() => setIsCancelModalOpen(true)}

@@ -16,6 +16,7 @@ import {
   Copy,
   Check,
   AlertCircle,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SavedAddress } from '../types/auth';
@@ -520,9 +521,9 @@ export const ProfilePage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddressModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-900 text-lg leading-none cursor-pointer"
+                className="text-zinc-400 hover:text-zinc-900 cursor-pointer"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 

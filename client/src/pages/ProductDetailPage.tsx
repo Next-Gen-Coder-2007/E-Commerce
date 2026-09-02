@@ -31,13 +31,15 @@ import {
   Camera,
   Ticket,
 } from 'lucide-react';
+import { ReviewCard } from '../components/reviews/ReviewCard';
+import { FrequentlyBoughtTogether } from '../components/recommendations/FrequentlyBoughtTogether';
 import { getProductByIdApi, getProductsApi } from '../services/productService';
 import { getProductReviewsApi, getMyProductReviewApi } from '../services/reviewService';
 import { getAvailableCouponsApi } from '../services/couponService';
 import { WriteReviewModal } from '../components/reviews/WriteReviewModal';
-import { ReviewCard } from '../components/reviews/ReviewCard';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
 import type { Review, ReviewSummary } from '../types/review';
 import type { Coupon } from '../types/coupon';
@@ -47,6 +49,7 @@ export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart, items, updateQuantity, removeFromCart, openBusinessModal, actionLoading, openCart } = useCart();
   const { user } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -655,7 +658,7 @@ export const ProductDetailPage: React.FC = () => {
                           }}
                           className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
                         >
-                          {copiedCouponCode === cp.code ? 'Copied ✓' : 'Copy Code'}
+                          {copiedCouponCode === cp.code ? 'Copied' : 'Copy Code'}
                         </button>
                       </div>
                     </div>
@@ -863,7 +866,7 @@ export const ProductDetailPage: React.FC = () => {
                   ) : addedRecently ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-white" />
-                      <span>✓ Added to Cart!</span>
+                      <span>Added to Cart</span>
                     </>
                   ) : (
                     <>
@@ -884,6 +887,20 @@ export const ProductDetailPage: React.FC = () => {
                 >
                   <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
                   {buyingNow ? 'Processing...' : 'Buy Now • Instant Checkout'}
+                </button>
+
+                {/* Wishlist Button */}
+                <button
+                  type="button"
+                  onClick={() => product && toggleWishlist(product)}
+                  className={`w-full py-3 px-4 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center gap-2 cursor-pointer ${
+                    product && isInWishlist(product._id)
+                      ? 'bg-pink-50 border-pink-300 text-pink-700 hover:bg-pink-100 shadow-2xs'
+                      : 'bg-white border-zinc-200 text-zinc-700 hover:text-pink-600 hover:border-pink-200 hover:bg-pink-50/50 shadow-2xs'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${product && isInWishlist(product._id) ? 'fill-pink-600 text-pink-600' : 'text-zinc-500'}`} />
+                  <span>{product && isInWishlist(product._id) ? 'Saved in Wishlist' : 'Save to Wishlist & Track Price Drops'}</span>
                 </button>
               </div>
 
@@ -922,6 +939,9 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* AI Frequently Bought Together Bundle */}
+        {product && <FrequentlyBoughtTogether productId={product._id} />}
 
         {/* Detailed Tabs (Description, Specs, Reviews, Shipping) */}
         <div className="mt-16 bg-white border border-zinc-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
@@ -1321,14 +1341,14 @@ export const ProductDetailPage: React.FC = () => {
                         onEdit={() => {
                           setIsWriteReviewModalOpen(true);
                         }}
-                        onDeleted={(deletedId) => {
+                        onDeleted={(deletedId: any) => {
                           setReviews((prev) => prev.filter((r) => r._id !== deletedId));
                           if (id) {
                             fetchReviews(id);
                             fetchProductData(id, true);
                           }
                         }}
-                        onReviewUpdated={(updated) => {
+                        onReviewUpdated={(updated: any) => {
                           setReviews((prev) =>
                             prev.map((r) => (r._id === updated._id ? updated : r))
                           );

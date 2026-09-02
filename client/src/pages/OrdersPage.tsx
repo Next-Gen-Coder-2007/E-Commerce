@@ -271,7 +271,8 @@ export const OrdersPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              const badge = getStatusBadge(order.orderStatus);
+              const currentStatus = (order.orderStatus || order.status || 'placed') as OrderStatus;
+              const badge = getStatusBadge(currentStatus);
               const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
@@ -280,7 +281,7 @@ export const OrdersPage: React.FC = () => {
 
               const isCancellable =
                 !order.cancellation?.isCancelled &&
-                ['placed', 'confirmed', 'processing'].includes(order.orderStatus);
+                ['placed', 'confirmed', 'processing'].includes(currentStatus);
 
               return (
                 <div

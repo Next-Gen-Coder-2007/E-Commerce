@@ -469,7 +469,7 @@ export const CompanyStorePage: React.FC = () => {
                           }}
                           className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
                         >
-                          {copiedCouponCode === cp.code ? 'Copied ✓' : 'Copy Code'}
+                          {copiedCouponCode === cp.code ? 'Copied' : 'Copy Code'}
                         </button>
                       </div>
                     </div>
