@@ -6,12 +6,29 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000,
+});
+
+// Attach Bearer token from localStorage if available (for cross-domain hostings where third-party cookies might be blocked)
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If 401 Unauthorized, purge stale token from localStorage
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+    }
+
     const message =
       error.response?.data?.message ||
       error.message ||

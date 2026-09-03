@@ -1,4 +1,4 @@
-import React from 'react';
+import { getGatewayBaseUrl } from '../utils/apiConfig';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -161,7 +161,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <a href="http://localhost:5000/docs" target="_blank" rel="noreferrer" className="hover:text-zinc-950 transition">
+                <a href={`${getGatewayBaseUrl()}/docs`} target="_blank" rel="noreferrer" className="hover:text-zinc-950 transition">
                   OpenAPI 3.0 Swagger
                 </a>
               </li>

@@ -83,11 +83,12 @@ export const registerUser = async (req, res, next) => {
       companyName: role === 'company' ? (companyName ? companyName.trim() : '') : '',
     });
 
-    generateToken(res, user);
+    const token = generateToken(res, user);
 
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
+      token,
       user: sanitizeUser(user),
     });
   } catch (error) {
@@ -133,11 +134,12 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    generateToken(res, user);
+    const token = generateToken(res, user);
 
     return res.status(200).json({
       success: true,
       message: 'Login successful',
+      token,
       user: sanitizeUser(user),
     });
   } catch (error) {
@@ -217,11 +219,12 @@ export const googleAuth = async (req, res, next) => {
       });
     }
 
-    generateToken(res, user);
+    const token = generateToken(res, user);
 
     return res.status(200).json({
       success: true,
       message: 'Google authentication successful',
+      token,
       user: sanitizeUser(user),
     });
   } catch (error) {

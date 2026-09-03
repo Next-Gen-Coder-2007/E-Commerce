@@ -82,6 +82,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearError();
     try {
       const data = await registerApi(input);
+      if (data.token && typeof window !== 'undefined') {
+        localStorage.setItem('authToken', data.token);
+      }
       setUser(data.user);
     } catch (err: any) {
       const msg = err.message || 'Registration failed';
@@ -97,6 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearError();
     try {
       const data = await loginApi(input);
+      if (data.token && typeof window !== 'undefined') {
+        localStorage.setItem('authToken', data.token);
+      }
       setUser(data.user);
     } catch (err: any) {
       const msg = err.message || 'Invalid email or password';
@@ -112,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearError();
     try {
       const data = await googleLoginApi(credential, portal);
+      if (data.token && typeof window !== 'undefined') {
+        localStorage.setItem('authToken', data.token);
+      }
       setUser(data.user);
     } catch (err: any) {
       const msg = err.message || 'Google authentication failed';
@@ -126,9 +135,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     clearError();
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+      }
       await logoutApi();
       setUser(null);
     } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+      }
       setUser(null);
     } finally {
       setLoading(false);

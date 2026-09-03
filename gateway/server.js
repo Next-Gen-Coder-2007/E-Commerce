@@ -27,30 +27,84 @@ import gatewayRoutes from './routes/index.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Enable trust proxy for cloud deployments behind reverse proxies (Render, Railway, Fly, Heroku, AWS ALB)
+app.set('trust proxy', 1);
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
 
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-];
+// Dynamic allowed origins parser for multi-domain hosting
+const parseAllowedOrigins = () => {
+  const envOrigins = [
+    process.env.CLIENT_URL,
+    process.env.ALLOWED_ORIGINS,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ]
+    .filter(Boolean)
+    .flatMap((entry) => entry.split(','))
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+  return Array.from(new Set(envOrigins));
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // allow curl, mobile, health checks, server-to-server
+  const cleanOrigin = origin.replace(/\/$/, '');
+
+  // Exact match
+  if (allowedOrigins.includes(cleanOrigin)) return true;
+
+  // Wildcard / allow all mode
+  if (process.env.CORS_ORIGIN === '*' || process.env.ALLOW_ALL_ORIGINS === 'true') {
+    return true;
+  }
+
+  // Automatic match for standard cloud preview domains (Vercel, Netlify, Render, Railway)
+  if (process.env.ALLOW_PREVIEW_ORIGINS === 'true' || process.env.NODE_ENV !== 'production') {
+    if (
+      cleanOrigin.endsWith('.vercel.app') ||
+      cleanOrigin.endsWith('.netlify.app') ||
+      cleanOrigin.endsWith('.onrender.com') ||
+      cleanOrigin.endsWith('.up.railway.app')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-idempotency-key',
+    'traceparent',
+    'x-correlation-id',
+    'x-user-id',
+    'x-user-role',
+  ],
+  exposedHeaders: ['traceparent', 'x-correlation-id'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(cookieParser());
 app.use(gatewayTracer);
@@ -62,6 +116,22 @@ app.use(attachAuthContext);
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
+
+// Root welcome & cluster health endpoint (for cloud platform deployment checks)
+app.get('/', (req, res) => {
+  res.status(200).json({
+    service: 'api-gateway',
+    status: 'operational',
+    name: 'NovaCommerce Enterprise API Gateway',
+    version: '1.0.0',
+    documentation: '/docs',
+    openApiSpec: '/openapi.json',
+    health: '/health',
+    metrics: '/metrics',
+    apiRoot: '/api',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Prometheus Metrics Exporter
 app.get('/metrics', metricsEndpointHandler);

@@ -1,6 +1,8 @@
 import CircuitBreaker from '../../shared/resilience/circuitBreaker.js';
 
-const INVENTORY_SERVICE_URL = process.env.INVENTORY_SERVICE_URL || 'http://localhost:5007';
+const INVENTORY_SERVICE_URL =
+  process.env.INVENTORY_SERVICE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5007');
 
 class InventoryClient {
   constructor(baseUrl = INVENTORY_SERVICE_URL) {

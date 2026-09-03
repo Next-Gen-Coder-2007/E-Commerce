@@ -3,7 +3,9 @@
  * Encapsulates timeout control, correlation-id propagation, error logging, and resilient fallback.
  */
 
-const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://localhost:5002';
+const PRODUCT_SERVICE_URL =
+  process.env.PRODUCT_SERVICE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5002');
 const DEFAULT_TIMEOUT_MS = parseInt(process.env.HTTP_CLIENT_TIMEOUT_MS, 10) || 5000;
 
 export class CouponServiceClient {

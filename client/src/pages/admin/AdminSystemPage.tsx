@@ -1,6 +1,8 @@
 import React from 'react';
+import { getGatewayBaseUrl } from '../../utils/apiConfig';
 
 export const AdminSystemPage: React.FC = () => {
+  const gatewayUrl = getGatewayBaseUrl();
   const services = [
     { name: 'API Gateway', port: 5000, status: 'ONLINE', p99: '6ms', load: '14%', circuit: 'CLOSED' },
     { name: 'Auth Microservice', port: 5001, status: 'ONLINE', p99: '9ms', load: '18%', circuit: 'CLOSED' },
@@ -65,7 +67,7 @@ export const AdminSystemPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <a
-            href="http://localhost:5000/docs"
+            href={`${gatewayUrl}/docs`}
             target="_blank"
             rel="noreferrer"
             className="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs transition shadow-xs"
@@ -73,7 +75,7 @@ export const AdminSystemPage: React.FC = () => {
             Open Swagger UI Docs
           </a>
           <a
-            href="http://localhost:5000/metrics"
+            href={`${gatewayUrl}/metrics`}
             target="_blank"
             rel="noreferrer"
             className="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs border border-zinc-200 transition"

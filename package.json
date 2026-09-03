@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node start-all.js",
+    "start:all": "node start-all.js",
     "gateway": "npm run dev --prefix gateway",
     "auth-service": "npm run dev:auth --prefix services",
     "product-service": "npm run dev:product --prefix services",
@@ -18,6 +20,24 @@
     "kafka:init": "npm run kafka:init --prefix services",
     "client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
+    "build": "npm run build --prefix client",
     "build:all": "npm run build:client"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^11.0.2",
+    "helmet": "^8.1.0",
+    "http-proxy-middleware": "^3.0.3",
+    "ioredis": "^5.9.3",
+    "jsonwebtoken": "^9.0.3",
+    "kafkajs": "^2.2.4",
+    "mongoose": "^9.9.4",
+    "morgan": "^1.12.0",
+    "multer": "^2.3.0"
   }
 }

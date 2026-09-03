@@ -24,11 +24,14 @@ export const generateToken = (res, userPayload) => {
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
+  // In cross-origin deployments (e.g. Vercel frontend talking to Render backend), sameSite must be 'none' with secure: true
+  const sameSite = process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax');
+  const secure = isProduction || process.env.COOKIE_SECURE === 'true' || sameSite === 'none';
 
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure,
+    sameSite,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   });
@@ -38,12 +41,14 @@ export const generateToken = (res, userPayload) => {
 
 export const clearToken = (res) => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax');
+  const secure = isProduction || process.env.COOKIE_SECURE === 'true' || sameSite === 'none';
 
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure,
+    sameSite,
     path: '/',
   });
 };

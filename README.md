@@ -672,7 +672,16 @@ npm run client
 * **Kafka UI Dashboard**: `http://localhost:8080`
 * **Prometheus Metrics**: `http://localhost:5000/metrics`
 
-### 4. Run Entire Stack via Docker Compose
+### 4. Single-Command All-in-One Cloud Runner (Render, Railway, Fly, VPS)
+To host the entire backend on a **single web service / container** (e.g. Render, Railway, Fly.io, Heroku, EC2):
+```bash
+# Starts all 8 microservices and API Gateway in a single multiplexed Node process
+npm start
+# or: node start-all.js
+```
+> For complete step-by-step instructions on deploying the frontend (Vercel/Netlify) and backend (Render/Railway/Fly/Docker/K8s), see the comprehensive [**Production Deployment Guide (docs/DEPLOYMENT.md)**](docs/DEPLOYMENT.md).
+
+### 5. Run Entire Stack via Docker Compose
 ```bash
 # Build and launch all services, databases, Kafka, Prometheus & Grafana
 docker compose up -d --build

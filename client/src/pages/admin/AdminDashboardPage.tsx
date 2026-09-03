@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getGatewayBaseUrl } from '../../utils/apiConfig';
 import {
   Users,
   Building2,
@@ -925,7 +926,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
                     <span className="text-slate-500 font-mono">{s.endpoint}</span>
                     <a
-                      href={`http://localhost:${s.port}/metrics`}
+                      href={`${getGatewayBaseUrl()}/metrics`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-indigo-400 hover:underline font-bold flex items-center gap-0.5"

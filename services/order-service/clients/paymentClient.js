@@ -1,6 +1,8 @@
 import CircuitBreaker from '../../shared/resilience/circuitBreaker.js';
 
-const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5005';
+const PAYMENT_SERVICE_URL =
+  process.env.PAYMENT_SERVICE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5005');
 
 class PaymentClient {
   constructor(baseUrl = PAYMENT_SERVICE_URL) {
