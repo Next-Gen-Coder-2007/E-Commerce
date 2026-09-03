@@ -16,17 +16,37 @@
     }
   ],
   "tags": [
-    { "name": "Authentication", "description": "User & Merchant Identity, JWT Tokens, Role Verification" },
-    { "name": "Products & Discovery", "description": "Product Catalog, Faceted Filter Search, Dynamic Categories" },
+    { "name": "System & Telemetry", "description": "Cluster Health, Prometheus Metrics, Service Discovery" },
+    { "name": "Authentication", "description": "User & Merchant Identity, JWT Tokens, Role Verification, Saved Addresses" },
+    { "name": "Products & Discovery", "description": "Product Catalog, Specifications, Faceted Filter Search, Dynamic Categories" },
+    { "name": "Customer Reviews", "description": "Verified Customer Reviews, Rating Distributions, Merchant Official Replies" },
+    { "name": "Promotional Coupons", "description": "Promo Codes, Store Campaigns, Multi-Tier Discount Validation" },
     { "name": "AI Search & Recommendations", "description": "64-dim Dense Vector Embeddings, RRF Hybrid Search, AI Shopping Concierge" },
-    { "name": "Cart", "description": "Shopping Cart Session Management" },
-    { "name": "Wishlist", "description": "Wishlist Items, Shareable Lists & Price Drop Tracking" },
-    { "name": "Orders & Saga", "description": "Saga Distributed Transaction Orchestration, Compensation & Timeline" },
-    { "name": "Payments & Fraud", "description": "Idempotent Payment Processing & Real-Time Fraud Risk Scoring" },
-    { "name": "Inventory", "description": "Distributed Two-Phase Stock Reservations & Commitments" },
-    { "name": "Admin Platform", "description": "Global User Moderation, Merchant Approvals, Order Ledger" }
+    { "name": "Cart", "description": "Shopping Cart Session Management (Redis & DB)" },
+    { "name": "Wishlist", "description": "Wishlist Items, Shareable Lists, Price Drop Tracking & Move to Cart" },
+    { "name": "Orders & Saga", "description": "Saga Distributed Transaction Orchestration, Compensation, Tracking & Cancellation" },
+    { "name": "Payments & Fraud", "description": "Idempotent Payment Processing, Webhooks & Real-Time Fraud Risk Scoring" },
+    { "name": "Inventory", "description": "Distributed Two-Phase Stock Reservations, Commitments, Releases & Audits" }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "tags": ["System & Telemetry"],
+        "summary": "Check API Gateway and registered downstream microservice health status",
+        "responses": {
+          "200": { "description": "Cluster operational status" }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["System & Telemetry"],
+        "summary": "Scrape Prometheus telemetry metrics and latency histograms",
+        "responses": {
+          "200": { "description": "Prometheus text format metric dump" }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": ["Authentication"],
@@ -42,7 +62,7 @@
                   "name": { "type": "string" },
                   "email": { "type": "string" },
                   "password": { "type": "string" },
-                  "role": { "type": "string", "enum": ["user", "company", "admin"] }
+                  "role": { "type": "string", "enum": ["customer", "company", "admin"] }
                 }
               }
             }
@@ -79,6 +99,48 @@
         }
       }
     },
+    "/api/auth/google": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Authenticate with Google OAuth ID token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["idToken"],
+                "properties": {
+                  "idToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Google Single Sign-On authenticated" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get authenticated user profile details",
+        "responses": {
+          "200": { "description": "Current user profile" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/auth/business-details": {
+      "put": {
+        "tags": ["Authentication"],
+        "summary": "Update merchant business banking, tax ID, and address",
+        "responses": {
+          "200": { "description": "Business profile updated" }
+        }
+      }
+    },
     "/api/products": {
       "get": {
         "tags": ["Products & Discovery"],
@@ -95,6 +157,26 @@
         "responses": {
           "200": { "description": "List of paginated products" }
         }
+      },
+      "post": {
+        "tags": ["Products & Discovery"],
+        "summary": "Create new product in catalog (Merchant/Admin only)",
+        "responses": {
+          "201": { "description": "Product created" }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "tags": ["Products & Discovery"],
+        "summary": "Get full product details by ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Product details" },
+          "404": { "description": "Product not found" }
+        }
       }
     },
     "/api/products/categories": {
@@ -106,24 +188,22 @@
         }
       }
     },
-    "/api/products/search/faceted": {
+    "/api/products/search/semantic": {
       "get": {
-        "tags": ["Products & Discovery"],
-        "summary": "Execute sub-50ms faceted search with multi-attribute drilldown aggregations",
+        "tags": ["AI Search & Recommendations"],
+        "summary": "Hybrid vector + keyword search using Reciprocal Rank Fusion (RRF)",
         "parameters": [
-          { "name": "q", "in": "query", "schema": { "type": "string" } },
-          { "name": "category", "in": "query", "schema": { "type": "string" } },
-          { "name": "brands", "in": "query", "schema": { "type": "string" } }
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "Faceted products with facet breakdown counts" }
+          "200": { "description": "Hybrid ranked products" }
         }
       }
     },
     "/api/products/recommendations/for-you": {
       "get": {
         "tags": ["AI Search & Recommendations"],
-        "summary": "Get personalized multi-signal AI recommendations",
+        "summary": "Get personalized multi-signal AI recommendations (Wishlist weighted)",
         "responses": {
           "200": { "description": "Curated recommendations with match justification tags" }
         }
@@ -165,6 +245,106 @@
         }
       }
     },
+    "/api/reviews/product/{id}": {
+      "get": {
+        "tags": ["Customer Reviews"],
+        "summary": "Get product reviews and rating breakdown",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Product customer reviews" }
+        }
+      },
+      "post": {
+        "tags": ["Customer Reviews"],
+        "summary": "Submit verified purchase customer review with photos",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "201": { "description": "Review submitted" }
+        }
+      }
+    },
+    "/api/coupons/available": {
+      "get": {
+        "tags": ["Promotional Coupons"],
+        "summary": "List active eligible discount coupons",
+        "responses": {
+          "200": { "description": "Available coupons" }
+        }
+      }
+    },
+    "/api/coupons/validate": {
+      "post": {
+        "tags": ["Promotional Coupons"],
+        "summary": "Validate promo code against cart items and calculate discount",
+        "responses": {
+          "200": { "description": "Coupon discount breakdown" }
+        }
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "tags": ["Cart"],
+        "summary": "Get active user or guest shopping cart",
+        "responses": {
+          "200": { "description": "Active shopping cart" }
+        }
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "tags": ["Cart"],
+        "summary": "Add item or increment quantity in shopping cart",
+        "responses": {
+          "200": { "description": "Updated cart" }
+        }
+      }
+    },
+    "/api/wishlist": {
+      "get": {
+        "tags": ["Wishlist"],
+        "summary": "Fetch customer wishlist items with real-time price change indicators",
+        "responses": {
+          "200": { "description": "User wishlist" }
+        }
+      }
+    },
+    "/api/wishlist/items": {
+      "post": {
+        "tags": ["Wishlist"],
+        "summary": "Add product to customer wishlist",
+        "responses": {
+          "201": { "description": "Item saved to wishlist" }
+        }
+      }
+    },
+    "/api/wishlist/items/{productId}/move-to-cart": {
+      "post": {
+        "tags": ["Wishlist"],
+        "summary": "1-click atomic move from wishlist into active shopping cart",
+        "parameters": [
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Moved to cart successfully" }
+        }
+      }
+    },
+    "/api/wishlist/shared/{shareToken}": {
+      "get": {
+        "tags": ["Wishlist"],
+        "summary": "Public read-only access for shared gift registry wishlist",
+        "parameters": [
+          { "name": "shareToken", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Public wishlist registry" }
+        }
+      }
+    },
     "/api/orders": {
       "post": {
         "tags": ["Orders & Saga"],
@@ -179,7 +359,6 @@
                 "properties": {
                   "items": { "type": "array", "items": { "type": "object" } },
                   "shippingAddress": { "type": "object" },
-                  "billingAddress": { "type": "object" },
                   "paymentMethod": { "type": "string" }
                 }
               }
@@ -189,12 +368,43 @@
         "responses": {
           "201": { "description": "Order created and Saga dispatched" }
         }
+      },
+      "get": {
+        "tags": ["Orders & Saga"],
+        "summary": "Get authenticated customer's order history",
+        "responses": {
+          "200": { "description": "Customer orders" }
+        }
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "tags": ["Orders & Saga"],
+        "summary": "Get order tracking and fulfillment status timeline",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Order details & timeline" }
+        }
+      }
+    },
+    "/api/orders/{id}/cancel": {
+      "post": {
+        "tags": ["Orders & Saga"],
+        "summary": "Cancel order within grace period and trigger automated refund compensation",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Order cancelled & refund queued" }
+        }
       }
     },
     "/api/payments/charge": {
       "post": {
         "tags": ["Payments & Fraud"],
-        "summary": "Idempotent payment processing with simulated card gateway",
+        "summary": "Idempotent payment processing with card gateway and duplicate protection",
         "parameters": [
           { "name": "x-idempotency-key", "in": "header", "schema": { "type": "string" } }
         ],
@@ -233,9 +443,7 @@
                 "properties": {
                   "amount": { "type": "number" },
                   "email": { "type": "string" },
-                  "ordersInLastHour": { "type": "integer" },
-                  "shippingAddress": { "type": "object" },
-                  "billingAddress": { "type": "object" }
+                  "ordersInLastHour": { "type": "integer" }
                 }
               }
             }
@@ -243,6 +451,46 @@
         },
         "responses": {
           "200": { "description": "Risk score, risk level, decision (APPROVE, REVIEW, REJECT)" }
+        }
+      }
+    },
+    "/api/inventory/reserve": {
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Phase 1: Two-phase stock reservation with 15m TTL expiration",
+        "responses": {
+          "200": { "description": "Stock reserved (Reservation token returned)" },
+          "409": { "description": "Insufficient stock" }
+        }
+      }
+    },
+    "/api/inventory/commit": {
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Phase 2: Permanently commit reserved stock deduction",
+        "responses": {
+          "200": { "description": "Stock permanently committed" }
+        }
+      }
+    },
+    "/api/inventory/release": {
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Compensate: Release reserved stock back into available pool",
+        "responses": {
+          "200": { "description": "Reserved stock released" }
+        }
+      }
+    },
+    "/api/inventory/product/{productId}": {
+      "get": {
+        "tags": ["Inventory"],
+        "summary": "Query real-time stock levels (available, reserved, total)",
+        "parameters": [
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Inventory levels" }
         }
       }
     }
