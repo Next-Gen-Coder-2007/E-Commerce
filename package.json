@@ -20,7 +20,7 @@
     "kafka:init": "npm run kafka:init --prefix services",
     "client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
-    "build": "npm run build --prefix client",
+    "build": "node build-runner.js",
     "build:all": "npm run build:client"
   },
   "dependencies": {

@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm run build --prefix client",
+  "buildCommand": "node build-runner.js",
   "outputDirectory": "client/dist",
-  "framework": "vite",
   "rewrites": [
     {
       "source": "/api/(.*)",
