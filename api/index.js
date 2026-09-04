@@ -109,29 +109,38 @@ app.use(attachAuthContext);
 // ==========================================
 // Cached MongoDB Connection for Serverless
 // ==========================================
-let isDbConnected = false;
+let cachedPromise = null;
 
 const connectToDatabase = async () => {
-  if (isDbConnected && mongoose.connection.readyState >= 1) {
-    return;
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
   }
 
   const mongoURI = process.env.MONGO_URI;
   if (!mongoURI) {
     console.warn('[Vercel Serverless] Warning: MONGO_URI is not set in environment variables');
-    return;
+    return null;
   }
 
-  try {
-    const conn = await mongoose.connect(mongoURI, {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
-    });
-    isDbConnected = true;
-    console.log(`[Vercel Serverless] MongoDB connected to host: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`[Vercel Serverless] MongoDB Connection Error: ${error.message}`);
+  if (!cachedPromise) {
+    cachedPromise = mongoose
+      .connect(mongoURI, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 10,
+      })
+      .then((conn) => {
+        console.log(`[Vercel Serverless] MongoDB connected to host: ${conn.connection.host}`);
+        return conn;
+      })
+      .catch((err) => {
+        cachedPromise = null;
+        console.error(`[Vercel Serverless] MongoDB Connection Error: ${err.message}`);
+        throw err;
+      });
   }
+
+  return cachedPromise;
 };
 
 app.use(async (req, res, next) => {

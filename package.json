@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "client"
+  ],
   "scripts": {
     "start": "node api/index.js",
-    "dev": "npm run client",
+    "dev": "npm run dev --prefix client",
     "gateway": "npm run dev --prefix gateway",
     "auth-service": "npm run dev:auth --prefix services",
     "product-service": "npm run dev:product --prefix services",
@@ -19,8 +22,8 @@
     "kafka:down": "docker compose -f docker-compose.kafka.yml down",
     "kafka:init": "npm run kafka:init --prefix services",
     "client": "npm run dev --prefix client",
-    "build:client": "cd client && npm install && npm run build",
-    "build": "cd client && npm install && npm run build"
+    "build:client": "npm run build --prefix client",
+    "build": "npm run build --prefix client"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
