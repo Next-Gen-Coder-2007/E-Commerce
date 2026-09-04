@@ -9,8 +9,12 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach Bearer token from localStorage if available (for cross-domain hostings where third-party cookies might be blocked)
+// Normalize duplicate /api prefixes and attach Bearer token if present
 api.interceptors.request.use((config) => {
+  if (config.url && config.url.startsWith('/api/')) {
+    config.url = config.url.replace(/^\/api\/?/, '/');
+  }
+
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (token && !config.headers.Authorization) {
