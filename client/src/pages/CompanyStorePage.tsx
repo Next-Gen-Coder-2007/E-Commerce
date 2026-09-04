@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
-  Building2,
   Star,
   Package,
   Search,
   ArrowUpDown,
-  ShoppingBag,
-  Plus,
-  Minus,
-  Trash2,
   ChevronRight,
   ShieldCheck,
   Truck,
@@ -21,19 +16,17 @@ import {
   Store,
   Flame,
   Clock,
-  Zap,
   Megaphone,
   Ticket,
 } from 'lucide-react';
 import { getCompanyStorefrontApi } from '../services/productService';
 import { getAvailableCouponsApi } from '../services/couponService';
-import { useCart } from '../context/CartContext';
+import { ProductCard } from '../components/ProductCard';
 import type { Product, CompanyStorefrontResponse } from '../types/product';
 import type { Coupon } from '../types/coupon';
 
 export const CompanyStorePage: React.FC = () => {
   const { companyIdentifier } = useParams<{ companyIdentifier: string }>();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeCategory = searchParams.get('category') || 'all';
@@ -48,7 +41,6 @@ export const CompanyStorePage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addingId, setAddingId] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Flash Sale Countdown State
@@ -58,8 +50,6 @@ export const CompanyStorePage: React.FC = () => {
     minutes: number;
     seconds: number;
   } | null>(null);
-
-  const { addToCart, items, updateQuantity, removeFromCart, actionLoading } = useCart();
 
   const fetchStorefront = useCallback(async () => {
     if (!companyIdentifier) return;
@@ -618,203 +608,9 @@ export const CompanyStorePage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-2">
-                {products.map((product) => {
-                  const cartItem = items.find((i) => i.productId === product._id);
-                  const hasDiscount =
-                    (product.originalPrice && product.originalPrice > product.price) ||
-                    (product.discountPercentage && product.discountPercentage > 0);
-
-                  const discountPct =
-                    product.discountPercentage ||
-                    (product.originalPrice && product.originalPrice > product.price
-                      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                      : 0);
-
-                  return (
-                    <div
-                      key={product._id}
-                      onClick={() => navigate(`/product/${product._id}`)}
-                      className="group bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-2xs hover:shadow-lg hover:border-zinc-300 transition-all duration-300 flex flex-col justify-between cursor-pointer"
-                    >
-                      <div className="space-y-3">
-                        <div className="relative aspect-square rounded-xl bg-zinc-100 overflow-hidden">
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-xs text-[10px] font-bold uppercase tracking-wider text-zinc-800 shadow-2xs">
-                            {product.category}
-                          </span>
-                          
-                          {/* Discount Badge */}
-                          {hasDiscount && (
-                            <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black tracking-wider shadow-md">
-                              -{discountPct}% OFF
-                            </span>
-                          )}
-
-                          {/* Flash Sale Tag */}
-                          {product.isFlashSale && (
-                            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider shadow-md flex items-center gap-0.5">
-                              <Zap className="w-3 h-3 fill-white" />
-                              <span>Flash Deal</span>
-                            </span>
-                          )}
-
-                          {cartItem && !product.isFlashSale && (
-                            <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-zinc-950 text-white text-[10px] font-black tracking-wider shadow-md animate-in zoom-in-75">
-                              {cartItem.quantity} in cart
-                            </span>
-                          )}
-                          {product.stock <= 5 && product.stock > 0 && (
-                            <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-bold shadow-2xs">
-                              Only {product.stock} left
-                            </span>
-                          )}
-                          {product.stock === 0 && (
-                            <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-rose-600/90 text-white text-[10px] font-bold shadow-2xs">
-                              Out of stock
-                            </span>
-                          )}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-1 text-zinc-400 text-[11px] mb-1">
-                            <Building2 className="w-3 h-3 text-zinc-500" />
-                            <span className="truncate font-medium text-zinc-600">
-                              {product.companyName}
-                            </span>
-                          </div>
-
-                          <h2 className="text-sm font-bold text-zinc-900 group-hover:text-zinc-700 transition-colors line-clamp-2 leading-snug">
-                            {product.title}
-                          </h2>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
-                        <div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-base font-extrabold text-zinc-950">
-                              ${product.price.toFixed(2)}
-                            </span>
-                            {hasDiscount && product.originalPrice ? (
-                              <span className="text-xs text-zinc-400 line-through">
-                                ${product.originalPrice.toFixed(2)}
-                              </span>
-                            ) : null}
-                          </div>
-                          {product.numReviews && product.numReviews > 0 ? (
-                            <div className="flex items-center gap-1 text-[11px] text-amber-500 font-medium">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                              <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
-                              <span className="text-zinc-400">({product.numReviews})</span>
-                            </div>
-                          ) : (
-                            <div className="text-[10px] text-zinc-400 font-medium pt-0.5">
-                              New Listing
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/product/${product._id}`);
-                            }}
-                            className="px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
-                          >
-                            Details
-                          </button>
-
-                          {cartItem ? (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center rounded-lg bg-zinc-950 text-white p-0.5 shadow-xs border border-zinc-900 animate-in zoom-in-90 duration-150"
-                            >
-                              <button
-                                type="button"
-                                disabled={actionLoading || addingId === product._id}
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  setAddingId(product._id);
-                                  if (cartItem.quantity <= 1) {
-                                    await removeFromCart(product._id);
-                                  } else {
-                                    await updateQuantity(product._id, cartItem.quantity - 1);
-                                  }
-                                  setAddingId(null);
-                                }}
-                                className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors cursor-pointer"
-                                title={cartItem.quantity === 1 ? 'Remove from cart' : 'Decrease quantity'}
-                              >
-                                {cartItem.quantity === 1 ? (
-                                  <Trash2 className="w-3 h-3 text-rose-400" />
-                                ) : (
-                                  <Minus className="w-3 h-3" />
-                                )}
-                              </button>
-                              <span className="px-2 text-xs font-black font-mono text-white min-w-[20px] text-center select-none">
-                                {cartItem.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={
-                                  actionLoading ||
-                                  addingId === product._id ||
-                                  (product.stock !== undefined && cartItem.quantity >= product.stock)
-                                }
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  setAddingId(product._id);
-                                  await updateQuantity(product._id, cartItem.quantity + 1);
-                                  setAddingId(null);
-                                }}
-                                className="w-6 h-6 rounded-md flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors cursor-pointer"
-                                title="Increase quantity"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={product.stock === 0 || addingId === product._id}
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                setAddingId(product._id);
-                                await addToCart(
-                                  {
-                                    productId: product._id,
-                                    title: product.title,
-                                    price: product.price,
-                                    image: product.image,
-                                    category: product.category,
-                                    companyId: product.companyId,
-                                    companyName: product.companyName,
-                                    stock: product.stock,
-                                    quantity: 1,
-                                  },
-                                  false
-                                );
-                                setAddingId(null);
-                              }}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 disabled:opacity-40 rounded-lg transition-all active:scale-95 shadow-2xs cursor-pointer"
-                              title="Quick Add to Cart"
-                            >
-                              <ShoppingBag className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Add</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {products.map((product, idx) => (
+                  <ProductCard key={product._id} product={product} index={idx} />
+                ))}
               </div>
             )}
           </>
