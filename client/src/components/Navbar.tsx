@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useNotifications } from '../context/NotificationContext';
 import SearchAutocomplete from './SearchAutocomplete';
 import {
   ShoppingBag,
@@ -12,13 +13,15 @@ import {
   Package,
   MapPin,
   Heart,
-  Shield
+  Shield,
+  Bell,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const { totalItems, openCart } = useCart();
   const { wishlistCount, toggleWishlistDrawer, priceDropCount } = useWishlist();
+  const { unreadCount, toggleNotifications } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -187,17 +190,32 @@ export const Navbar: React.FC = () => {
                 className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-all relative cursor-pointer group"
                 title="My Wishlist & Price Tracker"
               >
-                <Heart className="w-5 h-5 group-hover:scale-110 transition-transform text-zinc-700 group-hover:text-rose-600" />
+                <Heart className="w-5 h-5 group-hover:scale-110 transition-transform text-zinc-700 group-hover:text-zinc-950" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white font-mono text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-950 text-white font-mono text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
                 {priceDropCount > 0 && (
-                  <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
+                  <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-zinc-900 ring-2 ring-white animate-pulse" />
                 )}
               </button>
             )}
+
+            {/* Notification Center Button */}
+            <button
+              type="button"
+              onClick={toggleNotifications}
+              className="p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-all relative cursor-pointer group"
+              title="Notification Center"
+            >
+              <Bell className="w-5 h-5 group-hover:scale-105 transition-transform text-zinc-700 group-hover:text-zinc-950" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-zinc-950 text-white font-mono text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
 
             {/* Shopping Cart Button */}
             <button

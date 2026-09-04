@@ -30,13 +30,13 @@ export const WishlistDrawer: React.FC = () => {
           {/* Header */}
           <div className="p-6 border-b border-zinc-200/80 flex items-center justify-between bg-white">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-                <Heart className="w-5 h-5 fill-rose-500" />
+              <div className="w-10 h-10 rounded-full border border-neutral-200 bg-neutral-50 flex items-center justify-center text-neutral-900">
+                <Heart className="w-4 h-4 fill-neutral-900" />
               </div>
               <div>
                 <h2 className="text-base font-extrabold text-zinc-950 flex items-center gap-2">
                   My Wishlist
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-800 font-bold">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-950 text-white font-bold">
                     {wishlistCount}
                   </span>
                 </h2>
@@ -54,13 +54,13 @@ export const WishlistDrawer: React.FC = () => {
 
           {/* Price Drops Banner */}
           {priceDropCount > 0 && (
-            <div className="bg-emerald-50 border-b border-emerald-100 px-6 py-2.5 flex items-center justify-between text-emerald-800 text-xs font-semibold">
+            <div className="bg-neutral-50 border-b border-neutral-200 px-6 py-2.5 flex items-center justify-between text-neutral-800 text-xs font-semibold">
               <div className="flex items-center space-x-2">
                 <span>
                   <strong>{priceDropCount} item{priceDropCount > 1 ? 's' : ''}</strong> on price drop sale!
                 </span>
               </div>
-              <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <span className="bg-neutral-950 text-white px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 Price Alert
               </span>
             </div>

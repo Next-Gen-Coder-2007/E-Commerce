@@ -4,11 +4,13 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { Navbar } from './components/Navbar';
 import { BusinessNavbar } from './components/business/BusinessNavbar';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
+import { NotificationDrawer } from './components/NotificationDrawer';
 import { AiShoppingAssistantDrawer } from './components/ai-assistant/AiShoppingAssistantDrawer';
 import { BusinessRestrictedModal } from './components/BusinessRestrictedModal';
 import { HomePage } from './pages/HomePage';
@@ -57,6 +59,7 @@ const AppContent: React.FC = () => {
       {isBusinessAuth && <BusinessNavbar />}
       <CartDrawer />
       <WishlistDrawer />
+      <NotificationDrawer />
       <AiShoppingAssistantDrawer />
       <BusinessRestrictedModal />
       <div className="flex-1">
@@ -253,9 +256,11 @@ const App: React.FC = () => {
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
+            <NotificationProvider>
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </NotificationProvider>
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
