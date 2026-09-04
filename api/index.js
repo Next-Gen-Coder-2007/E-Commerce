@@ -5,6 +5,7 @@
  * Express application compatible with Vercel Serverless Functions.
  */
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -235,5 +236,12 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
   });
 });
+
+const PORT = process.env.PORT || 5000;
+if (process.argv[1] && (process.argv[1].endsWith('api/index.js') || process.argv[1].endsWith('api\\index.js'))) {
+  app.listen(PORT, () => {
+    console.log(`[API Server] Running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;

@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "start": "node api/index.js",
-    "dev": "npm run dev --prefix client",
+    "dev": "node scripts/dev.js",
+    "dev:client": "npm run dev --prefix client",
     "gateway": "npm run dev --prefix gateway",
     "auth-service": "npm run dev:auth --prefix services",
     "product-service": "npm run dev:product --prefix services",

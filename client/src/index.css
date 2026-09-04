@@ -7,6 +7,10 @@
   }
 }
 
+.font-serif {
+  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
 .bg-dot-pattern {
   background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;

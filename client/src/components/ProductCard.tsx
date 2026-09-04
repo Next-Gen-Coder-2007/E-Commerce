@@ -64,11 +64,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     product.category?.toLowerCase() === 'tech' ||
     product.category?.toLowerCase() === 'audio';
 
-  // Curated minimalist color swatches for demo aesthetic matching the reference
+  // Curated minimalist color swatches for monochrome aesthetic matching reference
   const colorSwatches = isFashion
-    ? ['#ffffff', '#1e293b', '#f87171']
+    ? ['#ffffff', '#0a0a0a', '#737373']
     : isAudioOrElectronics
-    ? ['#d8c6b4', '#475569']
+    ? ['#ffffff', '#171717']
     : null;
 
   const sizes = isFashion ? ['S', 'M', 'L', 'XL'] : null;
@@ -104,7 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative bg-white rounded-3xl p-6 md:p-7 flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] border border-slate-100/80 ${className}`}
+      className={`group relative bg-white rounded-3xl p-6 md:p-7 flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] border border-neutral-100 ${className}`}
       style={{ transitionDelay: `${(index % 4) * 50}ms` }}
     >
       {/* Discreet Wishlist Action */}
@@ -114,14 +114,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           e.stopPropagation();
           toggleWishlist(product);
         }}
-        className={`absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+        className={`absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
           inWish
-            ? 'bg-rose-50 text-rose-500 scale-105'
-            : 'text-slate-300 hover:text-rose-500 hover:bg-slate-50'
+            ? 'bg-neutral-900 text-white shadow-xs scale-105'
+            : 'text-neutral-300 hover:text-neutral-900 hover:bg-neutral-100'
         }`}
         title={inWish ? 'Remove from wishlist' : 'Save to wishlist'}
       >
-        <Heart className={`w-4 h-4 ${inWish ? 'fill-rose-500 text-rose-500' : ''}`} />
+        <Heart className={`w-4 h-4 ${inWish ? 'fill-white text-white' : ''}`} />
       </button>
 
       {/* Top Header: Title & Clean Subtitle */}
@@ -193,8 +193,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ))}
             </div>
           ) : !colorSwatches || isAudioOrElectronics ? (
-            /* Free Shipping Indicator (like in reference iPad card) */
-            <span className="text-[12px] font-medium text-teal-500 tracking-normal">
+            /* Free Shipping Indicator (pure neutral minimalism) */
+            <span className="text-[12px] font-medium text-neutral-500 tracking-normal">
               Free shipping
             </span>
           ) : null}
@@ -205,11 +205,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Default Price View */}
           <div className="flex items-baseline justify-center gap-1.5">
             {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs text-slate-300 line-through font-normal">
+              <span className="text-xs text-neutral-400 line-through font-normal">
                 ${product.originalPrice.toFixed(0)}
               </span>
             )}
-            <span className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+            <span className="text-xl md:text-2xl font-bold text-neutral-900 tracking-tight">
               ${product.price % 1 === 0 ? product.price.toFixed(0) : product.price.toFixed(2)}
             </span>
           </div>
@@ -220,7 +220,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className="absolute right-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
           >
             {cartItem ? (
-              <div className="inline-flex items-center rounded-full bg-slate-900 text-white p-0.5 shadow-sm">
+              <div className="inline-flex items-center rounded-full bg-neutral-900 text-white p-0.5 shadow-sm">
                 <button
                   type="button"
                   onClick={async (e) => {
@@ -231,10 +231,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       await updateQuantity(product._id, cartItem.quantity - 1);
                     }
                   }}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   {cartItem.quantity === 1 ? (
-                    <Trash2 className="w-2.5 h-2.5 text-rose-400" />
+                    <Trash2 className="w-2.5 h-2.5 text-neutral-300" />
                   ) : (
                     <Minus className="w-2.5 h-2.5" />
                   )}
