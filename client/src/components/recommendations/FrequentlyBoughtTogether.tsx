@@ -84,7 +84,7 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
   };
 
   return (
-    <div className="my-10 bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-8 shadow-xs">
+    <div className="my-10 bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
       <div className="flex items-center gap-2 mb-6">
         <span className="p-2 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100">
           <Sparkles className="w-4 h-4" />
@@ -163,7 +163,7 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
         </div>
 
         {/* Pricing Summary & Checkout Button */}
-        <div className="w-full lg:w-72 bg-zinc-50 border border-zinc-200 rounded-3xl p-5 flex flex-col justify-between shrink-0 space-y-4">
+        <div className="w-full lg:w-72 bg-zinc-50 border border-zinc-200 rounded-2xl p-5 flex flex-col justify-between shrink-0 space-y-4">
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center justify-between text-zinc-500">
               <span>Combined Total:</span>

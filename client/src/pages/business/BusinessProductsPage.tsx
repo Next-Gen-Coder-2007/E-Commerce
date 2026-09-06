@@ -158,7 +158,7 @@ export const BusinessProductsPage: React.FC = () => {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-zinc-200/80 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-zinc-700">
             <thead className="bg-zinc-50 text-[11px] uppercase tracking-wider text-zinc-500 border-b border-zinc-200/80">
@@ -236,7 +236,7 @@ export const BusinessProductsPage: React.FC = () => {
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
-          <div className="bg-white border border-zinc-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl">
+          <div className="bg-white border border-zinc-200 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl">
             <h3 className="font-extrabold text-zinc-950 text-base">Create New Product</h3>
             <form onSubmit={handleCreateProduct} className="space-y-4 text-xs">
               <div>

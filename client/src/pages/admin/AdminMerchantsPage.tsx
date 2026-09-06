@@ -51,7 +51,7 @@ export const AdminMerchantsPage: React.FC = () => {
         {merchants.map((m) => (
           <div
             key={m._id}
-            className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-4 shadow-xs hover:border-zinc-300 transition flex flex-col justify-between"
+            className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-4 shadow-xs hover:border-zinc-300 transition flex flex-col justify-between"
           >
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3">

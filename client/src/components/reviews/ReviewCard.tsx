@@ -104,7 +104,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
   });
 
   return (
-    <div className="p-6 rounded-3xl bg-white border border-zinc-200/80 shadow-2xs space-y-4 hover:border-zinc-300 transition-colors">
+    <div className="p-6 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-4 hover:border-zinc-300 transition-colors">
       {/* Product Reference Glance (if available from business reviews feed) */}
       {review.product && (
         <div className="flex items-center justify-between pb-3 border-b border-zinc-100 gap-3">
@@ -235,7 +235,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           onClick={() => setSelectedPhoto(null)}
         >
           <div
-            className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-2 border border-zinc-200"
+            className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl p-2 border border-zinc-200"
             onClick={(e) => e.stopPropagation()}
           >
             <button

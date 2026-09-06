@@ -212,7 +212,7 @@ export const ProfilePage: React.FC = () => {
           {/* Left Column: Account Details & Address Book (8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
             {/* 1. Account Details Form */}
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
@@ -309,7 +309,7 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {/* 2. Saved Address Book */}
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
@@ -425,7 +425,7 @@ export const ProfilePage: React.FC = () => {
 
           {/* Right Column: Active Promo Coupons & Platform Perks (4 Cols) */}
           <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-zinc-100">
                 <Tag className="w-4 h-4 text-zinc-950" />
                 <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider">
@@ -495,7 +495,7 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {/* Security Guarantee Box */}
-            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white rounded-3xl p-6 space-y-3 shadow-md">
+            <div className="bg-zinc-900 text-white rounded-2xl p-6 space-y-3 shadow-xs border border-zinc-800">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <h4 className="text-xs font-black uppercase tracking-wider">
@@ -513,7 +513,7 @@ export const ProfilePage: React.FC = () => {
       {/* Address Add / Edit Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-zinc-200 animate-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-zinc-200 animate-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
               <h3 className="text-base font-black text-zinc-950">
                 {editingAddressId ? 'Edit Delivery Address' : 'Add New Delivery Address'}

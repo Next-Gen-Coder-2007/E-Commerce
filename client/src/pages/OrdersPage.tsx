@@ -231,12 +231,12 @@ export const OrdersPage: React.FC = () => {
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="h-44 rounded-3xl bg-white border border-zinc-200/80 animate-pulse p-6"
+                className="h-44 rounded-2xl bg-white border border-zinc-200/80 animate-pulse p-6"
               />
             ))}
           </div>
         ) : error ? (
-          <div className="p-6 rounded-3xl bg-white border border-rose-200 text-center space-y-3">
+          <div className="p-6 rounded-2xl bg-white border border-rose-200 text-center space-y-3">
             <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
             <div className="text-sm font-bold text-zinc-900">{error}</div>
             <button
@@ -248,8 +248,8 @@ export const OrdersPage: React.FC = () => {
             </button>
           </div>
         ) : orders.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-zinc-200/90 p-12 text-center space-y-5">
-            <div className="w-16 h-16 rounded-3xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
+          <div className="bg-white rounded-2xl border border-zinc-200/90 p-12 text-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
               <Package className="w-8 h-8" />
             </div>
             <div className="space-y-1.5">
@@ -286,7 +286,7 @@ export const OrdersPage: React.FC = () => {
               return (
                 <div
                   key={order._id}
-                  className="bg-white border border-zinc-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5 hover:border-zinc-300 transition-all"
+                  className="bg-white border border-zinc-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5 hover:border-zinc-300 transition-all"
                 >
                   {/* Order Top Bar */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-100">

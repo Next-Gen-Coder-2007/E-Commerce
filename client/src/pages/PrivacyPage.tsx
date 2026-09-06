@@ -17,7 +17,7 @@ export const PrivacyPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-xs space-y-8 text-xs text-zinc-600 leading-relaxed">
+      <div className="bg-white border border-zinc-200/80 rounded-2xl p-8 sm:p-10 shadow-xs space-y-8 text-xs text-zinc-600 leading-relaxed">
         <section className="space-y-3">
           <h2 className="text-base font-bold text-zinc-900">1. Information Collection & Purpose</h2>
           <p>

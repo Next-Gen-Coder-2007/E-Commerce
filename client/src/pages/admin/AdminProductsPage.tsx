@@ -69,7 +69,7 @@ export const AdminProductsPage: React.FC = () => {
         </form>
       </div>
 
-      <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-zinc-200/80 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-zinc-700">
             <thead className="bg-zinc-50 text-[11px] uppercase tracking-wider text-zinc-500 border-b border-zinc-200/80">

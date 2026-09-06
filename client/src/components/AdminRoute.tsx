@@ -25,7 +25,7 @@ export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }
   if (user.role !== 'admin') {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4 bg-zinc-50">
-        <div className="bg-white border border-rose-100 rounded-3xl p-8 max-w-md w-full text-center shadow-xl space-y-4">
+        <div className="bg-white border border-rose-100 rounded-2xl p-8 max-w-md w-full text-center shadow-xl space-y-4">
           <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto text-2xl">
             <ShieldAlert className="w-8 h-8" />
           </div>

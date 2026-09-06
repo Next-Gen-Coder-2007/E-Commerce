@@ -347,7 +347,7 @@ export const HomePage: React.FC = () => {
               {/* Row 1 Card 1: Electronics */}
               <div
                 onClick={() => handleCategorySelect('electronics')}
-                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
               >
                 <img
                   src="/banners/tech_banner.jpg"
@@ -380,7 +380,7 @@ export const HomePage: React.FC = () => {
               {/* Row 1 Card 2: Luxury Fashion */}
               <div
                 onClick={() => handleCategorySelect('fashion')}
-                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+                className="reveal-on-scroll group relative min-h-[300px] sm:min-h-[340px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
                 style={{ transitionDelay: '120ms' }}
               >
                 <img
@@ -417,7 +417,7 @@ export const HomePage: React.FC = () => {
               {/* Row 2 Card 1: Home & Furniture (Left ~ 25%) */}
               <div
                 onClick={() => handleCategorySelect('home-furniture')}
-                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
+                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
                 style={{ transitionDelay: '100ms' }}
               >
                 <img
@@ -444,7 +444,7 @@ export const HomePage: React.FC = () => {
               {/* Row 2 Card 2: Flash Deals Hub (Center Wide ~ 50%) */}
               <div
                 onClick={() => handleCategorySelect('all')}
-                className="reveal-on-scroll md:col-span-12 lg:col-span-6 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+                className="reveal-on-scroll md:col-span-12 lg:col-span-6 group relative min-h-[260px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
                 style={{ transitionDelay: '200ms' }}
               >
                 <img
@@ -486,7 +486,7 @@ export const HomePage: React.FC = () => {
               {/* Row 2 Card 3: Beauty & Personal Care (Right ~ 25%) */}
               <div
                 onClick={() => handleCategorySelect('beauty-personal-care')}
-                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
+                className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
                 style={{ transitionDelay: '300ms' }}
               >
                 <img
@@ -846,7 +846,7 @@ export const HomePage: React.FC = () => {
           onClick={() => setSelectedProduct(null)}
         >
           <div
-            className="bg-white rounded-3xl border border-zinc-200 max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl border border-zinc-200 max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
@@ -1061,20 +1061,9 @@ export const HomePage: React.FC = () => {
                   <Link
                     to={`/product/${selectedProduct._id}`}
                     onClick={() => setSelectedProduct(null)}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-zinc-800 bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950 flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <span>View Full Product Page & All Photos</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <Link
-                    to={`/product/${selectedProduct._id}`}
-                    onClick={() => setSelectedProduct(null)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-                  >
-                    <span>View Dedicated Product Page</span>
+                    <span>View Product Details</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>

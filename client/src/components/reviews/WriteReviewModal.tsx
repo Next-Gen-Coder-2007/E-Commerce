@@ -158,7 +158,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="bg-white rounded-3xl border border-zinc-200 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col"
+        className="bg-white rounded-2xl border border-zinc-200 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

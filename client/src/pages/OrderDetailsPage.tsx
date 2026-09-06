@@ -178,7 +178,7 @@ export const OrderDetailsPage: React.FC = () => {
   if (error || !order) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-black text-zinc-950">Order Not Found</h2>
@@ -243,7 +243,7 @@ export const OrderDetailsPage: React.FC = () => {
 
         {/* Success Banner if newly checked out */}
         {showSuccessBanner && (
-          <div className="relative overflow-hidden p-5 rounded-3xl bg-zinc-950 text-white shadow-xl space-y-2 border border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative overflow-hidden p-5 rounded-2xl bg-zinc-950 text-white shadow-xl space-y-2 border border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
@@ -277,7 +277,7 @@ export const OrderDetailsPage: React.FC = () => {
         )}
 
         {/* Order Main Header Card */}
-        <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+        <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-100">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -443,7 +443,7 @@ export const OrderDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: Items List (8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
               <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider pb-3 border-b border-zinc-100">
                 Ordered Items ({order.orderItems.length})
               </h3>
@@ -527,7 +527,7 @@ export const OrderDetailsPage: React.FC = () => {
             </div>
 
             {/* Audit Status History Timeline */}
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
               <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider pb-3 border-b border-zinc-100">
                 Status History & Activity
               </h3>
@@ -563,7 +563,7 @@ export const OrderDetailsPage: React.FC = () => {
           {/* Right: Shipping & Payment Summary (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Delivery Address Card */}
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-3">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-3">
               <div className="flex items-center gap-2 text-zinc-950 font-black text-xs uppercase tracking-wider pb-2 border-b border-zinc-100">
                 <MapPin className="w-4 h-4 text-zinc-700" />
                 <span>Shipping Address</span>
@@ -590,7 +590,7 @@ export const OrderDetailsPage: React.FC = () => {
             </div>
 
             {/* Payment & Invoice Breakdown */}
-            <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 text-zinc-950 font-black text-xs uppercase tracking-wider pb-2 border-b border-zinc-100">
                 <CreditCard className="w-4 h-4 text-zinc-700" />
                 <span>Payment & Charges</span>

@@ -423,7 +423,7 @@ export const CheckoutPage: React.FC = () => {
   if (user?.role === 'company') {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700 shadow-sm">
+        <div className="w-20 h-20 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700 shadow-sm">
           <Building2 className="w-10 h-10" />
         </div>
         <div className="space-y-3">
@@ -480,7 +480,7 @@ export const CheckoutPage: React.FC = () => {
   if (items.length === 0 && !submitting) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
+        <div className="w-16 h-16 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
           <ShoppingBag className="w-8 h-8" />
         </div>
         <div className="space-y-2">
@@ -537,7 +537,7 @@ export const CheckoutPage: React.FC = () => {
             {/* Left Column: Shipping, Delivery & Payment Sections (7 Cols) */}
             <div className="lg:col-span-7 space-y-6">
               {/* Step 1: Shipping Address & Saved Address Book */}
-              <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
@@ -801,7 +801,7 @@ export const CheckoutPage: React.FC = () => {
               </div>
 
               {/* Step 2: Shipping Method */}
-              <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
@@ -921,7 +921,7 @@ export const CheckoutPage: React.FC = () => {
               </div>
 
               {/* Step 3: Payment Method - Strictly 2 Options (Credit/Debit/UPI vs Cash on Delivery) */}
-              <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
@@ -1124,7 +1124,7 @@ export const CheckoutPage: React.FC = () => {
 
             {/* Right Column: Order Summary & Coupon Promotion Center (5 Cols) */}
             <div className="lg:col-span-5 sticky top-20 space-y-4">
-              <div className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-sm space-y-5">
+              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-sm space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider">
                     Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
@@ -1392,19 +1392,19 @@ export const CheckoutPage: React.FC = () => {
         </form>
       </div>
 
-      {/* Live Distributed Saga Progress Visualizer Modal */}
+      {/* Live Distributed Order Progress Visualizer Modal */}
       {(submitting || sagaStep > 0) && (
         <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-zinc-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-zinc-900 shadow-2xl space-y-6">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 sm:p-8 max-w-lg w-full text-zinc-900 shadow-2xl space-y-6">
             <div className="text-center space-y-2">
               <div className="w-14 h-14 rounded-2xl bg-zinc-100 border border-zinc-200 text-zinc-900 flex items-center justify-center mx-auto text-xl">
                 <Shield className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-black text-zinc-950 tracking-tight">
-                Distributed Saga Orchestration
+                Securing Your Order
               </h3>
               <p className="text-xs text-zinc-500">
-                Executing distributed transaction with transactional outbox dual-write prevention
+                Please wait while we confirm your items and process your payment safely.
               </p>
             </div>
 
@@ -1423,11 +1423,11 @@ export const CheckoutPage: React.FC = () => {
             {/* Step list */}
             <div className="space-y-2.5 text-xs">
               {[
-                { step: 1, title: 'Step 1: Order State Staged (PENDING)', desc: 'Aggregate persisted & outbox event queued' },
-                { step: 2, title: 'Step 2: Warehouse Stock Hold (2-Phase)', desc: 'Two-phase reservation token issued' },
-                { step: 3, title: 'Step 3: Idempotent Payment Charge', desc: 'Financial transaction authorization verified' },
-                { step: 4, title: 'Step 4: Permanent Inventory Commit', desc: 'Warehouse stock allocated & deducted' },
-                { step: 5, title: 'Step 5: Order Confirmed & Outbox Dispatched', desc: 'ORDER_CONFIRMED broadcasted across cluster' },
+                { step: 1, title: 'Step 1: Staging Order Details', desc: 'Validating items and delivery destination' },
+                { step: 2, title: 'Step 2: Reserving Inventory', desc: 'Holding items from merchant warehouse' },
+                { step: 3, title: 'Step 3: Processing Payment', desc: 'Authorizing secure transaction' },
+                { step: 4, title: 'Step 4: Allocating Stock', desc: 'Confirming warehouse fulfillment slot' },
+                { step: 5, title: 'Step 5: Order Confirmed', desc: 'Generating confirmation and dispatching tracking' },
               ].map((s) => {
                 const isCompleted = sagaStep > s.step;
                 const isCurrent = sagaStep === s.step;

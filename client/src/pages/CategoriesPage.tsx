@@ -180,7 +180,7 @@ export const CategoriesPage: React.FC = () => {
       </div>
 
       {filteredCategories.length === 0 && (
-        <div className="text-center py-16 bg-white border border-dashed border-zinc-300 rounded-3xl">
+        <div className="text-center py-16 bg-white border border-dashed border-zinc-300 rounded-2xl">
           <p className="text-sm font-bold text-zinc-800">No departments match &ldquo;{searchQuery}&rdquo;</p>
           <p className="text-xs text-zinc-500 mt-1">Try searching by category name, subcategory or variant attribute.</p>
           <button

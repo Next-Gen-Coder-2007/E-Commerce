@@ -245,7 +245,7 @@ export const ProductDetailPage: React.FC = () => {
         <div className="animate-pulse space-y-8">
           <div className="h-4 bg-neutral-100 rounded-md w-1/4" />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div className="lg:col-span-6 aspect-square bg-neutral-100 rounded-3xl" />
+            <div className="lg:col-span-6 aspect-square bg-neutral-100 rounded-2xl" />
             <div className="lg:col-span-6 space-y-4">
               <div className="h-4 bg-neutral-100 rounded w-1/4" />
               <div className="h-10 bg-neutral-100 rounded w-3/4" />
@@ -388,7 +388,7 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Center Canvas: High Whitespace Product Showcase */}
-            <div className="relative flex-1 w-full aspect-square sm:aspect-[4/5] max-h-[580px] rounded-3xl bg-[#fbfbfb] border border-neutral-100 p-8 sm:p-12 flex items-center justify-center overflow-hidden group">
+            <div className="relative flex-1 w-full aspect-square sm:aspect-[4/5] max-h-[580px] rounded-2xl bg-[#fbfbfb] border border-neutral-100 p-8 sm:p-12 flex items-center justify-center overflow-hidden group">
               {/* Minimalist Pill Badge (e.g. BEST SELLER) */}
               <span className="absolute top-5 left-5 px-3 py-1 rounded-full border border-neutral-200/90 bg-white/95 text-[10px] uppercase font-semibold tracking-widest text-neutral-800 shadow-2xs">
                 {product.isFlashSale ? 'FEATURED DEAL' : 'BEST SELLER'}
@@ -448,8 +448,8 @@ export const ProductDetailPage: React.FC = () => {
           {/* RIGHT COLUMN: Minimalist Editorial Information & Actions (5 cols) */}
           <div className="lg:col-span-5 flex flex-col justify-start">
             {/* Brand / Merchant Tag */}
-            <div className="text-xs uppercase tracking-[0.25em] text-neutral-400 font-semibold mb-2">
-              {product.companyName || product.category || 'EVERYDAY HUMANS'}
+            <div className="text-xs uppercase tracking-[0.2em] text-neutral-400 font-semibold mb-2">
+              {product.brand || product.companyName || 'Verified Merchant'}
             </div>
 
             {/* Editorial Title */}

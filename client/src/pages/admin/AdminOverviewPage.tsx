@@ -32,7 +32,7 @@ export const AdminOverviewPage: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
+        <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
           <div className="flex items-center justify-between text-zinc-500">
             <span className="text-xs font-semibold">Gross Merchandise Value (GMV)</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -48,7 +48,7 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
+        <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
           <div className="flex items-center justify-between text-zinc-500">
             <span className="text-xs font-semibold">Total Orders Processed</span>
             <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -64,7 +64,7 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
+        <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
           <div className="flex items-center justify-between text-zinc-500">
             <span className="text-xs font-semibold">Registered Accounts</span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -80,7 +80,7 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
+        <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-3 shadow-xs hover:border-zinc-300 transition group">
           <div className="flex items-center justify-between text-zinc-500">
             <span className="text-xs font-semibold">Active Merchant Stores</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -98,7 +98,7 @@ export const AdminOverviewPage: React.FC = () => {
       </div>
 
       {/* Platform Architecture Status Panel */}
-      <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl space-y-4 shadow-xs">
+      <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-4 shadow-xs">
         <h3 className="font-bold text-zinc-900 text-sm">Cluster & Microservice Health Status</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           {[
@@ -111,7 +111,7 @@ export const AdminOverviewPage: React.FC = () => {
             { name: 'Kafka KRaft Cluster', status: 'Operational', latency: '1ms' },
             { name: 'AI Vector Embeddings', status: 'Active (64-dim)', latency: '3ms' },
           ].map((s) => (
-            <div key={s.name} className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-2xl space-y-1">
+            <div key={s.name} className="p-3.5 bg-zinc-50 border border-zinc-200/60 rounded-xl space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-zinc-800">{s.name}</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />

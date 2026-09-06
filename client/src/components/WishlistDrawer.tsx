@@ -70,7 +70,7 @@ export const WishlistDrawer: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-6 space-y-3">
             {items.length === 0 ? (
               <div className="text-center py-16 space-y-3">
-                <div className="w-16 h-16 rounded-3xl bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400">
+                <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400">
                   <Heart className="w-8 h-8" />
                 </div>
                 <h3 className="text-base font-bold text-zinc-900">Your wishlist is empty</h3>

@@ -63,7 +63,7 @@ export const BusinessStorefrontPage: React.FC = () => {
         </a>
       </div>
 
-      <form onSubmit={handleSave} className="bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-8 space-y-5 text-xs shadow-xs">
+      <form onSubmit={handleSave} className="bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-8 space-y-5 text-xs shadow-xs">
         <div>
           <label className="block font-bold text-zinc-900 mb-1.5">Store Display Name</label>
           <input

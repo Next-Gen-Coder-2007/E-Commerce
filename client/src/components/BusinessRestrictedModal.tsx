@@ -62,9 +62,9 @@ export const BusinessRestrictedModal: React.FC = () => {
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-white rounded-3xl border border-zinc-200 shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200">
         {/* Top Accent Stripe */}
-        <div className="h-2 bg-gradient-to-r from-amber-500 via-indigo-600 to-zinc-950 w-full" />
+        <div className="h-1 bg-amber-500 w-full" />
 
         {/* Header */}
         <div className="p-6 sm:p-7 pb-4">

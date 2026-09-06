@@ -366,7 +366,7 @@ export const AdminDashboardPage: React.FC = () => {
             {/* Pipeline Breakdown & Recent Orders */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Order Status Breakdown */}
-              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-4">
+              <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Layers className="w-4 h-4 text-indigo-400" />
                   <span>Order Pipeline Distribution</span>
@@ -392,7 +392,7 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
 
               {/* Recent Orders Stream */}
-              <div className="lg:col-span-2 p-6 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-4">
+              <div className="lg:col-span-2 p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-purple-400" />
@@ -510,7 +510,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             {/* Users Data Table */}
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-3xl overflow-x-auto">
+            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 font-semibold pb-2">
@@ -624,7 +624,7 @@ export const AdminDashboardPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {users.filter(u => u.role === 'company').map((m) => (
-                <div key={m._id} className="p-5 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-4 shadow-sm">
+                <div key={m._id} className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-lg">
@@ -718,7 +718,7 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-3xl overflow-x-auto">
+            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 font-semibold pb-2">
@@ -816,7 +816,7 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-3xl overflow-x-auto">
+            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 font-semibold pb-2">
@@ -884,7 +884,7 @@ export const AdminDashboardPage: React.FC = () => {
         {/* ======================================================== */}
         {activeTab === 'health' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-3xl flex items-center justify-between">
+            <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Activity className="w-4 h-4 text-emerald-400" />
@@ -903,7 +903,7 @@ export const AdminDashboardPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {healthStatus.map((s) => (
-                <div key={s.name} className="p-5 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-3">
+                <div key={s.name} className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-white text-sm">{s.name}</span>
                     <span className="font-mono text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">

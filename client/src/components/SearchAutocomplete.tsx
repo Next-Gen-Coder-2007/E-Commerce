@@ -112,7 +112,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({ onSelect
 
       {/* Floating Dropdown Results */}
       {isOpen && (query.trim().length >= 2 || results) && (
-        <div className="absolute top-full left-0 right-0 mt-2 rounded-3xl bg-white border border-zinc-200 shadow-2xl z-50 overflow-hidden text-zinc-800">
+        <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white border border-zinc-200 shadow-2xl z-50 overflow-hidden text-zinc-800">
           {/* Telemetry Header */}
           <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400 bg-zinc-50/50">
             <span className="flex items-center gap-1.5 font-medium">

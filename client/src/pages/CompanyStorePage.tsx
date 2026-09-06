@@ -219,81 +219,69 @@ export const CompanyStorePage: React.FC = () => {
       </div>
 
       {/* Merchant Hero Banner */}
-      <div className="bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 text-white relative overflow-hidden border-b border-zinc-800">
-        {/* Custom Background Banner or Radial Pattern */}
-        {storeData?.bannerImage ? (
-          <img
-            src={storeData.bannerImage}
-            alt={`${companyName} Banner`}
-            className="absolute inset-0 w-full h-full object-cover opacity-25"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 relative z-10">
+      <div className="bg-white border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-start sm:items-center gap-4 sm:gap-5">
               {/* Store Avatar */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xl shrink-0">
-                <Store className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900 shadow-2xs shrink-0">
+                <Store className="w-7 h-7 sm:w-8 sm:h-8 text-zinc-700" />
               </div>
 
               {/* Store Titles & Info */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200 inline-flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
                     Verified Merchant
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-zinc-300 border border-white/10">
-                    {storeData?.tagline || 'Official Brand Storefront'}
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-50 text-zinc-500 border border-zinc-200">
+                    {storeData?.tagline || 'Official Storefront'}
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
                   {companyName}
                 </h1>
 
-                <p className="text-xs sm:text-sm text-zinc-300 max-w-xl line-clamp-2">
+                <p className="text-xs text-zinc-500 max-w-xl line-clamp-2">
                   {storeData?.description ||
-                    `Browse authentic products, exclusive brand collections, and verified inventory directly fulfilled by ${companyName}.`}
+                    `Browse authentic products and verified inventory fulfilled directly by ${companyName}.`}
                 </p>
               </div>
             </div>
 
             {/* Merchant Metrics Card */}
             {storeData && (
-              <div className="flex items-center gap-3 sm:gap-4 bg-white/5 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/10 self-start md:self-auto">
+              <div className="flex items-center gap-3 sm:gap-4 bg-zinc-50/70 p-3.5 rounded-2xl border border-zinc-200/60 self-start md:self-auto">
                 <div className="text-center px-2 sm:px-3">
-                  <div className="text-lg sm:text-2xl font-black text-white">
+                  <div className="text-base sm:text-lg font-bold text-zinc-950">
                     {storeData.totalProducts}
                   </div>
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                     Listed Items
                   </div>
                 </div>
 
-                <div className="h-8 w-px bg-white/15" />
+                <div className="h-7 w-px bg-zinc-200" />
 
                 <div className="text-center px-2 sm:px-3">
-                  <div className="text-lg sm:text-2xl font-black text-amber-400 flex items-center justify-center gap-1">
-                    <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400" />
+                  <div className="text-base sm:text-lg font-bold text-zinc-950 flex items-center justify-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     <span>{storeData.numReviews > 0 && storeData.rating > 0 ? storeData.rating.toFixed(1) : '0.0'}</span>
                   </div>
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                     {storeData.numReviews > 0 ? `${storeData.numReviews} Reviews` : 'No reviews'}
                   </div>
                 </div>
 
-                <div className="h-8 w-px bg-white/15" />
+                <div className="h-7 w-px bg-zinc-200" />
 
                 <div className="text-center px-2 sm:px-3">
-                  <div className="text-lg sm:text-2xl font-black text-white">
+                  <div className="text-base sm:text-lg font-bold text-zinc-950">
                     {storeData.categories.length}
                   </div>
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                     Categories
                   </div>
                 </div>
@@ -302,21 +290,21 @@ export const CompanyStorePage: React.FC = () => {
           </div>
 
           {/* Quick Trust Highlights */}
-          <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-zinc-300">
+          <div className="mt-6 pt-5 border-t border-zinc-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-zinc-500">
             <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-amber-400 shrink-0" />
+              <Truck className="w-4 h-4 text-zinc-700 shrink-0" />
               <span className="text-[11px] sm:text-xs">Direct Merchant Dispatch</span>
             </div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-zinc-700 shrink-0" />
               <span className="text-[11px] sm:text-xs">100% Authentic Guarantee</span>
             </div>
             <div className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-indigo-400 shrink-0" />
-              <span className="text-[11px] sm:text-xs">30-Day Buyer Protection</span>
+              <RotateCcw className="w-4 h-4 text-zinc-700 shrink-0" />
+              <span className="text-[11px] sm:text-xs">30-Day Returns</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+              <Sparkles className="w-4 h-4 text-zinc-700 shrink-0" />
               <span className="text-[11px] sm:text-xs">Verified Top Merchant</span>
             </div>
           </div>
@@ -345,18 +333,17 @@ export const CompanyStorePage: React.FC = () => {
           <>
             {/* Active Flash Sale Showcase Banner */}
             {storeData?.flashSale?.isActive && (
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 via-rose-600 to-indigo-700 text-white p-6 sm:p-8 shadow-xl animate-in zoom-in-95 duration-200">
-                <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+              <div className="rounded-2xl bg-zinc-950 text-white p-6 sm:p-8 shadow-xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <div className="space-y-2 max-w-xl">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-md text-amber-300 text-xs font-black uppercase tracking-wider border border-white/10">
-                      <Flame className="w-4 h-4 fill-amber-300 animate-bounce" />
-                      <span>Exclusive Store Flash Sale</span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-zinc-200 text-xs font-semibold">
+                      <Flame className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Limited Store Promotion</span>
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
                       {storeData.flashSale.title}
                     </h2>
-                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                       {storeData.flashSale.description ||
                         `Special limited-time promotions up to ${storeData.flashSale.discountPercentage}% OFF on verified collections.`}
                     </p>
@@ -414,7 +401,7 @@ export const CompanyStorePage: React.FC = () => {
 
             {/* Active Store Coupons & Discounts Ribbon */}
             {storeCoupons.length > 0 && (
-              <div className="bg-white border border-zinc-200/90 rounded-3xl p-5 shadow-xs space-y-3">
+              <div className="bg-white border border-zinc-200/90 rounded-2xl p-5 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-zinc-950">
                     <Ticket className="w-4 h-4 text-emerald-600" />
@@ -588,7 +575,7 @@ export const CompanyStorePage: React.FC = () => {
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="py-16 text-center bg-white rounded-3xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-6 shadow-xs">
+              <div className="py-16 text-center bg-white rounded-2xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-6 shadow-xs">
                 <div className="w-14 h-14 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
                   <Package className="w-7 h-7" />
                 </div>

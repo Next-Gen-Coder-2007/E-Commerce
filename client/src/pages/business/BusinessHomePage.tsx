@@ -1773,7 +1773,7 @@ export const BusinessHomePage: React.FC = () => {
             {/* Merchant Fulfillment Modal */}
             {selectedFulfillmentOrder && (
               <div className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl border border-zinc-200 max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95">
+                <div className="bg-white rounded-2xl border border-zinc-200 max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95">
                   <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
@@ -1921,7 +1921,7 @@ export const BusinessHomePage: React.FC = () => {
         {activeTab === 'storefront' && (
           <div className="space-y-6">
             {/* Top Storefront Header Card */}
-            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1967,7 +1967,7 @@ export const BusinessHomePage: React.FC = () => {
 
             {/* Form Section 1: Storefront Banner & Branding */}
             <form onSubmit={handleSaveStorefront} className="space-y-6">
-              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center">
@@ -2126,7 +2126,7 @@ export const BusinessHomePage: React.FC = () => {
               </div>
 
               {/* Form Section 2: Flash Sale Campaign Manager */}
-              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-6">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
@@ -2243,7 +2243,7 @@ export const BusinessHomePage: React.FC = () => {
             </form>
 
             {/* Section 3: Bulk Product Discount & Sale Pricing Tool */}
-            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 border border-rose-100 flex items-center justify-center">
@@ -2364,7 +2364,7 @@ export const BusinessHomePage: React.FC = () => {
         {activeTab === 'profile' && (
           <div className="space-y-6">
             {/* Top Identity Cards */}
-            <div className="bg-white rounded-3xl border border-zinc-200/80 divide-y divide-zinc-100 shadow-2xs">
+            <div className="bg-white rounded-2xl border border-zinc-200/80 divide-y divide-zinc-100 shadow-2xs">
               <div className="p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -2444,7 +2444,7 @@ export const BusinessHomePage: React.FC = () => {
               )}
 
               {/* Section 1: Business Profile & Contact Info */}
-              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900">
@@ -2559,7 +2559,7 @@ export const BusinessHomePage: React.FC = () => {
               </div>
 
               {/* Section 2: Physical / Registered Business Address */}
-              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900">
@@ -2655,7 +2655,7 @@ export const BusinessHomePage: React.FC = () => {
               </div>
 
               {/* Section 3: Banking & Payout Settings */}
-              <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-6 sm:p-7 shadow-xs space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900">
@@ -2976,7 +2976,7 @@ export const BusinessHomePage: React.FC = () => {
                   {[1, 2, 3].map((n) => (
                     <div
                       key={n}
-                      className="p-6 rounded-3xl bg-white border border-zinc-200 animate-pulse space-y-3"
+                      className="p-6 rounded-2xl bg-white border border-zinc-200 animate-pulse space-y-3"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-zinc-200" />
@@ -2991,7 +2991,7 @@ export const BusinessHomePage: React.FC = () => {
                   ))}
                 </div>
               ) : companyReviews.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-zinc-200/80 p-12 text-center space-y-4">
+                <div className="bg-white rounded-2xl border border-zinc-200/80 p-12 text-center space-y-4">
                   <div className="w-14 h-14 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
                     <MessageSquare className="w-7 h-7" />
                   </div>
@@ -3041,7 +3041,7 @@ export const BusinessHomePage: React.FC = () => {
             </div>
 
             {/* Product Ratings Health Overview Table */}
-            <div className="bg-white rounded-3xl border border-zinc-200/80 overflow-hidden shadow-xs mt-8">
+            <div className="bg-white rounded-2xl border border-zinc-200/80 overflow-hidden shadow-xs mt-8">
               <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-zinc-950">Product Ratings Health Table</h4>
@@ -3140,7 +3140,7 @@ export const BusinessHomePage: React.FC = () => {
         {activeTab === 'coupons' && (
           <div className="space-y-6">
             {/* Header & Create CTA */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-7 shadow-xs">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
                   <Ticket className="w-3.5 h-3.5 text-emerald-600" />
@@ -3166,7 +3166,7 @@ export const BusinessHomePage: React.FC = () => {
 
             {/* Metrics Overview Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                   <Ticket className="w-6 h-6" />
                 </div>
@@ -3179,7 +3179,7 @@ export const BusinessHomePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
                   <Tag className="w-6 h-6" />
                 </div>
@@ -3192,7 +3192,7 @@ export const BusinessHomePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
                   <DollarSign className="w-6 h-6" />
                 </div>
@@ -3205,7 +3205,7 @@ export const BusinessHomePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-5 shadow-xs flex items-center gap-4">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-xs flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-700 shrink-0">
                   <Gift className="w-6 h-6" />
                 </div>
@@ -3221,13 +3221,13 @@ export const BusinessHomePage: React.FC = () => {
 
             {/* Coupons List */}
             {couponsLoading ? (
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-16 flex flex-col items-center justify-center text-center space-y-3 shadow-xs">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-16 flex flex-col items-center justify-center text-center space-y-3 shadow-xs">
                 <Loader2 className="w-8 h-8 text-zinc-950 animate-spin" />
                 <p className="text-xs text-zinc-500 font-mono">Loading store coupon campaigns...</p>
               </div>
             ) : coupons.length === 0 ? (
-              <div className="bg-white border border-zinc-200/80 rounded-3xl p-16 text-center space-y-4 shadow-xs">
-                <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto text-amber-600">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-16 text-center space-y-4 shadow-xs">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto text-amber-600">
                   <Ticket className="w-8 h-8" />
                 </div>
                 <div className="space-y-1">
@@ -3255,7 +3255,7 @@ export const BusinessHomePage: React.FC = () => {
                   return (
                     <div
                       key={coupon._id}
-                      className={`bg-white border rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-5 transition-all hover:shadow-md ${
+                      className={`bg-white border rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-5 transition-all hover:shadow-md ${
                         isLive ? 'border-zinc-200/90' : 'border-zinc-200/50 opacity-75 bg-zinc-50/50'
                       }`}
                     >
@@ -3408,7 +3408,7 @@ export const BusinessHomePage: React.FC = () => {
           onClick={() => setQuickDiscountProduct(null)}
         >
           <div
-            className="bg-white border border-zinc-200 max-w-md w-full p-6 sm:p-7 rounded-3xl shadow-2xl space-y-5 text-zinc-900 animate-in zoom-in-95 duration-150"
+            className="bg-white border border-zinc-200 max-w-md w-full p-6 sm:p-7 rounded-2xl shadow-2xl space-y-5 text-zinc-900 animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between border-b border-zinc-200/80 pb-4">
@@ -3629,7 +3629,7 @@ export const BusinessHomePage: React.FC = () => {
           }}
         >
           <div
-            className="bg-white border border-zinc-200 max-w-2xl w-full p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto text-zinc-900"
+            className="bg-white border border-zinc-200 max-w-2xl w-full p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto text-zinc-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4">
@@ -3878,7 +3878,7 @@ export const BusinessHomePage: React.FC = () => {
               {/* ---------------------------------------------------- */}
               {/* MULTI-PHOTO REFERENCE GALLERY (UP TO 10 PHOTOS)     */}
               {/* ---------------------------------------------------- */}
-              <div className="p-5 rounded-3xl border border-zinc-200 bg-zinc-50/50 space-y-4">
+              <div className="p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
@@ -4073,7 +4073,7 @@ export const BusinessHomePage: React.FC = () => {
               {/* ---------------------------------------------------- */}
               {/* DYNAMIC KEY-VALUE TECHNICAL SPECIFICATIONS BUILDER   */}
               {/* ---------------------------------------------------- */}
-              <div className="p-5 rounded-3xl border border-zinc-200 bg-zinc-50/50 space-y-4">
+              <div className="p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2">
@@ -4204,7 +4204,7 @@ export const BusinessHomePage: React.FC = () => {
           onClick={() => setDeletingProductId(null)}
         >
           <div
-            className="bg-white border border-zinc-200 max-w-sm w-full p-6 rounded-3xl shadow-2xl space-y-4 text-center text-zinc-900"
+            className="bg-white border border-zinc-200 max-w-sm w-full p-6 rounded-2xl shadow-2xl space-y-4 text-center text-zinc-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
@@ -4246,7 +4246,7 @@ export const BusinessHomePage: React.FC = () => {
           onClick={() => setShowCouponModal(false)}
         >
           <div
-            className="bg-white border border-zinc-200/90 max-w-xl w-full my-8 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 text-zinc-900 animate-in zoom-in-95 duration-150"
+            className="bg-white border border-zinc-200/90 max-w-xl w-full my-8 p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6 text-zinc-900 animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

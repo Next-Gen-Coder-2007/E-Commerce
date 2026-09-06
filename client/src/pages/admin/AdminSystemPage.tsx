@@ -29,7 +29,7 @@ export const AdminSystemPage: React.FC = () => {
         {services.map((s) => (
           <div
             key={s.name}
-            className="p-5 bg-white border border-zinc-200/80 rounded-3xl space-y-3 shadow-xs hover:border-zinc-300 transition"
+            className="p-5 bg-white border border-zinc-200/80 rounded-2xl space-y-3 shadow-2xs hover:border-zinc-300 transition"
           >
             <div className="flex items-center justify-between">
               <span className="font-bold text-zinc-900 text-sm">{s.name}</span>
@@ -57,7 +57,7 @@ export const AdminSystemPage: React.FC = () => {
       </div>
 
       {/* Observability & Documentation Links */}
-      <div className="p-6 bg-white border border-zinc-200/80 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xs">
+      <div className="p-6 bg-white border border-zinc-200/80 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-2xs">
         <div>
           <h4 className="font-bold text-zinc-900 text-sm">OpenAPI 3.0 & Prometheus Telemetry</h4>
           <p className="text-xs text-zinc-500 mt-0.5">

@@ -38,7 +38,7 @@ export const ForYouRecommendations: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="my-10 p-6 bg-white rounded-3xl border border-zinc-200/80 shadow-xs">
+      <div className="my-10 p-6 bg-white rounded-2xl border border-zinc-200/80 shadow-xs">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 animate-spin" />
           <span className="text-xs text-zinc-500 font-medium">Synthesizing personalized recommendations...</span>
@@ -50,7 +50,7 @@ export const ForYouRecommendations: React.FC = () => {
   if (recommendations.length === 0) return null;
 
   return (
-    <section className="my-12 rounded-3xl bg-white border border-zinc-200/80 p-6 sm:p-8 shadow-xs">
+    <section className="my-12 rounded-2xl bg-white border border-zinc-200/80 p-6 sm:p-8 shadow-xs">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold mb-2">

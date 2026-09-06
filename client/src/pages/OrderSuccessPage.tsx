@@ -30,27 +30,22 @@ export const OrderSuccessPage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-[85vh] py-12 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto flex flex-col justify-center">
-      <div className="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-12 shadow-xl shadow-zinc-950/5 text-center space-y-8 animate-in fade-in zoom-in-95 duration-300">
+    <div className="min-h-[80vh] py-12 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto flex flex-col justify-center">
+      <div className="bg-white border border-zinc-200/80 rounded-2xl p-8 sm:p-10 shadow-xs text-center space-y-6">
         {/* Top Success Badge */}
-        <div className="relative inline-block">
-          <div className="w-20 h-20 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-600 shadow-inner">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
-            <Sparkles className="w-4 h-4 animate-spin-slow" />
-          </div>
+        <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-600">
+          <CheckCircle2 className="w-8 h-8" />
         </div>
 
-        <div className="space-y-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-            Payment & Saga Verified
+        <div className="space-y-1.5">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Order Confirmed
           </span>
-          <h1 className="text-3xl font-black tracking-tight text-zinc-900 mt-2">
-            Order Successfully Placed!
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 mt-1">
+            Thank you for your order
           </h1>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            Thank you for your purchase. We've reserved your stock and dispatched notifications to our merchant fulfillment hubs.
+          <p className="text-xs sm:text-sm text-zinc-500 max-w-md mx-auto">
+            We've received your order and notified our verified merchant fulfillment team.
           </p>
         </div>
 
@@ -95,18 +90,18 @@ export const OrderSuccessPage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Link
             to={`/orders/${orderId}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs shadow-md shadow-zinc-950/10 transition active:scale-95"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition"
           >
             <Package className="w-4 h-4" />
-            <span>Track Order & Saga Timeline</span>
+            <span>Track Order Details</span>
           </Link>
 
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs transition active:scale-95"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs transition"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Continue Shopping</span>

@@ -152,7 +152,7 @@ export const CartDrawer: React.FC = () => {
                   className={`h-full transition-all duration-500 rounded-full ${
                     amountForFreeShipping === 0
                       ? 'bg-emerald-500'
-                      : 'bg-gradient-to-r from-indigo-500 to-amber-500'
+                      : 'bg-zinc-950'
                   }`}
                   style={{ width: `${freeShippingProgress}%` }}
                 />
@@ -424,7 +424,7 @@ export const CartDrawer: React.FC = () => {
                       <span>Encrypted</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <RotateCcw className="w-3 h-3 text-indigo-600" />
+                      <RotateCcw className="w-3 h-3 text-zinc-600" />
                       <span>30-Day Returns</span>
                     </span>
                   </div>
