@@ -227,6 +227,12 @@ export const CartDrawer: React.FC = () => {
                       )}
                     </div>
 
+                    {item.variantSummary && (
+                      <div className="text-[10px] font-semibold text-indigo-700 bg-indigo-50/90 px-2 py-0.5 rounded-md inline-block">
+                        {item.variantSummary}
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between pt-1">
                       <div className="text-xs font-extrabold text-zinc-950">
                         ${(item.price * item.quantity).toFixed(2)}

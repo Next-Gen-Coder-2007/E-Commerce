@@ -3,6 +3,11 @@ import Product from '../models/Product.js';
 import Review from '../models/Review.js';
 import StorefrontConfig from '../models/StorefrontConfig.js';
 import cloudinary from '../config/cloudinary.js';
+import {
+  TAXONOMY_CATEGORIES,
+  getTaxonomyCategory,
+  validateCategoryAndSubcategory,
+} from '../config/taxonomy.js';
 
 // Helper to calculate rating and review counts dynamically from the Review collection
 export const attachCalculatedRatings = async (products) => {
@@ -54,6 +59,7 @@ export const getProducts = async (req, res, next) => {
     const {
       search,
       category,
+      subcategory,
       companyId,
       companyName,
       minPrice,
@@ -85,6 +91,10 @@ export const getProducts = async (req, res, next) => {
 
     if (category && category.trim() && category.toLowerCase() !== 'all') {
       query.category = category.trim().toLowerCase();
+    }
+
+    if (subcategory && subcategory.trim() && subcategory.toLowerCase() !== 'all') {
+      query.subcategory = { $regex: new RegExp(`^${subcategory.trim()}$`, 'i') };
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -319,10 +329,57 @@ export const getProductById = async (req, res, next) => {
 
 export const getCategories = async (req, res, next) => {
   try {
-    const categories = await Product.distinct('category', { isPublished: true });
+    const [distinctCategories, categoryCounts] = await Promise.all([
+      Product.distinct('category', { isPublished: true }),
+      Product.aggregate([
+        { $match: { isPublished: true } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const allCategoryKeys = Array.from(
+      new Set([
+        ...distinctCategories.map((c) => String(c).toLowerCase()),
+        ...TAXONOMY_CATEGORIES.map((c) => c.id.toLowerCase()),
+      ])
+    ).sort();
+
+    const formattedCounts = categoryCounts.map((c) => ({
+      category: c._id,
+      count: c.count,
+    }));
+
     res.status(200).json({
       success: true,
-      categories: categories.sort(),
+      categories: allCategoryKeys,
+      categoryCounts: formattedCounts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getTaxonomy = async (req, res, next) => {
+  try {
+    const categoryCounts = await Product.aggregate([
+      { $match: { isPublished: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+
+    const countsMap = {};
+    categoryCounts.forEach((c) => {
+      if (c._id) countsMap[c._id.toLowerCase()] = c.count;
+    });
+
+    const enrichedTaxonomy = TAXONOMY_CATEGORIES.map((cat) => ({
+      ...cat,
+      productCount: countsMap[cat.id.toLowerCase()] || 0,
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: enrichedTaxonomy.length,
+      categories: enrichedTaxonomy,
     });
   } catch (error) {
     next(error);
@@ -339,6 +396,8 @@ export const createProduct = async (req, res, next) => {
       discountPercentage,
       isFlashSale,
       category,
+      subcategory,
+      attributes,
       stock,
       image,
       images,
@@ -351,6 +410,16 @@ export const createProduct = async (req, res, next) => {
         message: 'Please provide title, description, price, category, and stock count',
       });
     }
+
+    // Strict validation: only the 24 authorized categories and matching subcategories
+    const categoryValidation = validateCategoryAndSubcategory(category, subcategory);
+    if (!categoryValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: categoryValidation.message,
+      });
+    }
+    const validatedCategory = categoryValidation.canonicalCategory;
 
     const numericPrice = Number(price);
     let numericOriginal = originalPrice ? Number(originalPrice) : 0;
@@ -409,7 +478,9 @@ export const createProduct = async (req, res, next) => {
       originalPrice: numericOriginal,
       discountPercentage: numericDiscount,
       isFlashSale: Boolean(isFlashSale),
-      category: category.trim().toLowerCase(),
+      category: validatedCategory,
+      subcategory: subcategory ? String(subcategory).trim() : '',
+      attributes: (attributes && typeof attributes === 'object') ? attributes : {},
       stock: Number(stock),
       image: primaryImage,
       images: processedImages,
@@ -508,6 +579,8 @@ export const updateProduct = async (req, res, next) => {
       discountPercentage,
       isFlashSale,
       category,
+      subcategory,
+      attributes,
       stock,
       image,
       images,
@@ -515,13 +588,32 @@ export const updateProduct = async (req, res, next) => {
       isPublished,
     } = req.body;
 
+    if (category !== undefined || subcategory !== undefined) {
+      const targetCat = category !== undefined ? category : product.category;
+      const targetSub = subcategory !== undefined ? subcategory : product.subcategory;
+      const validation = validateCategoryAndSubcategory(targetCat, targetSub);
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.message,
+        });
+      }
+      product.category = validation.canonicalCategory;
+      if (subcategory !== undefined) {
+        product.subcategory = targetSub ? String(targetSub).trim() : '';
+      }
+    }
+
     if (title !== undefined) product.title = title.trim();
     if (description !== undefined) product.description = description.trim();
     if (price !== undefined) product.price = Number(price);
     if (originalPrice !== undefined) product.originalPrice = Number(originalPrice);
     if (discountPercentage !== undefined) product.discountPercentage = Number(discountPercentage);
     if (isFlashSale !== undefined) product.isFlashSale = Boolean(isFlashSale);
-    if (category !== undefined) product.category = category.trim().toLowerCase();
+    if (attributes !== undefined && typeof attributes === 'object') {
+      product.attributes = attributes;
+      product.markModified('attributes');
+    }
     if (stock !== undefined) product.stock = Number(stock);
     if (isPublished !== undefined) product.isPublished = Boolean(isPublished);
 

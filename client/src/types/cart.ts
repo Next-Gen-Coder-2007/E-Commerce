@@ -9,6 +9,8 @@ export interface CartItem {
   companyName?: string;
   quantity: number;
   stock?: number;
+  variantSummary?: string;
+  selectedVariants?: Record<string, string>;
 }
 
 export interface Cart {
@@ -32,6 +34,8 @@ export interface AddToCartPayload {
   companyName?: string;
   quantity?: number;
   stock?: number;
+  variantSummary?: string;
+  selectedVariants?: Record<string, string>;
 }
 
 export interface UpdateCartItemPayload {

@@ -40,6 +40,17 @@ const productSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    subcategory: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
+    },
+    attributes: {
+      type: Map,
+      of: String,
+      default: {},
+    },
     brand: {
       type: String,
       trim: true,
@@ -117,6 +128,7 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.index({ title: 'text', description: 'text', category: 'text' });
+productSchema.index({ category: 1, subcategory: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 

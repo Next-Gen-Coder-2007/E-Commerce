@@ -29,6 +29,7 @@ export class FacetedSearchEngine {
   static async search({
     query = '',
     category,
+    subcategory,
     brand,
     minPrice,
     maxPrice,
@@ -52,6 +53,7 @@ export class FacetedSearchEngine {
           { description: { $regex: cleanQ, $options: 'i' } },
           { brand: { $regex: cleanQ, $options: 'i' } },
           { category: { $regex: cleanQ, $options: 'i' } },
+          { subcategory: { $regex: cleanQ, $options: 'i' } },
           { tags: { $in: [new RegExp(cleanQ, 'i')] } },
         ],
       });
@@ -61,6 +63,14 @@ export class FacetedSearchEngine {
     if (category) {
       const categories = Array.isArray(category) ? category : [category];
       andConditions.push({ category: { $in: categories } });
+    }
+
+    // 2.1 Subcategory Filter
+    if (subcategory) {
+      const subcategories = Array.isArray(subcategory) ? subcategory : [subcategory];
+      andConditions.push({
+        subcategory: { $in: subcategories.map((s) => new RegExp(`^${s}$`, 'i')) },
+      });
     }
 
     // 3. Brand Filter (multi-brand support)

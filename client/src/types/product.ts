@@ -12,6 +12,8 @@ export interface Product {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category: string;
+  subcategory?: string;
+  attributes?: Record<string, string>;
   brand?: string;
   stock: number;
   image: string;
@@ -34,6 +36,8 @@ export interface CreateProductInput {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category: string;
+  subcategory?: string;
+  attributes?: Record<string, string>;
   brand?: string;
   stock: number;
   image?: string;
@@ -49,6 +53,8 @@ export interface UpdateProductInput {
   discountPercentage?: number;
   isFlashSale?: boolean;
   category?: string;
+  subcategory?: string;
+  attributes?: Record<string, string>;
   brand?: string;
   stock?: number;
   image?: string;
@@ -60,6 +66,7 @@ export interface UpdateProductInput {
 export interface ProductFilterParams {
   search?: string;
   category?: string;
+  subcategory?: string;
   brand?: string;
   companyId?: string;
   companyName?: string;

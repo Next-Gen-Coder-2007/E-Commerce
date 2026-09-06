@@ -29,6 +29,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
 import type { Review, ReviewSummary } from '../types/review';
+import { getTaxonomyCategory } from '../config/taxonomy';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,8 +49,8 @@ export const ProductDetailPage: React.FC = () => {
   const [addedRecently, setAddedRecently] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Variant / Size state matching editorial cosmetic style
-  const [selectedVariant, setSelectedVariant] = useState<string>('50ml');
+  // Dynamic category variant selections
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   // Minimalist collapsible accordions
   const [accordions, setAccordions] = useState<Record<string, boolean>>({
@@ -83,17 +84,21 @@ export const ProductDetailPage: React.FC = () => {
         setProduct(data.product);
         setQuantity((prev) => Math.max(1, Math.min(prev, data.product.stock || 1)));
 
-        // Set default variant if available
-        if (data.product.category?.toLowerCase() === 'fashion') {
-          setSelectedVariant('M');
-        } else if (
-          data.product.category?.toLowerCase() === 'beauty' ||
-          data.product.category?.toLowerCase() === 'skincare'
-        ) {
-          setSelectedVariant('50ml');
-        } else {
-          setSelectedVariant('Standard');
+        // Only initialize variants that the merchant actually specified on this product
+        const initialVars: Record<string, string> = {};
+        if (data.product.attributes && typeof data.product.attributes === 'object') {
+          Object.entries(data.product.attributes).forEach(([attrKey, attrVal]) => {
+            const raw = String(attrVal || '').trim();
+            if (raw) {
+              const options = raw.split(',').map((s) => s.trim()).filter(Boolean);
+              if (options.length > 0) {
+                initialVars[attrKey] = options[0];
+              }
+            }
+          });
         }
+
+        setSelectedVariants(initialVars);
 
         // Fetch related products in the same category
         try {
@@ -200,6 +205,10 @@ export const ProductDetailPage: React.FC = () => {
     }
     setAddingToCart(true);
     try {
+      const variantSummary = Object.entries(selectedVariants)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(' • ');
+
       const success = await addToCart(
         {
           productId: product._id,
@@ -211,6 +220,8 @@ export const ProductDetailPage: React.FC = () => {
           companyName: product.companyName,
           stock: product.stock,
           quantity,
+          variantSummary: variantSummary || undefined,
+          selectedVariants: Object.keys(selectedVariants).length > 0 ? selectedVariants : undefined,
         },
         true
       );
@@ -320,11 +331,22 @@ export const ProductDetailPage: React.FC = () => {
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
             <Link
-              to={`/?category=${product.category}`}
+              to={`/?category=${encodeURIComponent(product.category)}`}
               className="capitalize hover:text-neutral-900 transition-colors"
             >
               {product.category}
             </Link>
+            {product.subcategory && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                <Link
+                  to={`/?category=${encodeURIComponent(product.category)}&subcategory=${encodeURIComponent(product.subcategory)}`}
+                  className="hover:text-neutral-900 transition-colors font-medium text-neutral-600"
+                >
+                  {product.subcategory}
+                </Link>
+              </>
+            )}
             <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
             <span className="text-neutral-900 truncate max-w-[220px]">
               {product.title}
@@ -501,28 +523,68 @@ export const ProductDetailPage: React.FC = () => {
               {product.description}
             </p>
 
-            {/* Variant / Size Options */}
-            <div className="mb-6">
-              <div className="text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-2.5">
-                {isBeauty ? 'Size' : isFashion ? 'Size' : 'Option'}
-              </div>
-              <div className="flex items-center gap-2.5">
-                {variantOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setSelectedVariant(opt)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                      selectedVariant === opt
-                        ? 'bg-neutral-100 border-2 border-neutral-950 text-neutral-950 font-bold shadow-2xs'
-                        : 'bg-white border border-neutral-200 text-neutral-600 hover:border-neutral-400'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Merchant-Configured Variants & Options */}
+            {(() => {
+              if (!product.attributes || typeof product.attributes !== 'object') return null;
+
+              const merchantAttributes = Object.entries(product.attributes)
+                .map(([name, val]) => {
+                  const options = String(val || '')
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  return { name, options };
+                })
+                .filter(({ options }) => options.length > 0);
+
+              if (merchantAttributes.length === 0) return null;
+
+              return (
+                <div className="mb-6 space-y-4 pt-1 border-t border-b border-neutral-100 py-4">
+                  {merchantAttributes.map(({ name, options }) => {
+                    const currentSelected = selectedVariants[name] || options[0];
+
+                    return (
+                      <div key={name} className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-neutral-800 uppercase tracking-wider">
+                            {name}
+                          </span>
+                          <span className="text-neutral-500 font-medium">
+                            {currentSelected}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {options.map((opt) => {
+                            const isSelected =
+                              currentSelected.toLowerCase() === opt.toLowerCase();
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() =>
+                                  setSelectedVariants((prev) => ({
+                                    ...prev,
+                                    [name]: opt,
+                                  }))
+                                }
+                                className={`px-4 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-neutral-950 text-white font-bold shadow-xs scale-[1.02]'
+                                    : 'bg-white border border-neutral-200 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 font-medium'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* Quantity Stepper + Add to Cart + Wishlist Action Row */}
             <div className="space-y-3 mb-6">
@@ -663,14 +725,30 @@ export const ProductDetailPage: React.FC = () => {
                 </button>
                 {accordions.specs && (
                   <div className="pt-3 space-y-2">
-                    {product.specifications && product.specifications.length > 0 ? (
+                    {((product.specifications && product.specifications.length > 0) || (product.attributes && Object.keys(product.attributes).length > 0) || product.subcategory) ? (
                       <div className="border border-neutral-100 rounded-xl overflow-hidden divide-y divide-neutral-100">
-                        {product.specifications.map((s, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-2.5 bg-neutral-50/50">
-                            <span className="text-neutral-500">{s.key}</span>
-                            <span className="text-neutral-900 font-medium">{s.value}</span>
+                        {product.subcategory && (
+                          <div className="flex items-center justify-between p-2.5 bg-neutral-50/50">
+                            <span className="text-neutral-500 font-medium">Subcategory</span>
+                            <span className="text-neutral-900 font-semibold">{product.subcategory}</span>
                           </div>
-                        ))}
+                        )}
+                        {product.attributes &&
+                          Object.entries(product.attributes).map(([key, val]) => (
+                            <div key={key} className="flex items-center justify-between p-2.5 bg-neutral-50/50">
+                              <span className="text-neutral-500">{key}</span>
+                              <span className="text-neutral-900 font-medium">{val}</span>
+                            </div>
+                          ))}
+                        {product.specifications &&
+                          product.specifications
+                            .filter((s) => !product.attributes || !product.attributes[s.key])
+                            .map((s, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-2.5 bg-neutral-50/50">
+                                <span className="text-neutral-500">{s.key}</span>
+                                <span className="text-neutral-900 font-medium">{s.value}</span>
+                              </div>
+                            ))}
                       </div>
                     ) : (
                       <p className="text-neutral-500">

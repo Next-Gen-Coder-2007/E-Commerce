@@ -28,6 +28,7 @@ import {
 import { getProductsApi, getCategoriesApi } from '../services/productService';
 import { ForYouRecommendations } from '../components/recommendations/ForYouRecommendations';
 import { ProductCard } from '../components/ProductCard';
+import { TAXONOMY_CATEGORIES, getTaxonomyCategory } from '../config/taxonomy';
 import { useCart } from '../context/CartContext';
 import type { Product } from '../types/product';
 
@@ -56,7 +57,7 @@ const BANNERS = [
     id: 3,
     title: 'Scandinavian Living Space',
     subtitle: 'Warm minimalism, architectural lighting, and artisanal ceramics',
-    category: 'home',
+    category: 'home-furniture',
     badge: 'HOME SANCTUARY',
     image: '/banners/home_banner.jpg',
     cta: 'Upgrade Space',
@@ -76,24 +77,24 @@ const HOME_CATEGORY_SECTIONS = [
     subtitle: 'Organic cotton garments, breathable knitwear, and leather goods',
   },
   {
-    id: 'home',
+    id: 'home-furniture',
     title: 'Sanctuary & Modern Living',
     subtitle: 'Handmade ceramic serveware, ambient luminaires, and linen textiles',
   },
   {
-    id: 'beauty',
+    id: 'beauty-personal-care',
     title: 'Clean Beauty & Skincare',
     subtitle: 'Pure botanicals, restorative formulas, and organic self-care essentials',
   },
   {
-    id: 'sports',
+    id: 'sports-fitness',
     title: 'Sports & Active Lifestyle',
     subtitle: 'Athletic wear, performance training gear, and fitness accessories',
   },
   {
-    id: 'books',
-    title: 'Books & Media',
-    subtitle: 'Bestselling novels, educational literature, and audiobooks',
+    id: 'books-stationery',
+    title: 'Books & Stationery',
+    subtitle: 'Bestselling literature, archival journals, and fine stationery',
   },
 ];
 
@@ -102,6 +103,7 @@ export const HomePage: React.FC = () => {
 
   const search = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category');
+  const subcategoryParam = searchParams.get('subcategory') || '';
   const activeCategory = categoryParam || 'all';
   const sort = (searchParams.get('sort') as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'oldest') || 'newest';
 
@@ -120,7 +122,7 @@ export const HomePage: React.FC = () => {
 
   const { addToCart } = useCart();
 
-  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
+  const [_, setDynamicCategories] = useState<string[]>([]);
 
   useEffect(() => {
     getCategoriesApi()
@@ -201,10 +203,11 @@ export const HomePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const isHome = !search.trim() && categoryParam === null;
+      const isHome = !search.trim() && categoryParam === null && !subcategoryParam;
       const data = await getProductsApi({
         search: search.trim() || undefined,
         category: activeCategory !== 'all' ? activeCategory : undefined,
+        subcategory: subcategoryParam || undefined,
         sort,
         limit: isHome ? 60 : 48,
       });
@@ -215,7 +218,7 @@ export const HomePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, activeCategory, categoryParam, sort]);
+  }, [search, activeCategory, categoryParam, subcategoryParam, sort]);
 
   useEffect(() => {
     fetchProducts();
@@ -224,6 +227,7 @@ export const HomePage: React.FC = () => {
   const handleCategorySelect = (cat: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('category', cat);
+    params.delete('subcategory');
     setSearchParams(params);
   };
 
@@ -240,6 +244,7 @@ export const HomePage: React.FC = () => {
   const handleClearFilters = () => {
     const params = new URLSearchParams();
     params.set('category', 'all');
+    params.delete('subcategory');
     setSearchParams(params);
   };
 
@@ -247,7 +252,7 @@ export const HomePage: React.FC = () => {
     return <ProductCard key={product._id} product={product} index={idx} />;
   };
 
-  const isSearchOrFilterMode = Boolean(search || categoryParam !== null);
+  const isSearchOrFilterMode = Boolean(search || categoryParam !== null || subcategoryParam);
   const activeBanner = BANNERS[currentSlide] || BANNERS[0];
 
   return (
@@ -618,11 +623,27 @@ export const HomePage: React.FC = () => {
                   )}
                   {activeCategory !== 'all' ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-xs font-medium border border-zinc-200 capitalize">
-                      <span>Category: {activeCategory}</span>
+                      <span>Category: {getTaxonomyCategory(activeCategory)?.name || activeCategory}</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-xs font-medium border border-zinc-200">
                       <span>Category: All</span>
+                    </span>
+                  )}
+                  {subcategoryParam && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
+                      <span>Subcategory: {subcategoryParam}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const params = new URLSearchParams(searchParams);
+                          params.delete('subcategory');
+                          setSearchParams(params);
+                        }}
+                        className="text-indigo-400 hover:text-indigo-900 ml-0.5 cursor-pointer"
+                      >
+                        ✕
+                      </button>
                     </span>
                   )}
                   <button
@@ -653,24 +674,40 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {['all', ...(dynamicCategories.length > 0 ? dynamicCategories : ['smartphones', 'laptops', 'audio', 'electronics', 'fashion', 'home', 'beauty', 'sports'])].map((cat) => {
-                const isActive = activeCategory === cat;
-                const label = cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1);
+              <button
+                type="button"
+                onClick={() => handleCategorySelect('all')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  activeCategory === 'all'
+                    ? 'bg-zinc-950 text-white shadow-xs'
+                    : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700'
+                }`}
+              >
+                All Categories
+              </button>
+              {TAXONOMY_CATEGORIES.map((cat) => {
+                const isActive = activeCategory.toLowerCase() === cat.id.toLowerCase();
                 return (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    onClick={() => handleCategorySelect(cat)}
+                    onClick={() => handleCategorySelect(cat.id)}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                       isActive
                         ? 'bg-zinc-950 text-white shadow-xs'
                         : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700'
                     }`}
                   >
-                    {label}
+                    {cat.name}
                   </button>
                 );
               })}
+              <Link
+                to="/categories"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition"
+              >
+                Browse Directory →
+              </Link>
             </div>
 
             {loading ? (

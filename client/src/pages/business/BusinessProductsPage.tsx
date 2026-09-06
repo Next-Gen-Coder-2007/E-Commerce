@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Tag, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { getProductsApi, createProductApi } from '../../services/productService';
 import { useAuth } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
+import {
+  TAXONOMY_CATEGORIES,
+  getTaxonomyCategory,
+  getSubcategoriesForCategory,
+} from '../../config/taxonomy';
+
+interface VariantRow {
+  id: string;
+  name: string;
+  value: string;
+}
 
 export const BusinessProductsPage: React.FC = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('fashion');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [variantRows, setVariantRows] = useState<VariantRow[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    category: 'electronics',
+    category: 'fashion',
+    subcategory: '',
     stock: '25',
     image: '',
     brand: '',
@@ -31,28 +46,93 @@ export const BusinessProductsPage: React.FC = () => {
     fetchMyProducts();
   }, []);
 
+  // Update subcategories and suggested variants when category changes
+  const handleCategoryChange = (catId: string) => {
+    setSelectedCategory(catId);
+    const subcats = getSubcategoriesForCategory(catId);
+    const defaultSubcat = subcats.length > 0 ? subcats[0] : '';
+    setSelectedSubcategory(defaultSubcat);
+
+    setFormData((prev) => ({
+      ...prev,
+      category: catId,
+      subcategory: defaultSubcat,
+    }));
+  };
+
+  const handleAddCustomVariant = (name = '') => {
+    setVariantRows((prev) => [
+      ...prev,
+      {
+        id: `var-${Date.now()}-${Math.random()}`,
+        name,
+        value: '',
+      },
+    ]);
+  };
+
+  const handleRemoveVariantRow = (id: string) => {
+    setVariantRows((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleUpdateVariantRow = (id: string, field: 'name' | 'value', val: string) => {
+    setVariantRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: val } : r))
+    );
+  };
+
+  const handleOpenAddModal = () => {
+    const initialCategory = 'fashion';
+    setSelectedCategory(initialCategory);
+    const subcats = getSubcategoriesForCategory(initialCategory);
+    const defaultSub = subcats[0] || '';
+    setSelectedSubcategory(defaultSub);
+    setVariantRows([]);
+
+    setFormData({
+      title: '',
+      description: '',
+      price: '',
+      category: initialCategory,
+      subcategory: defaultSub,
+      stock: '25',
+      image: '',
+      brand: user?.companyName || '',
+    });
+    setShowAddModal(true);
+  };
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const attributesPayload: Record<string, string> = {};
+      variantRows.forEach((r) => {
+        const trimmedName = r.name.trim();
+        const trimmedVal = r.value.trim();
+        if (trimmedName && trimmedVal) {
+          attributesPayload[trimmedName] = trimmedVal;
+        }
+      });
+
+      // Build specifications array from attributes
+      const specs = Object.entries(attributesPayload).map(([key, value]) => ({
+        key,
+        value: value.trim(),
+      }));
+
       await createProductApi({
         title: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
         category: formData.category,
+        subcategory: formData.subcategory || selectedSubcategory,
+        attributes: attributesPayload,
+        specifications: specs,
         stock: parseInt(formData.stock, 10),
         image: formData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
         brand: formData.brand || user?.companyName || 'My Brand',
       });
       setShowAddModal(false);
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        category: 'electronics',
-        stock: '25',
-        image: '',
-        brand: '',
-      });
       fetchMyProducts();
     } catch (err: any) {
       alert(err.message || 'Failed to create product listing');
@@ -70,7 +150,7 @@ export const BusinessProductsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={handleOpenAddModal}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -108,8 +188,18 @@ export const BusinessProductsPage: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 uppercase text-[10px] font-bold text-amber-600">
-                    {p.category}
+                  <td className="p-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="uppercase text-[10px] font-bold text-indigo-600">
+                        {p.category}
+                      </span>
+                      {p.subcategory && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 font-medium">
+                          <Tag className="w-2.5 h-2.5 text-zinc-400" />
+                          {p.subcategory}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 font-mono font-bold text-zinc-950">
                     ${p.price.toFixed(2)}
@@ -185,34 +275,124 @@ export const BusinessProductsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-zinc-700 font-semibold mb-1">Category</label>
                   <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer"
+                    value={selectedCategory}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer font-medium"
                   >
-                    <option value="smartphones">Smartphones</option>
-                    <option value="laptops">Laptops</option>
-                    <option value="audio">Audio</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="fashion">Fashion</option>
-                    <option value="home">Home & Living</option>
-                    <option value="beauty">Beauty</option>
-                    <option value="sports">Sports</option>
+                    {TAXONOMY_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Brand Name</label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    placeholder={user?.companyName || 'Brand'}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:border-zinc-900"
-                  />
+                  <label className="block text-zinc-700 font-semibold mb-1">Subcategory</label>
+                  <select
+                    value={selectedSubcategory}
+                    onChange={(e) => {
+                      setSelectedSubcategory(e.target.value);
+                      setFormData({ ...formData, subcategory: e.target.value });
+                    }}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer font-medium"
+                  >
+                    {getSubcategoriesForCategory(selectedCategory).map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+
+              {/* Merchant Custom & Flexible Variant Attributes */}
+              <div className="p-4 bg-zinc-50/90 border border-zinc-200 rounded-2xl space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-900">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Product Variants & Specifications</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddCustomVariant()}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Custom Variant</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500">
+                  Add whatever variants or options you need for this product (e.g. Size, Color, Edition, Storage, Material). Separate multiple options with commas (e.g. <em>Red, Blue, Green</em> or <em>S, M, L</em>).
+                </p>
+
+                {/* Dynamic List of Variant Rows */}
+                <div className="space-y-3">
+                  {variantRows.map((row) => (
+                    <div key={row.id} className="bg-white border border-zinc-200 rounded-xl p-3 space-y-2.5 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1/3">
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                            Variant Name
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Size, Color, Edition"
+                            value={row.name}
+                            onChange={(e) => handleUpdateVariantRow(row.id, 'name', e.target.value)}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 font-bold focus:outline-none focus:border-zinc-900"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                            Options / Values (comma-separated)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Red, Blue, Green or 128GB, 256GB"
+                            value={row.value}
+                            onChange={(e) => handleUpdateVariantRow(row.id, 'value', e.target.value)}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariantRow(row.id)}
+                          className="p-2 mt-5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer shrink-0"
+                          title="Remove variant"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {variantRows.length === 0 && (
+                    <div className="text-center py-4 bg-white border border-dashed border-zinc-200 rounded-xl">
+                      <p className="text-xs text-zinc-500">No variants added yet.</p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddCustomVariant()}
+                        className="mt-2 text-xs text-indigo-600 font-bold hover:underline cursor-pointer"
+                      >
+                        + Add a variant or specification
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-700 font-semibold mb-1">Brand Name</label>
+                <input
+                  type="text"
+                  value={formData.brand}
+                  placeholder={user?.companyName || 'Brand'}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                />
               </div>
 
               <div>

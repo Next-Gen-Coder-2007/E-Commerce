@@ -4,6 +4,7 @@ import {
   getProducts,
   getProductById,
   getCategories,
+  getTaxonomy,
   createProduct,
   getMyCompanyProducts,
   updateProduct,
@@ -56,6 +57,7 @@ const handleImageUpload = (req, res, next) => {
 };
 
 router.get('/categories', getCategories);
+router.get('/taxonomy', getTaxonomy);
 router.get('/storefront/:companyIdentifier', getCompanyStorefront);
 router.get('/company/storefront-settings', requireCompany, getStorefrontSettings);
 router.put('/company/storefront-settings', requireCompany, updateStorefrontSettings);

@@ -94,6 +94,33 @@ export const getCategoriesApi = async (): Promise<{
   return response.data;
 };
 
+export const getTaxonomyApi = async (): Promise<{
+  success: boolean;
+  count: number;
+  categories: Array<{
+    id: string;
+    name: string;
+    subcategories: string[];
+    attributes: string[];
+    desc: string;
+    productCount?: number;
+  }>;
+}> => {
+  const response = await api.get<{
+    success: boolean;
+    count: number;
+    categories: Array<{
+      id: string;
+      name: string;
+      subcategories: string[];
+      attributes: string[];
+      desc: string;
+      productCount?: number;
+    }>;
+  }>('/products/taxonomy');
+  return response.data;
+};
+
 export const createProductApi = async (
   data: CreateProductInput
 ): Promise<{ success: boolean; message: string; product: Product }> => {
