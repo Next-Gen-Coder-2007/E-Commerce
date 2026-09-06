@@ -199,7 +199,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({ onSelect
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <img
-                            src={p.image || 'https://via.placeholder.com/40'}
+                            src={p.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&q=80'}
                             alt={p.title}
                             className="w-10 h-10 rounded-xl object-cover bg-zinc-100 shrink-0 border border-zinc-200"
                           />

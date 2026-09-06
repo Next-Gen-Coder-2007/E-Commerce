@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Plus, Minus, Trash2, Check } from 'lucide-react';
+import { Heart, Plus, Minus, Trash2, Check, Star, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
+import { getTaxonomyCategory } from '../config/taxonomy';
 
 interface ProductCardProps {
   product: Product;
@@ -20,58 +21,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const { items, addToCart, removeFromCart, updateQuantity } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
-  const [selectedColor, setSelectedColor] = useState<number>(0);
-  const [selectedSize, setSelectedSize] = useState<string>('M');
   const [adding, setAdding] = useState(false);
 
   const cartItem = items.find((i) => i.productId === product._id);
   const inWish = isInWishlist(product._id);
 
-  // Compute clean subtitle
-  const getSubtitle = () => {
-    const editionSpec = product.specifications?.find(
-      (s) => s.key.toLowerCase().includes('edition') || s.key.toLowerCase().includes('version') || s.key.toLowerCase().includes('storage')
-    );
-    if (editionSpec) return editionSpec.value;
+  // Compute canonical department & subcategory name
+  const taxCat = getTaxonomyCategory(product.category);
+  const categoryLabel = taxCat ? taxCat.name : product.category;
+  const brandOrMerchant = product.brand || product.companyName || categoryLabel;
 
-    const colorSpec = product.specifications?.find((s) => s.key.toLowerCase().includes('color'));
-    if (colorSpec) return colorSpec.value;
-
-    if (product.brand && product.companyName && product.brand !== product.companyName) {
-      return product.brand;
-    }
-
-    if (product.category === 'fashion') {
-      return 'Premium Cotton & Tailored Fit';
-    }
-    if (product.category === 'electronics') {
-      return 'High-Fidelity Audio & Tech';
-    }
-    if (product.category === 'home') {
-      return 'Minimalist Living & Studio Design';
-    }
-
-    return product.companyName || 'Verified Authentic';
-  };
-
-  const isFashion =
-    product.category?.toLowerCase() === 'fashion' ||
-    product.category?.toLowerCase() === 'clothing' ||
-    product.category?.toLowerCase() === 'apparel';
-
-  const isAudioOrElectronics =
-    product.category?.toLowerCase() === 'electronics' ||
-    product.category?.toLowerCase() === 'tech' ||
-    product.category?.toLowerCase() === 'audio';
-
-  // Curated minimalist color swatches for monochrome aesthetic matching reference
-  const colorSwatches = isFashion
-    ? ['#ffffff', '#0a0a0a', '#737373']
-    : isAudioOrElectronics
-    ? ['#ffffff', '#171717']
-    : null;
-
-  const sizes = isFashion ? ['S', 'M', 'L', 'XL'] : null;
+  const hasDiscount = Boolean(
+    product.originalPrice && product.originalPrice > product.price
+  );
+  const discountPercent = hasDiscount
+    ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
+    : 0;
 
   const handleCardClick = () => {
     navigate(`/product/${product._id}`);
@@ -104,166 +69,166 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative bg-white rounded-3xl p-6 md:p-7 flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] border border-neutral-100 ${className}`}
-      style={{ transitionDelay: `${(index % 4) * 50}ms` }}
+      className={`group relative bg-white rounded-2xl border border-zinc-200/80 hover:border-zinc-300/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between p-3 sm:p-4 cursor-pointer ${className}`}
+      style={{ transitionDelay: `${(index % 4) * 40}ms` }}
     >
-      {/* Discreet Wishlist Action */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleWishlist(product);
-        }}
-        className={`absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
-          inWish
-            ? 'bg-neutral-900 text-white shadow-xs scale-105'
-            : 'text-neutral-300 hover:text-neutral-900 hover:bg-neutral-100'
-        }`}
-        title={inWish ? 'Remove from wishlist' : 'Save to wishlist'}
-      >
-        <Heart className={`w-4 h-4 ${inWish ? 'fill-white text-white' : ''}`} />
-      </button>
+      <div>
+        {/* Top Product Image Showcase */}
+        <div className="relative w-full aspect-square bg-zinc-50/80 rounded-xl overflow-hidden p-4 flex items-center justify-center border border-zinc-100">
+          <img
+            src={product.image}
+            alt={product.title}
+            className="max-h-full max-w-full object-contain group-hover:scale-106 transition-transform duration-500 drop-shadow-2xs select-none"
+            loading="lazy"
+          />
 
-      {/* Top Header: Title & Clean Subtitle */}
-      <div className="w-full px-2">
-        <h3 className="font-bold text-slate-900 text-base md:text-lg tracking-tight line-clamp-1 group-hover:text-slate-700 transition-colors">
-          {product.title}
-        </h3>
-        <p className="text-xs md:text-sm font-normal text-slate-400 mt-1 tracking-normal line-clamp-1">
-          {getSubtitle()}
-        </p>
-      </div>
-
-      {/* Center Section: Focused Product Image with generous whitespace */}
-      <div className="w-full h-44 sm:h-48 md:h-52 my-5 flex items-center justify-center relative overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.title}
-          className="max-h-full max-w-[85%] object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-sm select-none"
-          loading="lazy"
-        />
-      </div>
-
-      {/* Bottom Section: Variants / Feature indicator & Price */}
-      <div className="w-full flex flex-col items-center">
-        {/* Variant / Tag Row (Color swatches, sizes, or Free shipping) */}
-        <div className="min-h-[38px] flex flex-col items-center justify-center gap-1.5 mb-2">
-          {/* Color Dots */}
-          {colorSwatches ? (
-            <div className="flex items-center justify-center gap-2">
-              {colorSwatches.map((color, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedColor(idx);
-                  }}
-                  className={`w-3.5 h-3.5 rounded-full border transition-all ${
-                    selectedColor === idx
-                      ? 'scale-110 ring-2 ring-slate-400 ring-offset-1 border-slate-300'
-                      : 'border-slate-300 hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color }}
-                  aria-label={`Color option ${idx + 1}`}
-                />
-              ))}
-            </div>
-          ) : null}
-
-          {/* Size Pills (if fashion) */}
-          {sizes ? (
-            <div className="flex items-center justify-center gap-2 pt-1 text-[11px] text-slate-400 font-medium">
-              {sizes.map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedSize(sz);
-                  }}
-                  className={`w-5 h-5 flex items-center justify-center rounded-full transition-all ${
-                    selectedSize === sz
-                      ? 'border border-slate-300 font-bold text-slate-900 shadow-2xs'
-                      : 'hover:text-slate-700'
-                  }`}
-                >
-                  {sz}
-                </button>
-              ))}
-            </div>
-          ) : !colorSwatches || isAudioOrElectronics ? (
-            /* Free Shipping Indicator (pure neutral minimalism) */
-            <span className="text-[12px] font-medium text-neutral-500 tracking-normal">
-              Free shipping
-            </span>
-          ) : null}
-        </div>
-
-        {/* Price & Smooth Quick Cart Control */}
-        <div className="w-full flex items-center justify-center relative pt-1">
-          {/* Default Price View */}
-          <div className="flex items-baseline justify-center gap-1.5">
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs text-neutral-400 line-through font-normal">
-                ${product.originalPrice.toFixed(0)}
+          {/* Badges on Top-Left: Discount or Subcategory */}
+          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start z-10">
+            {hasDiscount && discountPercent > 0 && (
+              <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-extrabold tracking-tight shadow-2xs">
+                -{discountPercent}%
               </span>
             )}
-            <span className="text-xl md:text-2xl font-bold text-neutral-900 tracking-tight">
-              ${product.price % 1 === 0 ? product.price.toFixed(0) : product.price.toFixed(2)}
-            </span>
+            {product.subcategory ? (
+              <span className="px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-zinc-700 text-[10px] font-semibold border border-zinc-200/80 shadow-2xs">
+                {product.subcategory}
+              </span>
+            ) : null}
           </div>
 
-          {/* Subtle Quick Cart Add / Counter on Hover or Active */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute right-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
+          {/* Wishlist Button on Top-Right */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlist(product);
+            }}
+            className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+              inWish
+                ? 'bg-zinc-950 text-white shadow-xs scale-105'
+                : 'bg-white/90 backdrop-blur-xs text-zinc-400 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-2xs'
+            }`}
+            title={inWish ? 'Remove from wishlist' : 'Save to wishlist'}
           >
-            {cartItem ? (
-              <div className="inline-flex items-center rounded-full bg-neutral-900 text-white p-0.5 shadow-sm">
-                <button
-                  type="button"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (cartItem.quantity <= 1) {
-                      await removeFromCart(product._id);
-                    } else {
-                      await updateQuantity(product._id, cartItem.quantity - 1);
-                    }
-                  }}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-                >
-                  {cartItem.quantity === 1 ? (
-                    <Trash2 className="w-2.5 h-2.5 text-neutral-300" />
-                  ) : (
-                    <Minus className="w-2.5 h-2.5" />
-                  )}
-                </button>
-                <span className="px-1.5 text-[11px] font-bold text-white min-w-[16px] text-center">
-                  {cartItem.quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    await updateQuantity(product._id, cartItem.quantity + 1);
-                  }}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                >
-                  <Plus className="w-2.5 h-2.5" />
-                </button>
-              </div>
+            <Heart className={`w-3.5 h-3.5 ${inWish ? 'fill-white text-white' : ''}`} />
+          </button>
+        </div>
+
+        {/* Product Information Body */}
+        <div className="pt-3.5 space-y-1.5 text-left">
+          {/* Brand & Stock Row */}
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-semibold text-zinc-400 uppercase tracking-wider truncate max-w-[140px]">
+              {brandOrMerchant}
+            </span>
+            {product.stock <= 5 && product.stock > 0 ? (
+              <span className="text-amber-600 font-bold text-[10px] bg-amber-50 px-1.5 py-0.5 rounded">
+                Only {product.stock} left
+              </span>
+            ) : product.stock > 0 ? (
+              <span className="text-emerald-600 font-semibold text-[10px]">In Stock</span>
             ) : (
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="w-7 h-7 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer"
-                title="Add to cart"
-              >
-                {adding ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-              </button>
+              <span className="text-rose-600 font-semibold text-[10px]">Out of Stock</span>
             )}
           </div>
+
+          {/* Title */}
+          <h3 className="font-bold text-zinc-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+            {product.title}
+          </h3>
+
+          {/* Ratings or Attribute Options Tag */}
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 pt-0.5">
+            {(product.numReviews || 0) > 0 ? (
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-zinc-900 text-[11px]">{product.rating}</span>
+                <span className="text-zinc-400 text-[10px]">({product.numReviews})</span>
+              </div>
+            ) : product.attributes && Object.keys(product.attributes).length > 0 ? (
+              <span className="text-[10px] text-zinc-500 font-medium bg-zinc-100 px-2 py-0.5 rounded-md">
+                {Object.keys(product.attributes).slice(0, 2).join(' • ')} Options
+              </span>
+            ) : (
+              <span className="text-[10px] text-zinc-400 font-medium">Verified Merchant</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Price & Cart Action Footer */}
+      <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-base sm:text-lg font-black text-zinc-950 font-sans tracking-tight">
+            ${product.price % 1 === 0 ? product.price.toFixed(0) : product.price.toFixed(2)}
+          </span>
+          {hasDiscount && (
+            <span className="text-xs text-zinc-400 line-through font-normal">
+              ${product.originalPrice!.toFixed(0)}
+            </span>
+          )}
+        </div>
+
+        {/* Cart Action */}
+        <div onClick={(e) => e.stopPropagation()}>
+          {cartItem ? (
+            <div className="inline-flex items-center rounded-xl bg-zinc-950 text-white p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (cartItem.quantity <= 1) {
+                    await removeFromCart(product._id);
+                  } else {
+                    await updateQuantity(product._id, cartItem.quantity - 1);
+                  }
+                }}
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Decrease"
+              >
+                {cartItem.quantity === 1 ? (
+                  <Trash2 className="w-3 h-3 text-zinc-300" />
+                ) : (
+                  <Minus className="w-3 h-3" />
+                )}
+              </button>
+              <span className="px-1.5 text-xs font-bold text-white min-w-[18px] text-center font-mono">
+                {cartItem.quantity}
+              </span>
+              <button
+                type="button"
+                disabled={cartItem.quantity >= product.stock}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await updateQuantity(product._id, cartItem.quantity + 1);
+                }}
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors cursor-pointer"
+                title="Increase"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={product.stock <= 0}
+              onClick={handleAddToCart}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition shadow-2xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Add to cart"
+            >
+              {adding ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Added</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Add</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -104,7 +104,7 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
           {/* Main Product Card */}
           <div className="flex items-center gap-3 p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl max-w-xs">
             <img
-              src={bundleData.mainProduct.image || 'https://via.placeholder.com/80'}
+              src={bundleData.mainProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'}
               alt={bundleData.mainProduct.title}
               className="w-14 h-14 rounded-xl object-cover bg-zinc-100"
             />
@@ -137,7 +137,7 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
                   }`}
                 >
                   <img
-                    src={item.image || 'https://via.placeholder.com/80'}
+                    src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'}
                     alt={item.title}
                     className="w-14 h-14 rounded-xl object-cover bg-zinc-100"
                   />

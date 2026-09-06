@@ -71,6 +71,7 @@ import type { Product, CompanyStats } from '../../types/product';
 import type { Order, CompanyOrderStats, OrderStatus } from '../../types/order';
 import type { Review, CompanyReviewSummary } from '../../types/review';
 import type { Coupon, CompanyCouponMetrics, CreateCouponInput } from '../../types/coupon';
+import { TAXONOMY_CATEGORIES } from '../../config/taxonomy';
 
 export const BusinessHomePage: React.FC = () => {
   const { user, loading: authLoading, logout, updateBusinessDetails } = useAuth();
@@ -821,64 +822,6 @@ export const BusinessHomePage: React.FC = () => {
       ...prev,
       specifications: prev.specifications.filter((_, i) => i !== index),
     }));
-  };
-
-  const handleApplySpecPreset = (presetType: 'electronics' | 'fashion' | 'home' | 'beauty' | 'sports') => {
-    const presets: Record<string, Array<{ key: string; value: string }>> = {
-      electronics: [
-        { key: 'Brand / Manufacturer', value: user?.companyName || '' },
-        { key: 'Model / Series', value: '' },
-        { key: 'Processor / Chipset', value: '' },
-        { key: 'Memory & Storage', value: '' },
-        { key: 'Display Specs', value: '' },
-        { key: 'Battery & Power', value: '' },
-        { key: 'Connectivity', value: 'Bluetooth 5.3, Wi-Fi 6E, Type-C' },
-        { key: 'Dimensions & Weight', value: '' },
-        { key: 'Warranty & Support', value: '1 Year Manufacturer Warranty' },
-      ],
-      fashion: [
-        { key: 'Brand', value: user?.companyName || '' },
-        { key: 'Material Composition', value: '100% Premium Organic Cotton' },
-        { key: 'Fit / Cut', value: 'Regular Fit' },
-        { key: 'Care Instructions', value: 'Machine Wash Cold, Tumble Dry Low' },
-        { key: 'Origin', value: 'Imported' },
-        { key: 'Style Tag', value: 'Casual & Daily Wear' },
-      ],
-      home: [
-        { key: 'Brand', value: user?.companyName || '' },
-        { key: 'Material', value: 'Solid Wood / Stainless Steel' },
-        { key: 'Dimensions (L x W x H)', value: '' },
-        { key: 'Item Weight', value: '' },
-        { key: 'Assembly Required', value: 'No - Pre-assembled' },
-        { key: 'Warranty', value: '2-Year Limited Structural Warranty' },
-      ],
-      beauty: [
-        { key: 'Brand', value: user?.companyName || '' },
-        { key: 'Item Form', value: 'Serum / Cream' },
-        { key: 'Skin Type', value: 'All Skin Types (Dermatologist Tested)' },
-        { key: 'Key Ingredients', value: 'Hyaluronic Acid, Vitamin C, Niacinamide' },
-        { key: 'Net Volume / Weight', value: '50 ml / 1.7 fl oz' },
-        { key: 'Cruelty Free', value: 'Yes - 100% Cruelty Free & Vegan' },
-      ],
-      sports: [
-        { key: 'Brand', value: user?.companyName || '' },
-        { key: 'Activity / Sport', value: 'Gym, Running, Training' },
-        { key: 'Material', value: 'High-Tensile Reinforced Alloy' },
-        { key: 'Max Weight Capacity', value: '300 lbs / 136 kg' },
-        { key: 'Water Resistance', value: 'IPX7 Sweat & Water Resistant' },
-        { key: 'Warranty', value: 'Lifetime Frame Warranty' },
-      ],
-    };
-
-    const chosen = presets[presetType] || presets.electronics;
-    setFormData((prev) => {
-      const existingKeys = new Set(prev.specifications.map((s) => s.key.toLowerCase().trim()));
-      const newAdditions = chosen.filter((c) => !existingKeys.has(c.key.toLowerCase().trim()));
-      return {
-        ...prev,
-        specifications: [...prev.specifications.filter((s) => s.key.trim() !== ''), ...newAdditions],
-      };
-    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -2359,12 +2302,11 @@ export const BusinessHomePage: React.FC = () => {
                       className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 capitalize"
                     >
                       <option value="all">All Products in Store</option>
-                      <option value="electronics">Electronics</option>
-                      <option value="fashion">Fashion & Apparel</option>
-                      <option value="home">Home & Living</option>
-                      <option value="beauty">Beauty & Skincare</option>
-                      <option value="sports">Sports & Outdoors</option>
-                      <option value="books">Books & Media</option>
+                      {TAXONOMY_CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -3907,12 +3849,11 @@ export const BusinessHomePage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-900 capitalize cursor-pointer"
                   >
-                    <option value="electronics">Electronics</option>
-                    <option value="fashion">Fashion & Apparel</option>
-                    <option value="home">Home & Living</option>
-                    <option value="beauty">Beauty & Skincare</option>
-                    <option value="sports">Sports & Outdoors</option>
-                    <option value="books">Books & Media</option>
+                    {TAXONOMY_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -4159,39 +4100,18 @@ export const BusinessHomePage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Quick Templates */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                    Quick Industry Templates:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { id: 'electronics', label: 'Electronics' },
-                      { id: 'fashion', label: 'Fashion' },
-                      { id: 'home', label: 'Home & Living' },
-                      { id: 'beauty', label: 'Beauty' },
-                      { id: 'sports', label: 'Sports' },
-                    ].map((tpl) => (
-                      <button
-                        key={tpl.id}
-                        type="button"
-                        onClick={() => handleApplySpecPreset(tpl.id as any)}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 transition-colors cursor-pointer"
-                      >
-                        {tpl.label}
-                      </button>
-                    ))}
-                    {formData.specifications.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, specifications: [] })}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
-                      >
-                        Clear All Specs
-                      </button>
-                    )}
+                {/* Clear All Specs action if rows exist */}
+                {formData.specifications.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, specifications: [] })}
+                      className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                    >
+                      Clear All Specs
+                    </button>
                   </div>
-                </div>
+                )}
 
                 {/* Key-Value Pair Rows */}
                 {formData.specifications.length > 0 ? (

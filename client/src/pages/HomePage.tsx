@@ -65,38 +65,7 @@ const BANNERS = [
   },
 ];
 
-const HOME_CATEGORY_SECTIONS = [
-  {
-    id: 'electronics',
-    title: 'Audio & Premium Computing',
-    subtitle: 'High-fidelity acoustic systems, precision mice, and 4K displays',
-  },
-  {
-    id: 'fashion',
-    title: 'Contemporary Essentials',
-    subtitle: 'Organic cotton garments, breathable knitwear, and leather goods',
-  },
-  {
-    id: 'home-furniture',
-    title: 'Sanctuary & Modern Living',
-    subtitle: 'Handmade ceramic serveware, ambient luminaires, and linen textiles',
-  },
-  {
-    id: 'beauty-personal-care',
-    title: 'Clean Beauty & Skincare',
-    subtitle: 'Pure botanicals, restorative formulas, and organic self-care essentials',
-  },
-  {
-    id: 'sports-fitness',
-    title: 'Sports & Active Lifestyle',
-    subtitle: 'Athletic wear, performance training gear, and fitness accessories',
-  },
-  {
-    id: 'books-stationery',
-    title: 'Books & Stationery',
-    subtitle: 'Bestselling literature, archival journals, and fine stationery',
-  },
-];
+
 
 export const HomePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -445,28 +414,28 @@ export const HomePage: React.FC = () => {
 
             {/* Row 2: Three Cards (3 cols | 6 cols | 3 cols in 12-col grid) */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6 items-stretch">
-              {/* Row 2 Card 1: Home & Living (Left ~ 25%) */}
+              {/* Row 2 Card 1: Home & Furniture (Left ~ 25%) */}
               <div
-                onClick={() => handleCategorySelect('home')}
+                onClick={() => handleCategorySelect('home-furniture')}
                 className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
                 style={{ transitionDelay: '100ms' }}
               >
                 <img
                   src="/banners/home_banner.jpg"
-                  alt="Home & Living"
+                  alt="Home & Furniture"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-70"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
                 <div className="relative z-10 space-y-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/15">
-                    <span>SMART LIVING</span>
+                    <span>LIVING SPACE</span>
                   </span>
                   <h4 className="text-lg font-bold text-white leading-snug">
-                    Minimalist Home & Ambient Decor
+                    Home & Furniture
                   </h4>
-                  <p className="text-[11px] text-zinc-300 font-medium">From $29.99</p>
+                  <p className="text-[11px] text-zinc-300 font-medium">Modular Comfort</p>
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-zinc-300 transition-colors pt-1">
-                    <span>Shop Home</span>
+                    <span>Shop Home & Furniture</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
@@ -514,28 +483,28 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Row 2 Card 3: Beauty & Skincare (Right ~ 25%) */}
+              {/* Row 2 Card 3: Beauty & Personal Care (Right ~ 25%) */}
               <div
-                onClick={() => handleCategorySelect('beauty')}
+                onClick={() => handleCategorySelect('beauty-personal-care')}
                 className="reveal-on-scroll md:col-span-12 lg:col-span-3 group relative min-h-[260px] rounded-3xl overflow-hidden cursor-pointer bg-zinc-950 border border-zinc-200/80 shadow-2xs hover:shadow-xl transition-all duration-500 flex flex-col justify-end p-6"
                 style={{ transitionDelay: '300ms' }}
               >
                 <img
                   src="/banners/beauty_banner.jpg"
-                  alt="Organic Beauty"
+                  alt="Beauty & Personal Care"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 opacity-70"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
                 <div className="relative z-10 space-y-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 backdrop-blur-md text-zinc-200 border border-white/15">
-                    <span>PURE BOTANICALS</span>
+                    <span>CARE & WELLNESS</span>
                   </span>
                   <h4 className="text-lg font-bold text-white leading-snug">
-                    Clean Beauty & Skincare
+                    Beauty & Personal Care
                   </h4>
-                  <p className="text-[11px] text-zinc-300 font-medium">100% Organic Extracts</p>
+                  <p className="text-[11px] text-zinc-300 font-medium">Verified Dermatology & Care</p>
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white group-hover:text-zinc-300 transition-colors pt-1">
-                    <span>Discover Beauty</span>
+                    <span>Discover Beauty & Care</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
@@ -777,40 +746,79 @@ export const HomePage: React.FC = () => {
               </div>
             ) : (
               <>
-                {HOME_CATEGORY_SECTIONS.map((cat) => {
-                  const catProducts = products
-                    .filter((p) => p.category?.toLowerCase() === cat.id)
-                    .slice(0, 4);
+                {(() => {
+                  const activeTaxonomyShowcases = TAXONOMY_CATEGORIES.map((taxCat) => {
+                    const catProducts = products.filter(
+                      (p) =>
+                        p.category?.toLowerCase() === taxCat.id.toLowerCase() ||
+                        p.category?.toLowerCase() === taxCat.name.toLowerCase()
+                    );
+                    return {
+                      id: taxCat.id,
+                      name: taxCat.name,
+                      subtitle: taxCat.desc,
+                      icon: taxCat.icon,
+                      products: catProducts,
+                    };
+                  }).filter((item) => item.products.length > 0);
 
-                  if (catProducts.length === 0) return null;
-
-                  return (
-                    <section key={cat.id} className="space-y-4">
-                      <div className="reveal-on-scroll flex items-end justify-between border-b border-zinc-200/80 pb-3">
-                        <div>
-                          <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
-                            {cat.title}
-                          </h2>
-                          <p className="text-xs text-zinc-500">
-                            {cat.subtitle}
-                          </p>
+                  if (activeTaxonomyShowcases.length === 0 && products.length > 0) {
+                    return (
+                      <section className="space-y-4">
+                        <div className="flex items-end justify-between border-b border-zinc-200/80 pb-3">
+                          <div>
+                            <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                              Curated Marketplace Catalog
+                            </h2>
+                            <p className="text-xs text-zinc-500">
+                              Explore our verified merchant selections
+                            </p>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCategorySelect(cat.id)}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 hover:text-zinc-600 transition-colors cursor-pointer group"
-                        >
-                          <span>See more in {cat.title.split(' ')[0]}</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                      </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-2">
+                          {products.slice(0, 8).map((product, idx) => renderProductCard(product, idx))}
+                        </div>
+                      </section>
+                    );
+                  }
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
-                        {catProducts.map((product, idx) => renderProductCard(product, idx))}
-                      </div>
-                    </section>
-                  );
-                })}
+                  return activeTaxonomyShowcases.map((cat) => {
+                    const IconComponent = cat.icon;
+                    return (
+                      <section key={cat.id} className="space-y-4">
+                        <div className="reveal-on-scroll flex items-end justify-between border-b border-zinc-200/80 pb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              {IconComponent && (
+                                <span className="p-1.5 rounded-lg bg-zinc-100 text-zinc-800">
+                                  <IconComponent className="w-4 h-4" />
+                                </span>
+                              )}
+                              <h2 className="text-xl font-extrabold text-zinc-950 tracking-tight">
+                                {cat.name}
+                              </h2>
+                            </div>
+                            <p className="text-xs text-zinc-500 mt-1">
+                              {cat.subtitle}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCategorySelect(cat.id)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 hover:text-zinc-600 transition-colors cursor-pointer group shrink-0"
+                          >
+                            <span>Explore all {cat.name}</span>
+                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-2">
+                          {cat.products.slice(0, 4).map((product, idx) => renderProductCard(product, idx))}
+                        </div>
+                      </section>
+                    );
+                  });
+                })()}
 
                 {/* If total products is 0 or all categories are empty */}
                 {products.length === 0 && (

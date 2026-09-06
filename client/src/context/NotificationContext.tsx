@@ -32,7 +32,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-1',
     title: 'Order #NOV-9281 Confirmed',
-    message: 'Your minimalist essentials have been verified and queued for same-day dispatch.',
+    message: 'Your order items have been verified and queued for same-day dispatch.',
     type: 'order',
     timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 mins ago
     read: false,
@@ -41,7 +41,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-2',
     title: 'Price Drop Alert (-20%)',
-    message: 'Oh My Bod! Sunscreen Lotion dropped to $16.00 in the Clean Beauty collection.',
+    message: 'An item on your wishlist is now on sale with an exclusive promotional discount.',
     type: 'price_drop',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
     read: false,

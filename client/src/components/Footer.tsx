@@ -96,16 +96,31 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-bold text-zinc-950 text-xs uppercase tracking-wider mb-3">Categories</h5>
             <ul className="space-y-2">
-              {['Smartphones', 'Laptops', 'Audio', 'Electronics', 'Fashion', 'Home & Living'].map((cat) => (
-                <li key={cat}>
+              {[
+                { name: 'Mobiles', id: 'mobiles' },
+                { name: 'Laptops & Computers', id: 'laptops-computers' },
+                { name: 'Electronics', id: 'electronics' },
+                { name: 'Fashion', id: 'fashion' },
+                { name: 'Home & Furniture', id: 'home-furniture' },
+                { name: 'Beauty & Personal Care', id: 'beauty-personal-care' },
+              ].map((cat) => (
+                <li key={cat.id}>
                   <Link
-                    to={`/?category=${encodeURIComponent(cat.toLowerCase().replace(' & living', ''))}`}
+                    to={`/?category=${encodeURIComponent(cat.id)}`}
                     className="hover:text-zinc-950 transition"
                   >
-                    {cat}
+                    {cat.name}
                   </Link>
                 </li>
               ))}
+              <li className="pt-1">
+                <Link
+                  to="/categories"
+                  className="font-bold text-zinc-900 hover:text-indigo-600 transition inline-flex items-center gap-1"
+                >
+                  <span>All 24 Departments →</span>
+                </Link>
+              </li>
             </ul>
           </div>
 

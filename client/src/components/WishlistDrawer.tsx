@@ -98,7 +98,7 @@ export const WishlistDrawer: React.FC = () => {
                     {/* Thumbnail */}
                     <div className="w-18 h-18 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center">
                       <img
-                        src={item.image || 'https://via.placeholder.com/80'}
+                        src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                       />

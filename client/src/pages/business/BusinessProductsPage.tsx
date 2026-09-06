@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
 import {
   TAXONOMY_CATEGORIES,
-  getTaxonomyCategory,
   getSubcategoriesForCategory,
 } from '../../config/taxonomy';
 
@@ -178,7 +177,7 @@ export const BusinessProductsPage: React.FC = () => {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src={p.image || 'https://via.placeholder.com/40'}
+                        src={p.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&q=80'}
                         alt={p.title}
                         className="w-10 h-10 rounded-xl object-cover bg-zinc-100 border border-zinc-200 shrink-0"
                       />

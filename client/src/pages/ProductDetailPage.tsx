@@ -13,8 +13,8 @@ import {
   Minus,
   Info,
   PenSquare,
-  Award,
-  Leaf,
+  Truck,
+  CheckCircle2,
   ChevronUp,
   ChevronDown,
 } from 'lucide-react';
@@ -29,7 +29,6 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
 import type { Review, ReviewSummary } from '../types/review';
-import { getTaxonomyCategory } from '../config/taxonomy';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -301,22 +300,6 @@ export const ProductDetailPage: React.FC = () => {
       : [product.image];
   const activePhoto =
     productPhotos[selectedImageIndex] || productPhotos[0] || product.image;
-
-  // Determine variant options matching reference
-  const isBeauty =
-    product.category?.toLowerCase() === 'beauty' ||
-    product.category?.toLowerCase() === 'skincare' ||
-    product.category?.toLowerCase() === 'cosmetics';
-  const isFashion =
-    product.category?.toLowerCase() === 'fashion' ||
-    product.category?.toLowerCase() === 'clothing' ||
-    product.category?.toLowerCase() === 'apparel';
-
-  const variantOptions = isBeauty
-    ? ['50ml', '100ml']
-    : isFashion
-    ? ['S', 'M', 'L', 'XL']
-    : ['Standard', 'Pro Edition'];
 
   const inWish = isInWishlist(product._id);
 
@@ -655,30 +638,30 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 4 Minimal Trust Icons (Matching reference Oh My Bod! footer pillars) */}
+            {/* Universal Marketplace Assurances */}
             <div className="grid grid-cols-4 gap-2 py-6 border-t border-b border-neutral-100 my-4 text-center">
               <div className="space-y-1.5">
                 <ShieldCheck className="w-5 h-5 text-neutral-900 mx-auto" />
                 <span className="text-[11px] font-medium text-neutral-600 block leading-tight">
-                  Safe & Non-toxic
+                  Secure Checkout
                 </span>
               </div>
               <div className="space-y-1.5">
-                <Award className="w-5 h-5 text-neutral-900 mx-auto" />
+                <Truck className="w-5 h-5 text-neutral-900 mx-auto" />
                 <span className="text-[11px] font-medium text-neutral-600 block leading-tight">
-                  Dermatologist Tested
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                <Leaf className="w-5 h-5 text-neutral-900 mx-auto" />
-                <span className="text-[11px] font-medium text-neutral-600 block leading-tight">
-                  Biodegradable
+                  Fast Delivery
                 </span>
               </div>
               <div className="space-y-1.5">
                 <RotateCcw className="w-5 h-5 text-neutral-900 mx-auto" />
                 <span className="text-[11px] font-medium text-neutral-600 block leading-tight">
-                  Vegan & Cruelty-Free
+                  30-Day Returns
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <CheckCircle2 className="w-5 h-5 text-neutral-900 mx-auto" />
+                <span className="text-[11px] font-medium text-neutral-600 block leading-tight">
+                  Authentic Guaranteed
                 </span>
               </div>
             </div>
@@ -961,7 +944,7 @@ export const ProductDetailPage: React.FC = () => {
                   Customers Also Viewed
                 </h3>
                 <p className="text-xs text-neutral-400 mt-1">
-                  Minimalist curation from {product.category}
+                  Explore more items in {product.category}
                 </p>
               </div>
               <Link
