@@ -1,48 +1,51 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Home, ArrowLeft } from 'lucide-react';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 export const NotFoundPage: React.FC = () => {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-20">
-      <div className="max-w-xl w-full text-center space-y-8 bg-white border border-zinc-200/80 rounded-2xl p-8 sm:p-12 shadow-xl shadow-zinc-950/5">
-        <div className="relative inline-block">
-          <div className="w-20 h-20 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-900">
-            <span className="text-3xl font-bold font-mono">404</span>
+    <div className="min-h-screen bg-[#E4E2DD] text-[#1E1E1E] flex items-center justify-center px-4 py-20">
+      <div className="max-w-2xl w-full text-center space-y-8 border-2 border-[#1E1E1E] bg-white p-8 sm:p-14 shadow-[12px_12px_0px_#1E1E1E]">
+        
+        {/* Oversized 404 Stamp */}
+        <div className="space-y-2">
+          <div className="inline-block px-4 py-1 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B] font-mono text-xs font-bold uppercase tracking-widest">
+            ERROR CODE // 404 NOT LOCATED
           </div>
+          <h1 className="text-7xl sm:text-9xl font-clash font-bold tracking-[-0.06em] text-[#1E1E1E] leading-none">
+            404
+          </h1>
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
-            Page Not Found
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 max-w-md mx-auto leading-relaxed">
-            The page or product you are looking for might have moved, been renamed, or is temporarily unavailable.
+        <div className="space-y-2 max-w-md mx-auto">
+          <h2 className="text-xl sm:text-2xl font-clash font-bold uppercase tracking-tight text-[#1E1E1E]">
+            Artifact Not Located in Archive
+          </h2>
+          <p className="text-xs sm:text-sm font-satoshi text-[#444444] leading-relaxed">
+            The requested trajectory, editorial collection, or specific catalogue entry has migrated, been expunged, or is temporarily sequestered.
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition"
-          >
-            <Home className="w-4 h-4" />
+        {/* Quick Action Button */}
+        <div className="pt-2 flex justify-center">
+          <BrutalistButton to="/" variant="primary">
+            <Home className="w-4 h-4 mr-2" />
             <span>Return to Storefront</span>
-          </Link>
+          </BrutalistButton>
         </div>
 
-        {/* Popular Category Shortcuts */}
-        <div className="pt-6 border-t border-zinc-100 text-left">
-          <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 text-center">
-            Or Explore Popular Collections
+        {/* Popular Department Shortcuts */}
+        <div className="pt-8 border-t-2 border-[#1E1E1E] text-left space-y-3">
+          <h4 className="text-[10px] font-mono font-bold text-[#444444] uppercase tracking-widest text-center">
+            RE-DIRECT TELEMETRY: CURATED DISCIPLINES
           </h4>
           <div className="flex flex-wrap items-center justify-center gap-2">
             {['Smartphones', 'Laptops', 'Audio', 'Electronics', 'Fashion', 'Home'].map((cat) => (
               <Link
                 key={cat}
                 to={`/?category=${encodeURIComponent(cat.toLowerCase())}`}
-                className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium transition"
+                className="px-3 py-1.5 border border-[#1E1E1E] bg-[#E4E2DD] hover:bg-[#1E1E1E] hover:text-[#E4E2DD] text-xs font-mono font-bold uppercase transition-all shadow-[2px_2px_0px_#1E1E1E]"
               >
                 {cat}
               </Link>
