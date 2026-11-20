@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/Input';
 import { Mail, Lock, AlertCircle, Eye, EyeOff, Building2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { BrutalistButton } from '../../components/BrutalistButton';
+import { RawAtmosphere } from '../../components/RawAtmosphere';
 
 export const BusinessLoginPage: React.FC = () => {
   const { login, error: authError, clearError } = useAuth();
@@ -28,7 +30,6 @@ export const BusinessLoginPage: React.FC = () => {
       ? (location.state as any).from.pathname
       : '/business';
 
-  // Automatically clear errors whenever navigating to or from this page
   useEffect(() => {
     setServerError(null);
     clearError();
@@ -38,7 +39,6 @@ export const BusinessLoginPage: React.FC = () => {
     };
   }, [location.pathname, clearError]);
 
-  // Auto-dismiss errors after 5 seconds
   useEffect(() => {
     if (serverError || authError) {
       const timer = setTimeout(() => {
@@ -90,57 +90,58 @@ export const BusinessLoginPage: React.FC = () => {
       await login({ ...formData, portal: 'business' });
       navigate(from, { replace: true });
     } catch (err: any) {
-      setServerError(err.message || 'Invalid email or password. Please check your credentials.');
+      setServerError(err.message || 'Invalid credentials for merchant portal.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-grid-pattern relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-50/50 to-zinc-50 pointer-events-none" />
+    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16 bg-[#E4E2DD] relative overflow-hidden">
+      <RawAtmosphere />
 
-      <div className="w-full max-w-md space-y-6 relative z-10">
+      <div className="w-full max-w-lg space-y-6 relative z-10">
         {/* Top Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 text-white shadow-md shadow-zinc-900/10 mb-2">
-            <Building2 className="w-5 h-5" />
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] text-[10px] font-mono font-bold uppercase tracking-widest">
+            <Building2 className="w-3.5 h-3.5 text-[#FF89A9]" />
+            <span>PORTAL ACCESS // SELLER CONSOLE</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
-            Merchant Business Portal
+          <h1 className="text-4xl sm:text-5xl font-clash font-bold tracking-tight text-[#1E1E1E] uppercase leading-none">
+            Merchant Authentication
           </h1>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
-            Manage your merchant store catalog, product inventory, and customer orders.
+          <p className="text-xs font-mono text-[#444444] uppercase tracking-wider">
+            Authorize seller ledger session to govern listings and fulfillments.
           </p>
         </div>
 
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] space-y-5">
+        <div className="border-2 border-[#1E1E1E] bg-white p-8 sm:p-10 shadow-[10px_10px_0px_#1E1E1E] space-y-6">
           {(serverError || authError) && (
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium animate-in fade-in duration-200">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{serverError || authError}</span>
+            <div className="flex items-start gap-3 p-3.5 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#1E1E1E] text-xs font-mono">
+              <AlertCircle className="w-4 h-4 text-[#DB4A2B] shrink-0 mt-0.5" />
+              <span>{serverError || authError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <Input
               id="business-login-email"
               label="Company Business Email"
               type="email"
               name="email"
               autoComplete="email"
-              placeholder="contact@company.com"
+              placeholder="seller@domain.com"
               value={formData.email}
               onChange={handleChange}
               error={formErrors.email}
-              icon={<Mail className="w-4 h-4 text-zinc-400" />}
+              icon={<Mail className="w-4 h-4 text-[#1E1E1E]" />}
               disabled={submitting}
             />
 
             <div className="relative">
               <Input
                 id="business-login-password"
-                label="Merchant Password"
+                label="Merchant Passkey"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 autoComplete="current-password"
@@ -148,67 +149,47 @@ export const BusinessLoginPage: React.FC = () => {
                 value={formData.password}
                 onChange={handleChange}
                 error={formErrors.password}
-                icon={<Lock className="w-4 h-4 text-zinc-400" />}
+                icon={<Lock className="w-4 h-4 text-[#1E1E1E]" />}
                 disabled={submitting}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[32px] text-zinc-400 hover:text-zinc-700 transition-colors focus:outline-none p-1 cursor-pointer"
-                tabIndex={-1}
+                className="absolute right-3.5 top-[38px] text-[#444444] hover:text-[#1E1E1E] transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
 
-            <button
-              id="business-login-submit-btn"
-              type="submit"
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-950 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs active:scale-[0.99] cursor-pointer"
-            >
-              {submitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>Sign In to Merchant Portal</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+            <div className="pt-2">
+              <BrutalistButton
+                type="submit"
+                disabled={submitting}
+                loading={submitting}
+                variant="primary"
+                className="w-full"
+              >
+                <span>Authorize Merchant Hub</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </BrutalistButton>
+            </div>
           </form>
 
-          <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500">
-            <div className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" />
-              <span>RBAC Protected</span>
-            </div>
+          {/* Quick Registration Link */}
+          <div className="pt-6 border-t-2 border-[#1E1E1E] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+            <span className="text-[#444444] uppercase">New Seller or Brand?</span>
             <Link
               to="/business/register"
-              className="font-semibold text-zinc-950 hover:underline"
+              className="font-bold text-[#DB4A2B] hover:text-[#1E1E1E] uppercase underline tracking-wider"
             >
-              Register New Merchant Entity
+              Register Entity →
             </Link>
           </div>
-        </div>
-
-        <div className="text-center space-y-1">
-          <p className="text-xs text-zinc-500">
-            New business vendor?{' '}
-            <Link
-              to="/business/register"
-              className="font-semibold text-zinc-950 hover:underline"
-            >
-              Apply for merchant account
-            </Link>
-          </p>
         </div>
       </div>
     </main>
   );
 };
+
+export default BusinessLoginPage;
