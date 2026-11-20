@@ -7,7 +7,9 @@ import {
   Store,
   PlusCircle,
   LayoutDashboard,
+  ShieldCheck,
 } from 'lucide-react';
+import { BrutalistButton } from '../BrutalistButton';
 
 export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
   onOpenAddModal,
@@ -25,72 +27,72 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
   const isRegisterPage = location.pathname === '/business/register';
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-zinc-200/80 shadow-2xs">
+    <header className="sticky top-0 z-50 w-full bg-[#E4E2DD] border-b-2 border-[#1E1E1E]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/business" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-zinc-950 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+          <Link to="/business" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 border-2 border-[#1E1E1E] bg-[#1E1E1E] flex items-center justify-center text-white shadow-[2px_2px_0px_#DB4A2B] group-hover:bg-[#DB4A2B] transition-colors">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-base font-extrabold text-zinc-950 tracking-tight">
-                  NovaCommerce
+              <div className="flex items-center gap-2 leading-none">
+                <span className="text-base sm:text-lg font-clash font-bold text-[#1E1E1E] tracking-tight uppercase">
+                  NOVA COMMERCE
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-900 text-white shadow-xs">
-                  Merchant Hub
+                <span className="text-[9px] uppercase font-mono font-bold tracking-widest px-1.5 py-0.5 bg-[#DB4A2B] text-white">
+                  SELLER HUB
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-400 font-medium tracking-tight">
-                Seller Central & Inventory Portal
+              <span className="text-[10px] font-mono text-[#444444] tracking-tight uppercase mt-0.5">
+                Merchant Operations Console
               </span>
             </div>
           </Link>
 
           {user && user.role === 'company' && user.companyName && (
-            <div className="hidden md:flex items-center gap-1.5 pl-3 border-l border-zinc-200 text-xs">
-              <Store className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-zinc-700 font-bold truncate max-w-[150px]">
+            <div className="hidden md:flex items-center gap-2 pl-4 border-l-2 border-[#1E1E1E] text-xs font-mono">
+              <Store className="w-3.5 h-3.5 text-[#DB4A2B]" />
+              <span className="text-[#1E1E1E] font-bold truncate max-w-[150px] uppercase">
                 {user.companyName}
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span className="w-2 h-2 bg-[#DB4A2B]"></span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-3">
           {loading ? (
-            <div className="h-8 w-24 bg-zinc-100 animate-pulse rounded-lg" />
+            <div className="h-8 w-24 bg-white/60 border border-[#1E1E1E] animate-pulse" />
           ) : user && (user.role === 'company' || user.role === 'admin') ? (
             <div className="flex items-center gap-3">
               {onOpenAddModal && (
                 <button
                   type="button"
                   onClick={onOpenAddModal}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-zinc-950 hover:bg-zinc-800 transition-transform active:scale-[0.98] shadow-xs cursor-pointer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 border-2 border-[#1E1E1E] bg-[#DB4A2B] hover:bg-[#1E1E1E] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-[2px_2px_0px_#1E1E1E] cursor-pointer"
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Add Product</span>
+                  <span>List Product</span>
                 </button>
               )}
 
               <Link
                 to="/business"
-                className="hidden lg:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100 border border-zinc-200/80 transition-colors"
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#1E1E1E] bg-white hover:bg-[#1E1E1E] hover:text-white text-xs font-mono font-bold uppercase text-[#1E1E1E] transition-colors shadow-[2px_2px_0px_#1E1E1E]"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Dashboard</span>
+                <span>Console</span>
               </Link>
 
-              <div className="flex items-center gap-2 p-1 sm:pr-3 sm:pl-1 rounded-xl bg-zinc-50 border border-zinc-200/80">
-                <div className="w-7 h-7 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
-                  <Building2 className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2 px-2.5 py-1 border-2 border-[#1E1E1E] bg-white">
+                <div className="w-6 h-6 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center font-clash font-bold text-xs uppercase">
+                  {user.name.charAt(0)}
                 </div>
                 <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-xs font-semibold text-zinc-900 leading-tight truncate max-w-[100px]">
+                  <span className="text-xs font-clash font-bold text-[#1E1E1E] leading-tight truncate max-w-[100px] uppercase">
                     {user.name}
                   </span>
-                  <span className="text-[9px] font-semibold text-zinc-400">
+                  <span className="text-[9px] font-mono font-bold text-[#DB4A2B] uppercase">
                     MERCHANT
                   </span>
                 </div>
@@ -99,35 +101,35 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:text-rose-600 hover:bg-zinc-100 border border-zinc-200 rounded-lg transition-colors cursor-pointer"
-                title="Merchant Sign Out"
+                className="p-2 border-2 border-[#1E1E1E] bg-white hover:bg-[#DB4A2B] hover:text-white text-[#1E1E1E] transition-colors cursor-pointer"
+                title="Sign out of Merchant Hub"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sign Out</span>
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 font-mono text-xs font-bold uppercase">
               <Link
-                to="/business/login"
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                  isLoginPage
-                    ? 'bg-zinc-100 text-zinc-950 font-bold'
-                    : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
-                }`}
+                to="/"
+                className="text-[#444444] hover:text-[#1E1E1E] transition-colors"
               >
-                Merchant Sign In
+                Storefront
               </Link>
-              <Link
-                to="/business/register"
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg shadow-xs transition-transform active:scale-[0.98] ${
-                  isRegisterPage
-                    ? 'bg-zinc-950 text-white ring-2 ring-zinc-950/20'
-                    : 'text-white bg-zinc-950 hover:bg-zinc-800'
-                }`}
-              >
-                Register Business
-              </Link>
+              {isLoginPage ? (
+                <Link
+                  to="/business/register"
+                  className="px-3.5 py-1.5 border-2 border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] hover:bg-[#DB4A2B] transition-colors shadow-[2px_2px_0px_#1E1E1E]"
+                >
+                  Register Entity
+                </Link>
+              ) : (
+                <Link
+                  to="/business/login"
+                  className="px-3.5 py-1.5 border-2 border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] hover:bg-[#DB4A2B] transition-colors shadow-[2px_2px_0px_#1E1E1E]"
+                >
+                  Merchant Access
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -135,3 +137,5 @@ export const BusinessNavbar: React.FC<{ onOpenAddModal?: () => void }> = ({
     </header>
   );
 };
+
+export default BusinessNavbar;
