@@ -15,6 +15,7 @@ import {
   uploadReviewPhotoApi,
 } from '../../services/reviewService';
 import type { Review, CreateReviewInput } from '../../types/review';
+import { BrutalistButton } from '../BrutalistButton';
 
 interface WriteReviewModalProps {
   isOpen: boolean;
@@ -28,11 +29,11 @@ interface WriteReviewModalProps {
 }
 
 const RATING_DESCRIPTIONS: Record<number, string> = {
-  1: 'Poor - Not as described',
-  2: 'Fair - Needs improvement',
-  3: 'Good - Average quality',
-  4: 'Very Good - Highly recommend',
-  5: 'Excellent - Outstanding experience!',
+  1: '01 / SUBPAR — Critical divergence from specifications',
+  2: '02 / DEFICIENT — Requires structural improvements',
+  3: '03 / SATISFACTORY — Meets standard operational requirements',
+  4: '04 / SUPERIOR — Recommended acquisition',
+  5: '05 / EXEMPLARY — Outstanding craftsmanship & performance',
 };
 
 export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
@@ -156,25 +157,25 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   const activeStarScore = hoverRating || rating;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1E1E]/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="bg-white rounded-2xl border border-zinc-200 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col"
+        className="bg-[#E4E2DD] border-2 border-[#1E1E1E] shadow-[8px_8px_0px_#1E1E1E] w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-6 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
+        <div className="p-6 border-b-2 border-[#1E1E1E] flex items-center justify-between sticky top-0 bg-white z-10">
           <div>
-            <h3 className="text-lg font-bold text-zinc-950">
-              {existingReview ? 'Edit Your Review' : 'Write a Customer Review'}
+            <h3 className="text-base font-clash font-bold text-[#1E1E1E] uppercase tracking-tight">
+              {existingReview ? 'EDIT YOUR REVIEW' : 'WRITE A CUSTOMER REVIEW'}
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-sm">
-              {productTitle}
+            <p className="text-xs font-mono text-[#444444] mt-0.5 truncate max-w-sm uppercase">
+              PRODUCT: {productTitle}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-zinc-900 rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer"
+            className="p-1.5 border border-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -183,38 +184,38 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1">
           {error && (
-            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#1E1E1E] text-xs font-mono flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-[#DB4A2B] shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Product Glance */}
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 border border-zinc-200/80">
+          <div className="flex items-center gap-3 p-3 border-2 border-[#1E1E1E] bg-white">
             {productImage && (
               <img
                 src={productImage}
                 alt={productTitle}
-                className="w-12 h-12 rounded-xl object-contain bg-white border border-zinc-200 shrink-0 p-1"
+                className="w-14 h-14 border border-[#1E1E1E] object-contain bg-[#E4E2DD] shrink-0 p-1"
               />
             )}
             <div className="min-w-0">
-              <h4 className="text-xs font-bold text-zinc-900 truncate">
+              <h4 className="text-xs font-clash font-bold text-[#1E1E1E] uppercase truncate">
                 {productTitle}
               </h4>
-              <span className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Verified Buyer Review Program</span>
+              <span className="text-[10px] font-mono text-[#444444] flex items-center gap-1 mt-0.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                <span>VERIFIED PURCHASER</span>
               </span>
             </div>
           </div>
 
           {/* Star Rating Picker */}
-          <div className="space-y-2 text-center py-2">
-            <label className="block text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
-              Overall Rating
+          <div className="space-y-2 text-center py-2 border-2 border-[#1E1E1E] bg-white p-4">
+            <label className="block text-xs font-clash font-bold text-[#1E1E1E] uppercase tracking-wider">
+              OVERALL RATING [1-5]
             </label>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-3">
               {[1, 2, 3, 4, 5].map((starValue) => (
                 <button
                   key={starValue}
@@ -222,47 +223,47 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                   onMouseEnter={() => setHoverRating(starValue)}
                   onMouseLeave={() => setHoverRating(null)}
                   onClick={() => setRating(starValue)}
-                  className="p-1 text-zinc-300 hover:scale-115 active:scale-95 transition-all cursor-pointer"
+                  className="p-1 hover:scale-125 transition-all cursor-pointer"
                   title={`${starValue} Stars`}
                 >
                   <Star
                     className={`w-8 h-8 transition-colors ${
                       starValue <= activeStarScore
-                        ? 'fill-amber-400 text-amber-400 drop-shadow-xs'
-                        : 'text-zinc-200 hover:text-zinc-300'
+                        ? 'fill-[#DB4A2B] text-[#DB4A2B]'
+                        : 'text-zinc-300 hover:text-zinc-400'
                     }`}
                   />
                 </button>
               ))}
             </div>
-            <div className="text-xs font-bold text-indigo-600 h-4">
+            <div className="text-xs font-mono font-bold text-[#DB4A2B] h-4 uppercase">
               {RATING_DESCRIPTIONS[activeStarScore]}
             </div>
           </div>
 
           {/* Review Headline */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-zinc-900">
-              Review Headline <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E]">
+              REVIEW HEADLINE <span className="text-[#DB4A2B]">*</span>
             </label>
             <input
               type="text"
               required
               maxLength={120}
-              placeholder="What's most important to know? (e.g. Outstanding sound quality & battery!)"
+              placeholder="Headline or summary of your experience..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-xs font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-zinc-950 transition-all shadow-2xs"
+              className="w-full px-4 py-2.5 border-2 border-[#1E1E1E] bg-white text-xs font-satoshi text-[#1E1E1E] focus:outline-none"
             />
           </div>
 
           {/* Review Details Body */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-zinc-900">
-                Detailed Feedback <span className="text-rose-500">*</span>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E]">
+                DETAILED FEEDBACK <span className="text-[#DB4A2B]">*</span>
               </label>
-              <span className="text-[10px] text-zinc-400 font-mono">
+              <span className="text-[10px] text-[#444444] font-mono">
                 {comment.length} / 3000
               </span>
             </div>
@@ -270,21 +271,21 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
               required
               rows={4}
               maxLength={3000}
-              placeholder="Share what you liked or disliked, specific features, material feel, build quality, and how it met your expectations..."
+              placeholder="What did you like or dislike? How was the fit, material quality, and everyday usability?..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white text-xs text-zinc-800 placeholder:text-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-zinc-950 transition-all shadow-2xs resize-none"
+              className="w-full px-4 py-3 border-2 border-[#1E1E1E] bg-white text-xs font-satoshi text-[#1E1E1E] focus:outline-none resize-none"
             />
           </div>
 
           {/* Photos Manager */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Attach Reference Photos ({photos.length}/5)</span>
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E] flex items-center gap-1.5">
+                <Camera className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                <span>CUSTOMER PHOTOS ({photos.length}/5)</span>
               </label>
-              <span className="text-[11px] text-zinc-400">Optional</span>
+              <span className="text-[10px] font-mono text-[#444444]">OPTIONAL</span>
             </div>
 
             {/* Photo Thumbnail Grid */}
@@ -292,7 +293,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
               {photos.map((photoUrl, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden group shadow-2xs"
+                  className="relative aspect-square border-2 border-[#1E1E1E] bg-white overflow-hidden group shadow-[2px_2px_0px_#1E1E1E]"
                 >
                   <img
                     src={photoUrl}
@@ -302,7 +303,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemovePhoto(idx)}
-                    className="absolute top-1 right-1 p-1 rounded-md bg-zinc-950/80 hover:bg-rose-600 text-white transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                    className="absolute top-1 right-1 p-1 bg-[#DB4A2B] text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Remove Photo"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -312,7 +313,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
 
               {photos.length < 5 && (
                 <label
-                  className={`aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-zinc-950 bg-zinc-50 hover:bg-zinc-100/80 flex flex-col items-center justify-center text-center p-2 cursor-pointer transition-all ${
+                  className={`aspect-square border-2 border-dashed border-[#1E1E1E] hover:bg-white bg-[#D9D6D0] flex flex-col items-center justify-center text-center p-2 cursor-pointer transition-all ${
                     uploadingPhoto ? 'opacity-50 pointer-events-none' : ''
                   }`}
                 >
@@ -325,12 +326,12 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                     className="hidden"
                   />
                   {uploadingPhoto ? (
-                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-[#1E1E1E] border-t-transparent animate-spin" />
                   ) : (
                     <>
-                      <Upload className="w-4 h-4 text-zinc-500 mb-1" />
-                      <span className="text-[9px] font-bold text-zinc-600">
-                        + Photo
+                      <Upload className="w-4 h-4 text-[#1E1E1E] mb-1" />
+                      <span className="text-[9px] font-mono font-bold text-[#1E1E1E] uppercase">
+                        + ATTACH
                       </span>
                     </>
                   )}
@@ -340,34 +341,27 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="pt-3 border-t border-zinc-100 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t-2 border-[#1E1E1E] flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+              className="px-5 py-2.5 border-2 border-[#1E1E1E] bg-white text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E] hover:bg-[#D9D6D0] transition-colors cursor-pointer"
             >
               Cancel
             </button>
-            <button
+            <BrutalistButton
               type="submit"
               disabled={submitting || uploadingPhoto}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 active:scale-95 transition-all shadow-xs cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={submitting}
+              variant="primary"
             >
-              {submitting ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Submitting Review...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{existingReview ? 'Update Review' : 'Submit Review'}</span>
-                </>
-              )}
-            </button>
+              <span>{existingReview ? 'Update Review' : 'Submit Review'}</span>
+            </BrutalistButton>
           </div>
         </form>
       </div>
     </div>
   );
 };
+
+export default WriteReviewModal;
