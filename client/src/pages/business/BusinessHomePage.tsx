@@ -1068,18 +1068,18 @@ export const BusinessHomePage: React.FC = () => {
   const outOfStockProducts = products.filter((p) => p.stock === 0);
 
   return (
-    <div className="min-h-screen bg-zinc-50/60 text-zinc-900 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-[#E4E2DD] text-[#1E1E1E] flex flex-col font-satoshi select-none">
       <BusinessNavbar onOpenAddModal={handleOpenAdd} />
 
-      <div className="bg-white border-b border-zinc-200/80 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none py-2 text-xs font-semibold">
+      <div className="bg-[#D9D6D0] border-b-2 border-[#1E1E1E] px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar py-2 text-xs font-mono font-bold uppercase">
           <button
             type="button"
             onClick={() => setActiveTab('products')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'products'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <Package className="w-3.5 h-3.5" />
@@ -1089,17 +1089,17 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('inventory')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'inventory'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <Boxes className="w-3.5 h-3.5" />
-            <span>Warehouse Inventory</span>
+            <span>Warehouse Stock</span>
             {stats.lowStock + stats.outOfStock > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-bold">
-                {stats.lowStock + stats.outOfStock} alerts
+              <span className="px-1.5 py-0.2 text-[9px] bg-[#DB4A2B] text-white font-bold uppercase">
+                {stats.lowStock + stats.outOfStock} ALERTS
               </span>
             )}
           </button>
@@ -1107,10 +1107,10 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('orders')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'orders'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
@@ -1120,10 +1120,10 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('reviews')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'reviews'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -1133,17 +1133,17 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('coupons')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'coupons'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <Ticket className="w-3.5 h-3.5" />
-            <span>Coupons & Discounts</span>
+            <span>Coupons & Vouchers</span>
             {couponSummary && couponSummary.activeCoupons > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-                {couponSummary.activeCoupons} active
+              <span className="px-1.5 py-0.2 text-[9px] bg-[#1E1E1E] text-white font-bold uppercase">
+                {couponSummary.activeCoupons} ACTIVE
               </span>
             )}
           </button>
@@ -1151,16 +1151,16 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('storefront')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'storefront'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <Store className="w-3.5 h-3.5" />
-            <span>Storefront & Promotions</span>
+            <span>Storefront Settings</span>
             {storefrontForm.flashSaleActive && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-500 text-white font-extrabold animate-pulse">
+              <span className="px-1.5 py-0.2 text-[9px] bg-[#DB4A2B] text-white font-extrabold animate-pulse uppercase">
                 LIVE SALE
               </span>
             )}
@@ -1169,64 +1169,64 @@ export const BusinessHomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border-2 transition-all cursor-pointer ${
               activeTab === 'profile'
-                ? 'bg-zinc-950 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                ? 'border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] shadow-[2px_2px_0px_#DB4A2B]'
+                : 'border-[#1E1E1E] bg-white text-[#1E1E1E] hover:bg-[#E4E2DD]'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span>Store Profile & APIs</span>
+            <span>Profile & Ledger APIs</span>
           </button>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 flex-1 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Active Catalog</span>
-              <Package className="w-4 h-4 text-zinc-600" />
+          <div className="p-5 border-2 border-[#1E1E1E] bg-white shadow-[4px_4px_0px_#1E1E1E] space-y-1">
+            <div className="flex items-center justify-between text-[#444444]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Active Catalog</span>
+              <Package className="w-4 h-4 text-[#1E1E1E]" />
             </div>
-            <div className="text-2xl font-extrabold text-zinc-950">
+            <div className="text-3xl font-clash font-bold text-[#1E1E1E]">
               {stats.totalProducts}
             </div>
-            <div className="text-[11px] text-zinc-500">Products live on marketplace</div>
+            <div className="text-[10px] font-mono text-[#444444] uppercase">Live marketplace entries</div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Warehouse Stock</span>
-              <Boxes className="w-4 h-4 text-emerald-600" />
+          <div className="p-5 border-2 border-[#1E1E1E] bg-white shadow-[4px_4px_0px_#1E1E1E] space-y-1">
+            <div className="flex items-center justify-between text-[#444444]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Warehouse Units</span>
+              <Boxes className="w-4 h-4 text-[#DB4A2B]" />
             </div>
-            <div className="text-2xl font-extrabold text-zinc-950">
+            <div className="text-3xl font-clash font-bold text-[#1E1E1E]">
               {stats.totalUnits}
             </div>
-            <div className="text-[11px] text-emerald-600 font-medium">Total available units</div>
+            <div className="text-[10px] font-mono text-[#DB4A2B] font-bold uppercase">Total available units</div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Stock Alerts</span>
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <div className="p-5 border-2 border-[#1E1E1E] bg-white shadow-[4px_4px_0px_#1E1E1E] space-y-1">
+            <div className="flex items-center justify-between text-[#444444]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Stock Alerts</span>
+              <AlertTriangle className="w-4 h-4 text-[#F8A348]" />
             </div>
-            <div className="text-2xl font-extrabold text-zinc-950">
+            <div className="text-3xl font-clash font-bold text-[#1E1E1E]">
               {stats.lowStock + stats.outOfStock}
             </div>
-            <div className="text-[11px] text-amber-600 font-medium">
-              {stats.outOfStock} out of stock, {stats.lowStock} low
+            <div className="text-[10px] font-mono text-[#444444] uppercase">
+              {stats.outOfStock} depleted / {stats.lowStock} threshold
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-1">
-            <div className="flex items-center justify-between text-zinc-500">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Inventory Value</span>
-              <DollarSign className="w-4 h-4 text-zinc-600" />
+          <div className="p-5 border-2 border-[#1E1E1E] bg-white shadow-[4px_4px_0px_#1E1E1E] space-y-1">
+            <div className="flex items-center justify-between text-[#444444]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Inventory Valuation</span>
+              <DollarSign className="w-4 h-4 text-[#1E1E1E]" />
             </div>
-            <div className="text-2xl font-extrabold text-zinc-950">
+            <div className="text-3xl font-clash font-bold text-[#1E1E1E]">
               ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
-            <div className="text-[11px] text-zinc-500">Total catalog inventory valuation</div>
+            <div className="text-[10px] font-mono text-[#444444] uppercase">Total catalog inventory valuation</div>
           </div>
         </div>
 
