@@ -1,32 +1,148 @@
 @import "tailwindcss";
 
+@theme {
+  --color-raw-base: #E4E2DD;
+  --color-raw-text: #1E1E1E;
+  --color-raw-red: #DB4A2B;
+  --color-raw-orange: #F8A348;
+  --color-raw-pink: #FF89A9;
+  --color-raw-campaign: #D9D6D0;
+  --color-raw-muted: #444444;
+
+  --font-clash: 'Clash Display', 'Syne', -apple-system, sans-serif;
+  --font-satoshi: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --ease-brutalist: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @layer base {
+  :root {
+    --bg-base: #E4E2DD;
+    --text-primary: #1E1E1E;
+    --accent-red: #DB4A2B;
+    --accent-orange: #F8A348;
+    --accent-pink: #FF89A9;
+    --bg-campaign: #D9D6D0;
+    --text-secondary: #444444;
+  }
+
   body {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    letter-spacing: -0.011em;
+    background-color: #E4E2DD;
+    color: #1E1E1E;
+    font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.015em;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Clash Display', 'Syne', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.04em;
   }
 }
 
-.font-serif {
-  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
+/* Atmospheric Noise Texture Overlay */
+.raw-grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
-.bg-dot-pattern {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+/* Atmospheric Organic Gradient Blob Keyframes */
+@keyframes blob-drift-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(60px, -45px) scale(1.15);
+  }
+  66% {
+    transform: translate(-40px, 35px) scale(0.92);
+  }
 }
 
-.bg-grid-pattern {
-  background-size: 40px 40px;
-  background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+@keyframes blob-drift-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-50px, 40px) scale(1.08);
+  }
+  66% {
+    transform: translate(45px, -30px) scale(0.95);
+  }
 }
 
+@keyframes blob-drift-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  40% {
+    transform: translate(40px, 50px) scale(1.12);
+  }
+  80% {
+    transform: translate(-30px, -20px) scale(0.9);
+  }
+}
+
+.animate-blob-1 {
+  animation: blob-drift-1 18s ease-in-out infinite;
+}
+
+.animate-blob-2 {
+  animation: blob-drift-2 22s ease-in-out infinite;
+}
+
+.animate-blob-3 {
+  animation: blob-drift-3 26s ease-in-out infinite;
+}
+
+/* Section 11: Interactive Brutalist CTA directional animation */
+.raw-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+.raw-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #FFFFFF;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: -1;
+}
+
+.raw-btn:hover::before {
+  transform: scaleX(1);
+}
+
+.raw-btn:hover {
+  color: #DB4A2B;
+}
+
+/* Hairline Swiss grid borders */
+.raw-border {
+  border-color: rgba(30, 30, 30, 0.14);
+}
+
+.raw-border-strong {
+  border-color: #1E1E1E;
+}
+
+/* Scroll reveal animations */
 .reveal-on-scroll {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(28px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
@@ -35,11 +151,20 @@
   transform: translateY(0);
 }
 
-.reveal-fade {
-  opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+/* Brutalist Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.reveal-fade.is-visible {
-  opacity: 1;
+::-webkit-scrollbar-track {
+  background: #E4E2DD;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E1E1E;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #DB4A2B;
 }
