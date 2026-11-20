@@ -40,10 +40,15 @@ export const AdminMerchantsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black tracking-tight text-zinc-900">Merchant Store Approvals</h2>
-        <p className="text-xs text-zinc-500 mt-1">
-          Review business registration licenses, storefront descriptions, and grant merchant privileges.
+      <div className="border-b-2 border-[#1E1E1E] pb-4">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 bg-[#1E1E1E] text-white">
+          MERCHANT APPROVALS
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-clash font-bold uppercase tracking-tight text-[#1E1E1E] mt-1">
+          Merchant Store Approvals
+        </h2>
+        <p className="text-xs font-mono text-[#444444] uppercase tracking-wider">
+          Review business registration, store information, and approve seller privileges.
         </p>
       </div>
 
@@ -51,65 +56,58 @@ export const AdminMerchantsPage: React.FC = () => {
         {merchants.map((m) => (
           <div
             key={m._id}
-            className="p-6 bg-white border border-zinc-200/80 rounded-2xl space-y-4 shadow-xs hover:border-zinc-300 transition flex flex-col justify-between"
+            className="p-6 bg-white border-2 border-[#1E1E1E] space-y-4 shadow-[4px_4px_0px_#1E1E1E] flex flex-col justify-between"
           >
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-zinc-900 text-sm">{m.companyName || m.name}</h4>
-                    <div className="text-[11px] text-zinc-400">{m.email}</div>
-                  </div>
+                <div className="w-10 h-10 border-2 border-[#1E1E1E] bg-[#E4E2DD] flex items-center justify-center font-clash font-bold text-sm uppercase">
+                  {m.companyName?.charAt(0) || m.name.charAt(0)}
                 </div>
-
-                {m.isVerifiedMerchant ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                    Verified
-                  </span>
-                ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
-                    Pending
-                  </span>
-                )}
+                <span
+                  className={`px-2 py-0.5 border text-[10px] font-mono font-bold uppercase ${
+                    m.isVerifiedMerchant
+                      ? 'border-[#1E1E1E] bg-[#1E1E1E] text-white'
+                      : 'border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B]'
+                  }`}
+                >
+                  {m.isVerifiedMerchant ? 'VERIFIED STORE' : 'PENDING APPROVAL'}
+                </span>
               </div>
 
-              <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">
-                {m.companyDescription || 'Storefront description awaiting submission.'}
-              </p>
+              <div>
+                <h3 className="font-clash font-bold text-base text-[#1E1E1E] uppercase">
+                  {m.companyName || m.name}
+                </h3>
+                <p className="text-xs font-mono text-[#444444] mt-0.5">
+                  EMAIL: {m.email}
+                </p>
+              </div>
+
+              {m.storeDescription && (
+                <p className="text-xs font-satoshi text-[#444444] line-clamp-3 bg-[#E4E2DD] p-2 border border-zinc-300">
+                  {m.storeDescription}
+                </p>
+              )}
             </div>
 
-            <div className="pt-4 border-t border-zinc-100 flex items-center justify-between gap-2">
-              <a
-                href={`/store/${m._id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-700 font-semibold transition"
+            <div className="pt-3 border-t-2 border-[#1E1E1E] flex items-center gap-2">
+              <button
+                type="button"
+                disabled={actionLoading === m._id}
+                onClick={() => handleVerify(m._id, true)}
+                className="flex-1 py-2 border-2 border-[#1E1E1E] bg-[#1E1E1E] hover:bg-[#DB4A2B] text-white text-xs font-mono font-bold uppercase transition cursor-pointer shadow-[2px_2px_0px_#1E1E1E]"
               >
-                <span>Storefront</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handleVerify(m._id, false)}
-                  disabled={actionLoading === m._id}
-                  className="p-1.5 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition cursor-pointer"
-                  title="Reject Store"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleVerify(m._id, true)}
-                  disabled={actionLoading === m._id}
-                  className="px-3.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Approve</span>
-                </button>
-              </div>
+                Approve Store
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading === m._id}
+                onClick={() => handleVerify(m._id, false)}
+                className="px-3 py-2 border-2 border-[#DB4A2B] text-[#DB4A2B] hover:bg-[#DB4A2B] hover:text-white text-xs font-mono font-bold uppercase transition cursor-pointer"
+                title="Revoke accreditation"
+              >
+                Reject
+              </button>
             </div>
           </div>
         ))}
