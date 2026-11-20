@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { wishlistService, WishlistItem, WishlistResponse } from '../services/wishlistService';
-import { Heart, Trash2 } from 'lucide-react';
+import { Heart, Trash2, ShoppingBag, Share2, Check, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { RawAtmosphere } from '../components/RawAtmosphere';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 export const WishlistPage: React.FC = () => {
   const { shareToken } = useParams<{ shareToken?: string }>();
@@ -83,48 +85,51 @@ export const WishlistPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto space-y-10 font-satoshi text-[#1E1E1E] relative">
+      <RawAtmosphere variant="subtle" />
+
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-white border border-zinc-200/80 shadow-xs space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-              <Heart className="w-3.5 h-3.5 text-zinc-700" />
-              <span>{isSharedView ? 'Shared Gift Registry' : 'Saved Items'}</span>
+      <div className="p-8 sm:p-12 bg-[#FFFFFF] border-2 border-[#1E1E1E] space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#1E1E1E] text-[#FF89A9] text-[10px] font-mono font-bold uppercase tracking-widest">
+              <Heart className="w-3.5 h-3.5" />
+              <span>{isSharedView ? 'PUBLIC GIFT REGISTRY ARCHIVE' : 'PERSONAL CURATION RADAR'}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
-              {isSharedView ? 'Public Wishlist Registry' : 'My Wishlist'}
+            <h1 className="font-clash text-4xl sm:text-6xl font-bold uppercase tracking-[-0.05em] text-[#1E1E1E] leading-none">
+              {isSharedView ? 'SHARED REGISTRY' : 'SAVED ARCHIVE'}
             </h1>
-            <p className="text-zinc-500 text-xs sm:text-sm max-w-xl">
+            <p className="text-xs sm:text-sm text-[#444444] leading-relaxed">
               {isSharedView
-                ? 'Browse items curated by a fellow shopper and add them directly to your cart.'
-                : 'Track items for later, check real-time stock availability, and receive price drop alerts.'}
+                ? 'Curated merchandise selected by an affiliate collector. Add items directly to your dispatch manifest.'
+                : 'Monitor real-time inventory levels, configure price drop alarms, and archive seasonal silhouettes.'}
             </p>
           </div>
 
-          {/* Sharing & Move All Actions */}
+          {/* Action Buttons */}
           {!isSharedView && myWishlist && (
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={handleToggleShare}
                 disabled={isPublicLoading}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition cursor-pointer border ${
                   myWishlist.isPublic
-                    ? 'bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-zinc-200'
-                    : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                    ? 'bg-[#1E1E1E] text-[#E4E2DD] border-[#1E1E1E]'
+                    : 'bg-[#FFFFFF] text-[#1E1E1E] border-[#1E1E1E]/30 hover:border-[#1E1E1E]'
                 }`}
               >
-                <span>{myWishlist.isPublic ? 'Public Registry (Active)' : 'Private Registry'}</span>
+                {myWishlist.isPublic ? 'REGISTRY: PUBLIC' : 'REGISTRY: PRIVATE'}
               </button>
 
               {myWishlist.isPublic && myWishlist.shareToken && (
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="px-3.5 py-2 rounded-xl bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2.5 bg-[#FFFFFF] border-2 border-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-[#E4E2DD] text-[#1E1E1E] text-xs font-mono font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
                 >
-                  <span>{isCopied ? 'Link Copied' : 'Copy Share Link'}</span>
+                  {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+                  <span>{isCopied ? 'URL COPIED' : 'COPY REGISTRY URL'}</span>
                 </button>
               )}
 
@@ -132,46 +137,44 @@ export const WishlistPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleMoveAllToCart}
-                  className="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold transition cursor-pointer"
+                  className="raw-btn px-6 py-2.5 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest cursor-pointer"
                 >
-                  Move All to Cart
+                  DISPATCH ALL TO BAG
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* Stats Bar */}
-        <div className="pt-5 border-t border-zinc-100 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-          <div className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/60">
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">Total Saved</span>
-            <p className="text-xl font-bold text-zinc-950 mt-0.5">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
+        {/* Stats Metrics Bar */}
+        <div className="pt-6 border-t border-[#1E1E1E]/20 grid grid-cols-2 sm:grid-cols-3 gap-4 font-mono text-xs">
+          <div className="p-4 bg-[#E4E2DD]/40 border border-[#1E1E1E]/15">
+            <span className="text-[10px] text-[#444444] uppercase tracking-widest font-bold">SAVED PIECES</span>
+            <p className="font-clash text-2xl font-bold text-[#1E1E1E] mt-1">{items.length} SILHOUETTES</p>
           </div>
-          <div className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/60">
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">Price Drops</span>
-            <p className="text-xl font-bold text-zinc-950 mt-0.5">{priceDropItems.length} on sale</p>
+          <div className="p-4 bg-[#E4E2DD]/40 border border-[#1E1E1E]/15">
+            <span className="text-[10px] text-[#DB4A2B] uppercase tracking-widest font-bold">PRICE DROPS</span>
+            <p className="font-clash text-2xl font-bold text-[#DB4A2B] mt-1">{priceDropItems.length} MARKDOWNS</p>
           </div>
-          <div className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/60 col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">Estimated Value</span>
-            <p className="text-xl font-bold font-mono text-zinc-950 mt-0.5">
-              ${items.reduce((sum: number, i: WishlistItem) => sum + (i.currentPrice || i.priceAtAdd || 0), 0).toFixed(2)}
-            </p>
+          <div className="p-4 bg-[#E4E2DD]/40 border border-[#1E1E1E]/15 col-span-2 sm:col-span-1">
+            <span className="text-[10px] text-[#444444] uppercase tracking-widest font-bold">DEPARTMENTS</span>
+            <p className="font-clash text-2xl font-bold text-[#1E1E1E] mt-1">{categories.length - 1} CATEGORIES</p>
           </div>
         </div>
       </div>
 
-      {/* Category Filter Tabs */}
+      {/* Category Filter Chips */}
       {categories.length > 2 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {categories.map((cat: string) => (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 font-mono text-xs">
+          {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
-                selectedCategory.toLowerCase() === cat.toLowerCase()
-                  ? 'bg-zinc-950 text-white'
-                  : 'bg-white text-zinc-600 hover:text-zinc-950 border border-zinc-200'
+              className={`px-4 py-2 font-bold uppercase tracking-wider transition cursor-pointer ${
+                selectedCategory === cat
+                  ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                  : 'bg-[#FFFFFF] border border-[#1E1E1E]/20 text-[#1E1E1E] hover:border-[#1E1E1E]'
               }`}
             >
               {cat}
@@ -180,107 +183,98 @@ export const WishlistPage: React.FC = () => {
         </div>
       )}
 
-      {/* Products Grid */}
-      {filteredItems.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-zinc-200/80 shadow-xs space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400">
-            <Heart className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-zinc-900">No items found in this section</h3>
-            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-              Browse the catalog to add items to your wishlist and receive price drop alerts.
+      {/* Wishlist Items Grid (3 Columns on Desktop) */}
+      <div className="space-y-6">
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-24 bg-[#FFFFFF] border-2 border-[#1E1E1E] p-8 space-y-4">
+            <Heart className="w-12 h-12 text-[#FF89A9] mx-auto" />
+            <h3 className="font-clash text-xl font-bold uppercase tracking-tight text-[#1E1E1E]">
+              NO ARCHIVED ITEMS DETECTED
+            </h3>
+            <p className="text-xs text-[#444444] max-w-sm mx-auto">
+              Browse the catalog and press the heart icon on any product to save it to your curation registry.
             </p>
+            <Link
+              to="/"
+              className="inline-block raw-btn px-8 py-3.5 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest"
+            >
+              BROWSE CATALOG
+            </Link>
           </div>
-          <Link
-            to="/"
-            className="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition inline-block"
-          >
-            Explore Catalog
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredItems.map((item: WishlistItem) => {
-            const isDropped = item.isPriceDropped;
-            return (
-              <div
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => (
+              <article
                 key={item.productId}
-                className="rounded-2xl bg-white border border-zinc-200/80 hover:border-zinc-300 transition overflow-hidden flex flex-col group relative shadow-2xs"
+                className="bg-[#FFFFFF] border-2 border-[#1E1E1E] flex flex-col justify-between group"
               >
-                {/* Price drop badge */}
-                {isDropped && (
-                  <div className="absolute top-2.5 left-2.5 z-10 bg-zinc-900 text-white font-mono font-semibold text-[10px] uppercase px-2 py-0.5 rounded-md">
-                    <span>SAVE {item.discountPct}%</span>
-                  </div>
-                )}
+                <div>
+                  {/* Image showcase: 3:4 aspect */}
+                  <div className="relative aspect-[3/4] bg-[#E4E2DD]/40 border-b border-[#1E1E1E]/20 p-6 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80'}
+                      alt={item.title}
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    />
 
-                {/* Remove Button */}
-                {!isSharedView && (
-                  <button
-                    type="button"
-                    onClick={() => removeFromWishlist(item.productId)}
-                    className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-lg bg-white/90 backdrop-blur-xs border border-zinc-200 text-zinc-400 hover:text-rose-600 flex items-center justify-center transition cursor-pointer"
-                    title="Remove from wishlist"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                    {item.isPriceDropped && (
+                      <span className="absolute top-3 left-3 px-2 py-0.5 bg-[#DB4A2B] text-[#FFFFFF] font-mono text-[9px] font-bold uppercase tracking-widest">
+                        PRICE DROP -{item.discountPct}%
+                      </span>
+                    )}
 
-                {/* Image */}
-                <div
-                  onClick={() => navigate(`/product/${item.productId}`)}
-                  className="aspect-square bg-zinc-100 overflow-hidden cursor-pointer flex items-center justify-center relative"
-                >
-                  <img
-                    src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                      {item.category || 'General'}
-                    </span>
-                    <h3
-                      onClick={() => navigate(`/product/${item.productId}`)}
-                      className="text-xs font-semibold text-zinc-900 hover:text-zinc-600 transition cursor-pointer mt-0.5 line-clamp-2"
+                    <button
+                      type="button"
+                      onClick={() => removeFromWishlist(item.productId)}
+                      className="absolute top-3 right-3 p-1.5 bg-[#FFFFFF] border border-[#1E1E1E]/30 hover:border-[#DB4A2B] hover:text-[#DB4A2B] text-[#1E1E1E] transition cursor-pointer"
+                      title="Remove from archive"
                     >
-                      {item.title}
-                    </h3>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">{item.companyName || 'Verified Merchant'}</p>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
-                  {/* Price & Actions */}
-                  <div className="pt-2 border-t border-zinc-100">
-                    <div className="flex items-baseline gap-1.5 mb-2.5">
-                      <span className="text-sm font-mono font-bold text-zinc-950">
+                  {/* Body */}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between font-mono text-[10px] text-[#444444] uppercase">
+                      <span>{item.category || 'COMMERCE'}</span>
+                      <span className="text-[#1E1E1E] font-bold">{item.companyName || 'VERIFIED ORIGIN'}</span>
+                    </div>
+
+                    <Link to={`/product/${item.productId}`}>
+                      <h3 className="font-clash text-sm font-bold uppercase tracking-tight text-[#1E1E1E] hover:text-[#DB4A2B] transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </Link>
+
+                    <div className="flex items-baseline gap-2 pt-1 font-mono">
+                      <span className="text-base font-bold text-[#1E1E1E]">
                         ${Number(item.currentPrice || item.priceAtAdd || 0).toFixed(2)}
                       </span>
-                      {isDropped && (
-                        <span className="text-xs font-mono text-zinc-400 line-through">
+                      {item.isPriceDropped && (
+                        <span className="text-xs text-[#444444] line-through">
                           ${Number(item.priceAtAdd).toFixed(2)}
                         </span>
                       )}
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => moveToCartAndNotify(item.productId)}
-                      className="w-full py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer"
-                    >
-                      Move to Cart
-                    </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+
+                {/* Footer Action */}
+                <div className="p-4 pt-0">
+                  <button
+                    type="button"
+                    onClick={() => moveToCartAndNotify(item.productId)}
+                    className="w-full raw-btn py-3 px-4 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>TRANSFER TO SHOPPING BAG</span>
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
