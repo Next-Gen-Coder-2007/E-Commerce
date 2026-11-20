@@ -35,17 +35,23 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
     onError?.('Google authentication was cancelled or failed');
   };
 
-  if (!clientId || clientId.trim() === '') {
+  const isInvalidOrPlaceholderClient =
+    !clientId ||
+    clientId.trim() === '' ||
+    clientId.includes('dummy') ||
+    clientId.includes('mock');
+
+  if (isInvalidOrPlaceholderClient) {
     return (
       <div className="w-full">
         <button
           type="button"
           onClick={() =>
             onError?.(
-              'Google OAuth requires VITE_GOOGLE_CLIENT_ID in client/.env and GOOGLE_CLIENT_ID in server/.env'
+              'Google OAuth requires registering http://localhost:5173 under Authorized JavaScript Origins in Google Cloud Console for VITE_GOOGLE_CLIENT_ID.'
             )
           }
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors shadow-xs cursor-pointer"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border-2 border-[#1E1E1E] bg-white hover:bg-[#D9D6D0] text-xs font-mono font-bold uppercase text-[#1E1E1E] transition-all shadow-[2px_2px_0px_#1E1E1E] cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -72,7 +78,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   }
 
   return (
-    <div className="w-full flex justify-center [&>div]:w-full">
+    <div className="w-full flex justify-center [&>div]:w-full max-w-full overflow-hidden">
       <GoogleLogin
         onSuccess={handleSuccess}
         onError={handleError}
@@ -80,7 +86,6 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
         theme="outline"
         size="large"
         shape="rectangular"
-        width="100%"
       />
     </div>
   );
