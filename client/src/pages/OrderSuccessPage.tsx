@@ -7,7 +7,10 @@ import {
   ShoppingBag,
   Sparkles,
   ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
+import { RawAtmosphere } from '../components/RawAtmosphere';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 export const OrderSuccessPage: React.FC = () => {
   const location = useLocation();
@@ -20,7 +23,6 @@ export const OrderSuccessPage: React.FC = () => {
     return <Navigate to="/orders" replace />;
   }
 
-  // Estimated delivery: 3 business days from now
   const estDelivery = new Date();
   estDelivery.setDate(estDelivery.getDate() + 3);
   const formattedDelivery = estDelivery.toLocaleDateString('en-US', {
@@ -30,60 +32,62 @@ export const OrderSuccessPage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-[80vh] py-12 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto flex flex-col justify-center">
-      <div className="bg-white border border-zinc-200/80 rounded-2xl p-8 sm:p-10 shadow-xs text-center space-y-6">
+    <div className="min-h-[85vh] py-16 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto flex flex-col justify-center font-satoshi text-[#1E1E1E] select-none relative">
+      <RawAtmosphere variant="vibrant" />
+
+      <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-8 sm:p-12 shadow-2xl text-center space-y-8">
         {/* Top Success Badge */}
-        <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-600">
-          <CheckCircle2 className="w-8 h-8" />
+        <div className="w-16 h-16 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center mx-auto">
+          <CheckCircle2 className="w-8 h-8 text-emerald-400" />
         </div>
 
-        <div className="space-y-1.5">
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Order Confirmed
+        <div className="space-y-2">
+          <span className="px-3 py-1 bg-[#1E1E1E] text-[#E4E2DD] text-[10px] font-mono font-bold uppercase tracking-widest">
+            SAGA TRANSACTION COMMITTED
           </span>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 mt-1">
-            Thank you for your order
+          <h1 className="font-clash text-3xl sm:text-4xl font-bold uppercase tracking-tight text-[#1E1E1E]">
+            ORDER CONFIRMED
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 max-w-md mx-auto">
-            We've received your order and notified our verified merchant fulfillment team.
+          <p className="text-xs text-[#444444] max-w-md mx-auto leading-relaxed">
+            Your requisition has been committed to the distributed outbox and transmitted to verified supplier fulfillment desks.
           </p>
         </div>
 
-        {/* Order Details Summary Box */}
-        <div className="p-5 bg-zinc-50 border border-zinc-200/60 rounded-2xl text-left space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-200/60 text-xs">
+        {/* Order Details Receipt Box */}
+        <div className="p-6 bg-[#E4E2DD]/40 border-2 border-[#1E1E1E] text-left space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#1E1E1E]/20">
             <div>
-              <span className="text-zinc-400 font-medium">Order Reference:</span>
-              <span className="font-mono font-bold text-zinc-900 ml-1.5">{orderId}</span>
+              <span className="text-[#444444] uppercase">ORDER REFERENCE:</span>
+              <span className="font-bold text-[#1E1E1E] ml-2">{orderId}</span>
             </div>
             {totalAmount > 0 && (
               <div>
-                <span className="text-zinc-400 font-medium">Total Paid:</span>
-                <span className="font-mono font-black text-emerald-600 ml-1.5">
+                <span className="text-[#444444] uppercase">SETTLEMENT:</span>
+                <span className="font-bold text-[#DB4A2B] ml-2">
                   ${totalAmount.toFixed(2)}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                <Truck className="w-4 h-4" />
+              <div className="w-8 h-8 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center shrink-0">
+                <Truck className="w-4 h-4 text-[#DB4A2B]" />
               </div>
               <div>
-                <div className="font-bold text-zinc-900">Estimated Delivery</div>
-                <div className="text-zinc-500">{formattedDelivery}</div>
+                <div className="font-bold text-[#1E1E1E] uppercase">ESTIMATED COURIER</div>
+                <div className="text-[11px] text-[#444444]">{formattedDelivery}</div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-4 h-4" />
+              <div className="w-8 h-8 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <div>
-                <div className="font-bold text-zinc-900">Buyer Protection</div>
-                <div className="text-zinc-500">100% Covered with 30-Day Returns</div>
+                <div className="font-bold text-[#1E1E1E] uppercase">BUYER PROTOCOL</div>
+                <div className="text-[11px] text-[#444444]">30-DAY SAGA REFUND</div>
               </div>
             </div>
           </div>
@@ -93,18 +97,18 @@ export const OrderSuccessPage: React.FC = () => {
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Link
             to={`/orders/${orderId}`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition"
+            className="raw-btn px-6 py-3 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest flex items-center gap-2"
           >
             <Package className="w-4 h-4" />
-            <span>Track Order Details</span>
+            <span>TRACK DISPATCH TELEMETRY</span>
           </Link>
 
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs transition"
+            className="px-6 py-3 bg-[#FFFFFF] hover:bg-[#1E1E1E] hover:text-[#E4E2DD] text-[#1E1E1E] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>Continue Shopping</span>
+            <span>RETURN TO ARCHIVE</span>
           </Link>
         </div>
       </div>
