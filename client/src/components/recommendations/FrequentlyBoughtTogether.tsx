@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Check, ShoppingBag, Sparkles, Tag } from 'lucide-react';
+import { Plus, Check, ShoppingBag, Sparkles } from 'lucide-react';
 import {
   getFrequentlyBoughtTogetherApi,
   FrequentlyBoughtTogetherResponse,
@@ -61,7 +61,6 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
   const calculatedSavings = calculatedRawPrice - calculatedBundlePrice;
 
   const handleAddBundleToCart = async () => {
-    // Add main product
     await addToCart({
       productId: bundleData.mainProduct._id,
       title: bundleData.mainProduct.title,
@@ -69,7 +68,6 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
       image: bundleData.mainProduct.image,
       quantity: 1,
     });
-    // Add selected bundle items
     for (const item of selectedBundleItems) {
       await addToCart({
         productId: item._id,
@@ -84,36 +82,38 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
   };
 
   return (
-    <div className="my-10 bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="p-2 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+    <div className="my-10 bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 font-satoshi text-[#1E1E1E]">
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#1E1E1E]/15">
+        <span className="w-8 h-8 bg-[#1E1E1E] text-[#DB4A2B] flex items-center justify-center">
           <Sparkles className="w-4 h-4" />
         </span>
         <div>
-          <h3 className="text-lg font-black text-zinc-950">Frequently Bought Together</h3>
-          <p className="text-xs text-zinc-500">
-            Combine complementary essentials and unlock an automatic{' '}
-            <b className="text-emerald-600">{bundleData.bundleDiscountPct}% bundle discount</b>
+          <h3 className="font-clash text-lg font-bold uppercase tracking-tight text-[#1E1E1E]">
+            COMPLEMENTARY ENSEMBLE
+          </h3>
+          <p className="text-xs text-[#444444] font-mono uppercase">
+            COMBINE VERIFIED ACCESSORIES AND UNLOCK AN AUTOMATIC{' '}
+            <span className="text-[#DB4A2B] font-bold">{bundleData.bundleDiscountPct}% BUNDLE MARKDOWN</span>
           </p>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         {/* Product Visual Combo Strip */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           {/* Main Product Card */}
-          <div className="flex items-center gap-3 p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl max-w-xs">
+          <div className="flex items-center gap-3 p-3 bg-[#E4E2DD]/40 border border-[#1E1E1E]/20 flex-1 sm:flex-initial min-w-[200px]">
             <img
               src={bundleData.mainProduct.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'}
               alt={bundleData.mainProduct.title}
-              className="w-14 h-14 rounded-xl object-cover bg-zinc-100"
+              className="w-14 h-16 object-contain bg-[#FFFFFF] border border-[#1E1E1E]/10"
             />
-            <div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase">Current Item</span>
-              <div className="text-xs font-bold text-zinc-900 line-clamp-1">
+            <div className="min-w-0">
+              <span className="text-[9px] font-mono font-bold text-[#444444] uppercase tracking-wider block">CURRENT ITEM</span>
+              <div className="text-xs font-bold text-[#1E1E1E] uppercase truncate max-w-[140px]">
                 {bundleData.mainProduct.title}
               </div>
-              <div className="text-xs font-mono font-black text-zinc-950">
+              <div className="text-xs font-mono font-bold text-[#1E1E1E] mt-0.5">
                 ${bundleData.mainProduct.price.toFixed(2)}
               </div>
             </div>
@@ -124,36 +124,33 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
             const isSelected = selectedItemIds.includes(item._id);
             return (
               <React.Fragment key={item._id}>
-                <div className="w-6 h-6 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center font-bold text-xs">
+                <div className="w-6 h-6 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center font-bold text-xs shrink-0">
                   <Plus className="w-3.5 h-3.5" />
                 </div>
 
                 <div
                   onClick={() => toggleItem(item._id)}
-                  className={`flex items-center gap-3 p-3.5 rounded-2xl max-w-xs cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 p-3 border cursor-pointer transition-all flex-1 sm:flex-initial min-w-[200px] ${
                     isSelected
-                      ? 'bg-zinc-50 border border-zinc-900 ring-1 ring-zinc-900 shadow-2xs'
-                      : 'bg-white border border-zinc-200 opacity-60'
+                      ? 'bg-[#FFFFFF] border-2 border-[#1E1E1E] shadow-xs'
+                      : 'bg-[#E4E2DD]/20 border border-[#1E1E1E]/20 opacity-50'
                   }`}
                 >
                   <img
                     src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80'}
                     alt={item.title}
-                    className="w-14 h-14 rounded-xl object-cover bg-zinc-100"
+                    className="w-14 h-16 object-contain bg-[#FFFFFF] border border-[#1E1E1E]/10"
                   />
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase">Add-on</span>
-                      {isSelected && <Check className="w-3 h-3 text-emerald-600" />}
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-mono font-bold text-[#DB4A2B] uppercase tracking-wider block">
+                      +{bundleData.bundleDiscountPct}% OFF
+                    </span>
+                    <div className="text-xs font-bold text-[#1E1E1E] uppercase truncate max-w-[140px]">
+                      {item.title}
                     </div>
-                    <div className="text-xs font-bold text-zinc-900 line-clamp-1">{item.title}</div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-black text-zinc-950">
-                        ${item.bundleDiscountPrice.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] line-through text-zinc-400 font-mono">
-                        ${item.price.toFixed(2)}
-                      </span>
+                    <div className="flex items-baseline gap-1.5 font-mono text-xs mt-0.5">
+                      <span className="font-bold text-[#1E1E1E]">${item.bundleDiscountPrice.toFixed(2)}</span>
+                      <span className="text-[10px] text-[#444444] line-through">${item.price.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -162,51 +159,36 @@ export const FrequentlyBoughtTogether: React.FC<Props> = ({ productId }) => {
           })}
         </div>
 
-        {/* Pricing Summary & Checkout Button */}
-        <div className="w-full lg:w-72 bg-zinc-50 border border-zinc-200 rounded-2xl p-5 flex flex-col justify-between shrink-0 space-y-4">
-          <div className="space-y-1.5 text-xs">
-            <div className="flex items-center justify-between text-zinc-500">
-              <span>Combined Total:</span>
-              <span className="font-mono text-zinc-400 line-through">
-                ${calculatedRawPrice.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-zinc-900 font-bold">
-              <span>Bundle Price:</span>
-              <span className="font-mono text-base font-black text-zinc-950">
+        {/* Bundle Action Panel */}
+        <div className="w-full lg:w-72 p-4 bg-[#E4E2DD] border border-[#1E1E1E]/20 text-left space-y-3 font-mono shrink-0">
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase text-[#444444] font-bold">TOTAL ENSEMBLE PRICE</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-clash font-bold text-[#1E1E1E]">
                 ${calculatedBundlePrice.toFixed(2)}
               </span>
-            </div>
-            {calculatedSavings > 0 && (
-              <div className="flex items-center justify-between text-emerald-600 font-semibold text-[11px]">
-                <span className="inline-flex items-center gap-1">
-                  <Tag className="w-3 h-3" />
-                  <span>Instant Bundle Savings:</span>
+              {calculatedSavings > 0 && (
+                <span className="text-xs text-[#DB4A2B] font-bold">
+                  SAVE ${calculatedSavings.toFixed(2)}
                 </span>
-                <span className="font-mono font-bold">-${calculatedSavings.toFixed(2)}</span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <button
             type="button"
             onClick={handleAddBundleToCart}
-            disabled={selectedBundleItems.length === 0}
-            className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
-              addedToCartSuccess
-                ? 'bg-emerald-600 text-white'
-                : 'bg-zinc-950 hover:bg-zinc-800 text-white active:scale-95'
-            }`}
+            className="w-full raw-btn py-3 px-4 text-xs font-bold uppercase tracking-wider text-[#E4E2DD] bg-[#1E1E1E] border border-[#1E1E1E] hover:text-[#DB4A2B] flex items-center justify-center gap-2 cursor-pointer"
           >
             {addedToCartSuccess ? (
               <>
-                <Check className="w-4 h-4" />
-                <span>Bundle Added to Cart!</span>
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>ENSEMBLE ADDED</span>
               </>
             ) : (
               <>
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add {selectedBundleItems.length + 1} Items to Cart</span>
+                <span>ADD {1 + selectedBundleItems.length} ITEMS TO BAG</span>
               </>
             )}
           </button>
