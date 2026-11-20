@@ -22,6 +22,7 @@ import {
   Check,
   Building2,
   LogOut,
+  ArrowRight,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -30,25 +31,27 @@ import { validateCouponApi, getAvailableCouponsApi } from '../services/couponSer
 import { PaymentMethod, ShippingMethodType } from '../types/order';
 import { SavedAddress } from '../types/auth';
 import type { Coupon } from '../types/coupon';
+import { RawAtmosphere } from '../components/RawAtmosphere';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 const AVAILABLE_COUPONS = [
   {
     code: 'NOVA10',
-    title: '10% Off Entire Order',
+    title: '10% OFF ENTIRE ORDER',
     description: 'Get an extra 10% instant discount across all categories.',
     discountType: 'percent',
     value: 0.1,
   },
   {
     code: 'SPRING20',
-    title: '20% Mega Spring Discount',
+    title: '20% MEGA SPRING DISCOUNT',
     description: 'Save 20% on orders with immediate checkout application.',
     discountType: 'percent',
     value: 0.2,
   },
   {
     code: 'FREESHIP',
-    title: '100% Free Delivery',
+    title: '100% FREE DELIVERY',
     description: 'Eliminates all standard or expedited courier shipping fees.',
     discountType: 'shipping',
     value: 1.0,
@@ -77,7 +80,6 @@ export const CheckoutPage: React.FC = () => {
   });
 
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodType>('standard');
-  // Only 2 payment methods: 'card_upi' (Online Payment) and 'cod' (Cash on Delivery)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card_upi');
   const [onlineSubTab, setOnlineSubTab] = useState<'card' | 'upi'>('card');
   const [upiId, setUpiId] = useState('');
@@ -241,7 +243,6 @@ export const CheckoutPage: React.FC = () => {
         throw new Error(res.message || 'Invalid coupon code.');
       }
     } catch (err: any) {
-      // Fallback for legacy codes
       if (cleanCode === 'NOVA10' || cleanCode === 'WELCOME10') {
         const discount = Number((rawItemsPrice * 0.1).toFixed(2));
         setAppliedCoupon({ code: cleanCode, discount });
@@ -254,7 +255,7 @@ export const CheckoutPage: React.FC = () => {
         setAppliedCoupon({ code: cleanCode, discount: shippingPrice });
         setCouponCode(cleanCode);
       } else {
-        setCouponError(err.message || 'Invalid or expired coupon promo code.');
+        setCouponError(err.message || 'Invalid or expired voucher code.');
       }
     } finally {
       setValidatingCoupon(false);
@@ -292,12 +293,12 @@ export const CheckoutPage: React.FC = () => {
     }
 
     if (items.length === 0) {
-      setError('Your shopping cart is empty.');
+      setError('Your shopping bag is empty.');
       return;
     }
 
     if (!formData.phone || !formData.phone.trim()) {
-      setError('Contact phone number is required for shipping updates and courier dispatch.');
+      setError('Contact telephone number is required for courier delivery updates.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -309,7 +310,7 @@ export const CheckoutPage: React.FC = () => {
       !formData.state ||
       !formData.postalCode
     ) {
-      setError('Please complete all required shipping address fields.');
+      setError('Please complete all mandatory destination fields.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -321,7 +322,6 @@ export const CheckoutPage: React.FC = () => {
       setSagaStep(1);
       setSagaMessage('Step 1/5: Registering Order & Outbox Event (State: PENDING)...');
 
-      // Save address and phone to user profile if requested
       if (saveAddressToProfile && selectedSavedAddressId === 'new') {
         try {
           await addSavedAddress({
@@ -377,16 +377,13 @@ export const CheckoutPage: React.FC = () => {
         notes: formData.deliveryNotes,
       };
 
-      // Step 2: Inventory reservation simulation / transition
       setSagaStep(2);
       setSagaMessage('Step 2/5: Reserving Warehouse Inventory (2-Phase Stock Hold)...');
 
-      // Step 3: Payment authorization
       setSagaStep(3);
       setSagaMessage('Step 3/5: Authorizing Payment with Idempotency Key...');
 
       const res = await checkoutWithSagaApi(orderPayload).catch(async (_: any) => {
-        // Fallback to standard createOrderApi if saga endpoint is unavailable
         return await createOrderApi(orderPayload);
       });
 
@@ -410,7 +407,7 @@ export const CheckoutPage: React.FC = () => {
       }
     } catch (err: any) {
       setSagaFailed(true);
-      setError(err.message || 'An error occurred while executing distributed checkout saga.');
+      setError(err.message || 'An error occurred during distributed checkout saga coordination.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setTimeout(() => {
@@ -422,29 +419,20 @@ export const CheckoutPage: React.FC = () => {
 
   if (user?.role === 'company') {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-20 h-20 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700 shadow-sm">
-          <Building2 className="w-10 h-10" />
+      <div className="max-w-xl mx-auto px-4 py-24 text-center space-y-6 font-satoshi">
+        <div className="w-16 h-16 bg-[#1E1E1E] text-[#DB4A2B] flex items-center justify-center mx-auto">
+          <Building2 className="w-8 h-8" />
         </div>
         <div className="space-y-3">
-          <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold uppercase tracking-wider">
-            Business Account Active
+          <span className="px-3 py-1 bg-[#1E1E1E] text-[#E4E2DD] font-mono text-[10px] font-bold uppercase tracking-widest">
+            SELLER CREDENTIAL DETECTED
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-zinc-950 tracking-tight">
-            Checkout Restricted for Business Accounts
+          <h1 className="font-clash text-2xl sm:text-3xl font-bold uppercase tracking-tight text-[#1E1E1E]">
+            CHECKOUT RESTRICTED FOR MERCHANTS
           </h1>
-          <p className="text-sm text-zinc-600 max-w-md mx-auto leading-relaxed">
-            You are currently logged in with your seller account (<strong className="text-zinc-900 font-bold">{user.companyName || user.name}</strong>). Business accounts are configured to sell products and manage merchant inventory, and cannot place customer orders.
+          <p className="text-xs text-[#444444] max-w-md mx-auto leading-relaxed">
+            Logged in as merchant <strong className="text-[#1E1E1E] font-bold">{user.companyName || user.name}</strong>. Business accounts cannot purchase retail consumer inventory.
           </p>
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 max-w-md mx-auto text-left space-y-1">
-            <p className="font-bold flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-              <span>How to order as a customer:</span>
-            </p>
-            <p className="text-amber-800 pl-5.5">
-              Please log out from this business account and sign in with or register a customer account.
-            </p>
-          </div>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
@@ -454,23 +442,15 @@ export const CheckoutPage: React.FC = () => {
               await logout();
               navigate('/login?redirect=/checkout');
             }}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-extrabold text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-md active:scale-[0.98] cursor-pointer"
+            className="raw-btn px-6 py-3 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Log Out & Sign In as Customer</span>
+            SIGN OUT & SIGN IN AS CUSTOMER
           </button>
           <Link
             to="/business"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-zinc-800 bg-white hover:bg-zinc-100 border border-zinc-200 transition-all shadow-2xs"
+            className="px-6 py-3 bg-[#FFFFFF] border border-[#1E1E1E] text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-[#E4E2DD] transition-colors"
           >
-            <Building2 className="w-4 h-4" />
-            <span>Go to Merchant Dashboard</span>
-          </Link>
-          <Link
-            to="/"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-zinc-600 hover:text-zinc-900 transition-colors"
-          >
-            <span>Browse Products</span>
+            MERCHANT PORTAL
           </Link>
         </div>
       </div>
@@ -479,22 +459,23 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0 && !submitting) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
-          <ShoppingBag className="w-8 h-8" />
+      <div className="max-w-md mx-auto px-4 py-24 text-center space-y-6 font-satoshi">
+        <div className="w-16 h-16 bg-[#FFFFFF] border-2 border-[#1E1E1E] flex items-center justify-center mx-auto text-[#1E1E1E]">
+          <ShoppingBag className="w-8 h-8 text-[#DB4A2B]" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-black text-zinc-950">Your Cart is Empty</h1>
-          <p className="text-sm text-zinc-600 max-w-sm mx-auto">
-            You don't have any items in your cart yet. Explore our curated store collections to start shopping.
+          <h1 className="font-clash text-2xl font-bold uppercase tracking-tight text-[#1E1E1E]">
+            SHOPPING BAG IS EMPTY
+          </h1>
+          <p className="text-xs text-[#444444] leading-relaxed">
+            No items present in your order manifest. Explore the catalog to select pieces.
           </p>
         </div>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-md active:scale-[0.98]"
+          className="inline-block raw-btn px-8 py-3.5 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Browse Products</span>
+          BROWSE CATALOG
         </Link>
       </div>
     );
@@ -503,67 +484,71 @@ export const CheckoutPage: React.FC = () => {
   const savedAddresses = user?.savedAddresses || [];
 
   return (
-    <div className="min-h-screen bg-zinc-50/70 pb-20 pt-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between pb-6 border-b border-zinc-200/80 mb-8">
+    <div className="min-h-screen bg-[#E4E2DD] text-[#1E1E1E] font-satoshi py-8 px-4 sm:px-6 lg:px-10 relative select-none">
+      <RawAtmosphere variant="subtle" />
+
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Step Indicator Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b-2 border-[#1E1E1E]">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 transition-colors"
+            className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-[#1E1E1E] hover:text-[#DB4A2B] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Continue Shopping</span>
+            <span>RETURN TO CATALOG</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
-            <span className="text-zinc-950 font-bold">1. Cart</span>
-            <ChevronRight className="w-3 h-3 text-zinc-400" />
-            <span className="text-zinc-950 font-bold bg-zinc-950 text-white px-2.5 py-0.5 rounded-full text-[11px]">
-              2. Checkout
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest">
+            <span className="text-[#444444]">01. BAG</span>
+            <span className="text-[#444444]">/</span>
+            <span className="bg-[#1E1E1E] text-[#E4E2DD] px-2.5 py-1 font-bold">
+              02. CHECKOUT MANIFEST
             </span>
-            <ChevronRight className="w-3 h-3 text-zinc-400" />
-            <span className="text-zinc-400">3. Confirmation</span>
+            <span className="text-[#444444]">/</span>
+            <span className="text-[#444444]">03. DISPATCH CONFIRMATION</span>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-start gap-3 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="p-4 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B] text-xs font-mono font-bold uppercase flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmitOrder}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column: Shipping, Delivery & Payment Sections (7 Cols) */}
+            
+            {/* Left Column: Delivery Address, Shipping Speed, Payment (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Step 1: Shipping Address & Saved Address Book */}
-              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              
+              {/* STEP 1: DESTINATION ADDRESS */}
+              <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
                   <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
-                      1
+                    <span className="w-6 h-6 bg-[#1E1E1E] text-[#E4E2DD] text-xs font-mono font-bold flex items-center justify-center">
+                      01
                     </span>
-                    <h2 className="text-base font-extrabold text-zinc-950">
-                      Shipping Address
+                    <h2 className="font-clash text-lg font-bold uppercase tracking-tight text-[#1E1E1E]">
+                      DISPATCH DESTINATION
                     </h2>
                   </div>
-                  <span className="text-[11px] text-zinc-400 font-medium">
-                    Phone contact mandatory for delivery
+                  <span className="font-mono text-[10px] text-[#444444] uppercase">
+                    CONTACT TELEPHONE MANDATORY
                   </span>
                 </div>
 
-                {/* Saved Addresses Selector Cards */}
+                {/* Saved Address Book Selector */}
                 {savedAddresses.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 font-mono">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider block">
-                        Saved Address Book ({savedAddresses.length})
+                      <span className="text-[10px] font-bold text-[#444444] uppercase tracking-wider block">
+                        SAVED DESTINATIONS ({savedAddresses.length})
                       </span>
                       <Link
                         to="/profile"
-                        className="text-[11px] font-semibold text-indigo-600 hover:underline"
+                        className="text-[10px] font-bold text-[#DB4A2B] uppercase hover:underline"
                       >
-                        Manage in Profile
+                        MANAGE IN PROFILE →
                       </Link>
                     </div>
 
@@ -574,64 +559,41 @@ export const CheckoutPage: React.FC = () => {
                           <div
                             key={addr._id}
                             onClick={() => handleSelectSavedAddress(addr)}
-                            className={`p-4 rounded-2xl border cursor-pointer transition-all relative group ${
+                            className={`p-3.5 border cursor-pointer transition-all relative ${
                               isSelected
-                                ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs ring-2 ring-zinc-950/5'
-                                : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                                ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/40'
+                                : 'border border-[#1E1E1E]/20 bg-[#FFFFFF] hover:border-[#1E1E1E]/50'
                             }`}
                           >
-                            <div className="flex items-center justify-between pb-1.5">
-                              <span className="text-xs font-extrabold text-zinc-950 flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-700" />
-                                <span>{addr.label || 'Saved'}</span>
+                            <div className="flex items-center justify-between pb-1">
+                              <span className="text-[11px] font-bold text-[#1E1E1E] uppercase flex items-center gap-1.5">
+                                <span>{addr.label || 'DESTINATION'}</span>
                                 {addr.isDefault && (
-                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                                    Default
+                                  <span className="text-[9px] font-bold bg-[#1E1E1E] text-[#E4E2DD] px-1.5 py-0.2">
+                                    PRIMARY
                                   </span>
                                 )}
                               </span>
-                              <div className="flex items-center gap-1.5">
-                                {addr._id && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleDeleteSavedAddress(e, addr._id!)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-600 transition-opacity"
-                                    title="Delete address"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                )}
-                                <input
-                                  type="radio"
-                                  name="savedAddressRadio"
-                                  checked={isSelected}
-                                  onChange={() => handleSelectSavedAddress(addr)}
-                                  className="w-3.5 h-3.5 text-zinc-950"
-                                />
-                              </div>
+                              <input
+                                type="radio"
+                                name="savedAddressRadio"
+                                checked={isSelected}
+                                onChange={() => handleSelectSavedAddress(addr)}
+                                className="w-3.5 h-3.5 accent-[#1E1E1E]"
+                              />
                             </div>
-                            <p className="text-xs font-semibold text-zinc-800 truncate">
+                            <p className="text-xs font-bold text-[#1E1E1E] uppercase truncate">
                               {addr.fullName}
                             </p>
-                            <p className="text-[11px] font-mono font-bold text-zinc-600">
-                              Tel: {addr.phone}
+                            <p className="text-[10px] text-[#444444]">
+                              TEL: {addr.phone}
                             </p>
-                            <p className="text-[11px] text-zinc-500 truncate">
-                              {addr.addressLine1}
-                              {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
+                            <p className="text-[10px] text-[#444444] truncate">
+                              {addr.addressLine1} {addr.addressLine2 && `, ${addr.addressLine2}`}
                             </p>
-                            <p className="text-[11px] text-zinc-500">
+                            <p className="text-[10px] text-[#444444]">
                               {addr.city}, {addr.state} {addr.postalCode}
                             </p>
-                            {!addr.isDefault && addr._id && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleSetDefaultAddress(e, addr._id!)}
-                                className="text-[10px] font-bold text-zinc-500 hover:text-zinc-950 underline mt-1 cursor-pointer"
-                              >
-                                Set as default
-                              </button>
-                            )}
                           </div>
                         );
                       })}
@@ -639,29 +601,26 @@ export const CheckoutPage: React.FC = () => {
                       {/* Option to use a new address */}
                       <div
                         onClick={handleUseNewAddress}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col items-center justify-center text-center ${
+                        className={`p-3.5 border cursor-pointer transition-all flex flex-col items-center justify-center text-center ${
                           selectedSavedAddressId === 'new'
-                            ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs ring-2 ring-zinc-950/5'
-                            : 'border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50/50'
+                            ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/40'
+                            : 'border border-dashed border-[#1E1E1E]/40 hover:border-[#1E1E1E] bg-[#FFFFFF]'
                         }`}
                       >
-                        <Plus className="w-4 h-4 text-zinc-600 mb-1" />
-                        <span className="text-xs font-extrabold text-zinc-900">
-                          + Enter New Address
-                        </span>
-                        <span className="text-[10px] text-zinc-400">
-                          Specify a new delivery destination
+                        <Plus className="w-4 h-4 text-[#1E1E1E] mb-1" />
+                        <span className="text-xs font-mono font-bold text-[#1E1E1E] uppercase">
+                          + SPECIFY NEW DESTINATION
                         </span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Address Form Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-zinc-100">
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Recipient Full Name *
+                {/* Form Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 font-mono text-xs">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      RECIPIENT NAME *
                     </label>
                     <input
                       type="text"
@@ -669,15 +628,14 @@ export const CheckoutPage: React.FC = () => {
                       required
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      placeholder="e.g. Jane Doe"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                      placeholder="Jane Doe"
+                      className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider flex items-center justify-between">
-                      <span>Contact Phone *</span>
-                      <span className="text-[10px] text-emerald-600 font-semibold lowercase">Required for OTP & Courier</span>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      CONTACT TELEPHONE *
                     </label>
                     <input
                       type="tel"
@@ -685,14 +643,14 @@ export const CheckoutPage: React.FC = () => {
                       required
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder="+1 (555) 000-0000 / 9876543210"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                     />
                   </div>
 
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Street Address *
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      STREET ADDRESS *
                     </label>
                     <input
                       type="text"
@@ -700,28 +658,28 @@ export const CheckoutPage: React.FC = () => {
                       required
                       value={formData.addressLine1}
                       onChange={handleInputChange}
-                      placeholder="House / Flat #, Building Name, Street"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                      placeholder="House / Unit #, Building Name, Street"
+                      className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                     />
                   </div>
 
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Apartment, suite, unit (optional)
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      SUITE / APT / FLOOR (OPTIONAL)
                     </label>
                     <input
                       type="text"
                       name="addressLine2"
                       value={formData.addressLine2}
                       onChange={handleInputChange}
-                      placeholder="Apt 4B, 2nd Floor"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                      placeholder="Studio 4B"
+                      className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      City *
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      CITY *
                     </label>
                     <input
                       type="text"
@@ -729,15 +687,15 @@ export const CheckoutPage: React.FC = () => {
                       required
                       value={formData.city}
                       onChange={handleInputChange}
-                      placeholder="e.g. San Francisco"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                      placeholder="City"
+                      className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                        State *
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                        STATE *
                       </label>
                       <input
                         type="text"
@@ -745,13 +703,13 @@ export const CheckoutPage: React.FC = () => {
                         required
                         value={formData.state}
                         onChange={handleInputChange}
-                        placeholder="CA"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                        placeholder="State / Region"
+                        className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                        ZIP / Postal *
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                        POSTAL CODE *
                       </label>
                       <input
                         type="text"
@@ -759,39 +717,35 @@ export const CheckoutPage: React.FC = () => {
                         required
                         value={formData.postalCode}
                         onChange={handleInputChange}
-                        placeholder="94103"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/5 transition-all"
+                        placeholder="ZIP"
+                        className="w-full px-3 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                       />
                     </div>
                   </div>
 
                   {/* Save to Profile Toggle */}
                   {selectedSavedAddressId === 'new' && (
-                    <div className="sm:col-span-2 p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-3 animate-in fade-in">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
+                    <div className="sm:col-span-2 p-3 bg-[#E4E2DD]/40 border border-[#1E1E1E]/20 space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={saveAddressToProfile}
                           onChange={(e) => setSaveAddressToProfile(e.target.checked)}
-                          className="w-4 h-4 rounded text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                          className="w-4 h-4 accent-[#1E1E1E]"
                         />
-                        <span className="text-xs font-extrabold text-zinc-950 flex items-center gap-1">
-                          <BookmarkCheck className="w-3.5 h-3.5 text-emerald-600" />
-                          Save this address & contact phone to my profile
+                        <span className="text-[11px] font-bold text-[#1E1E1E] uppercase">
+                          SAVE DESTINATION TO MY PROFILE
                         </span>
                       </label>
-
                       {saveAddressToProfile && (
-                        <div className="pl-6 flex items-center gap-2">
-                          <label className="text-[11px] font-bold text-zinc-500">
-                            Address Label:
-                          </label>
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[10px] text-[#444444] uppercase">LABEL:</span>
                           <input
                             type="text"
                             value={addressLabel}
                             onChange={(e) => setAddressLabel(e.target.value)}
-                            placeholder="Home, Work, Warehouse"
-                            className="px-2.5 py-1 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-900 max-w-[150px]"
+                            placeholder="Home / Studio"
+                            className="px-2.5 py-1 border border-[#1E1E1E]/30 bg-[#FFFFFF] text-xs font-mono uppercase text-[#1E1E1E] max-w-[140px]"
                           />
                         </div>
                       )}
@@ -800,29 +754,29 @@ export const CheckoutPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Step 2: Shipping Method */}
-              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              {/* STEP 2: SHIPPING SPEED */}
+              <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
                   <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
-                      2
+                    <span className="w-6 h-6 bg-[#1E1E1E] text-[#E4E2DD] text-xs font-mono font-bold flex items-center justify-center">
+                      02
                     </span>
-                    <h2 className="text-base font-extrabold text-zinc-950">
-                      Delivery Speed
+                    <h2 className="font-clash text-lg font-bold uppercase tracking-tight text-[#1E1E1E]">
+                      FREIGHT SPEED & ROUTING
                     </h2>
                   </div>
-                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                  <span className="font-mono text-[10px] text-[#DB4A2B] font-bold uppercase flex items-center gap-1">
                     <Truck className="w-3.5 h-3.5" />
-                    Tracked Fulfillment
+                    TRACKED DISPATCH
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 font-mono text-xs">
                   <label
-                    className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-3.5 border cursor-pointer transition-all ${
                       shippingMethod === 'standard'
-                        ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/40'
+                        : 'border border-[#1E1E1E]/20 bg-[#FFFFFF] hover:border-[#1E1E1E]/50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -832,20 +786,20 @@ export const CheckoutPage: React.FC = () => {
                         value="standard"
                         checked={shippingMethod === 'standard'}
                         onChange={() => setShippingMethod('standard')}
-                        className="w-4 h-4 text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                        className="w-4 h-4 accent-[#1E1E1E]"
                       />
                       <div>
-                        <div className="text-xs font-extrabold text-zinc-950">
-                          Standard Ground Delivery
+                        <div className="font-bold text-[#1E1E1E] uppercase">
+                          STANDARD GROUND COURIER
                         </div>
-                        <div className="text-[11px] text-zinc-500">
-                          Estimated 3 - 5 business days
+                        <div className="text-[10px] text-[#444444]">
+                          ESTIMATED 3 - 5 OPERATIONAL DAYS
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono">
+                    <span className="font-bold text-[#1E1E1E]">
                       {rawItemsPrice >= 75 ? (
-                        <span className="text-emerald-700 uppercase font-black">Free</span>
+                        <span className="text-emerald-700 font-bold uppercase">COMPLIMENTARY</span>
                       ) : (
                         '$7.99'
                       )}
@@ -853,10 +807,10 @@ export const CheckoutPage: React.FC = () => {
                   </label>
 
                   <label
-                    className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-3.5 border cursor-pointer transition-all ${
                       shippingMethod === 'express'
-                        ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/40'
+                        : 'border border-[#1E1E1E]/20 bg-[#FFFFFF] hover:border-[#1E1E1E]/50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -866,30 +820,25 @@ export const CheckoutPage: React.FC = () => {
                         value="express"
                         checked={shippingMethod === 'express'}
                         onChange={() => setShippingMethod('express')}
-                        className="w-4 h-4 text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                        className="w-4 h-4 accent-[#1E1E1E]"
                       />
                       <div>
-                        <div className="text-xs font-extrabold text-zinc-950 flex items-center gap-1.5">
-                          <span>Express Courier</span>
-                          <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold">
-                            Popular
-                          </span>
+                        <div className="font-bold text-[#1E1E1E] uppercase">
+                          EXPRESS COURIER
                         </div>
-                        <div className="text-[11px] text-zinc-500">
-                          Estimated 2 business days
+                        <div className="text-[10px] text-[#444444]">
+                          ESTIMATED 2 BUSINESS DAYS
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono text-zinc-900">
-                      $14.99
-                    </span>
+                    <span className="font-bold text-[#1E1E1E]">$14.99</span>
                   </label>
 
                   <label
-                    className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-3.5 border cursor-pointer transition-all ${
                       shippingMethod === 'overnight'
-                        ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/40'
+                        : 'border border-[#1E1E1E]/20 bg-[#FFFFFF] hover:border-[#1E1E1E]/50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -899,51 +848,46 @@ export const CheckoutPage: React.FC = () => {
                         value="overnight"
                         checked={shippingMethod === 'overnight'}
                         onChange={() => setShippingMethod('overnight')}
-                        className="w-4 h-4 text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                        className="w-4 h-4 accent-[#1E1E1E]"
                       />
                       <div>
-                        <div className="text-xs font-extrabold text-zinc-950 flex items-center gap-1.5">
-                          <span>Next-Day Priority Air</span>
-                          <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold">
-                            Fastest
-                          </span>
+                        <div className="font-bold text-[#1E1E1E] uppercase">
+                          PRIORITY AIR DISPATCH
                         </div>
-                        <div className="text-[11px] text-zinc-500">
-                          Guaranteed delivery by tomorrow 10:30 AM
+                        <div className="text-[10px] text-[#444444]">
+                          GUARANTEED ARRIVAL BY 10:30 AM
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono text-zinc-900">
-                      $34.99
-                    </span>
+                    <span className="font-bold text-[#1E1E1E]">$34.99</span>
                   </label>
                 </div>
               </div>
 
-              {/* Step 3: Payment Method - Strictly 2 Options (Credit/Debit/UPI vs Cash on Delivery) */}
-              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              {/* STEP 3: PAYMENT OPTIONS */}
+              <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
                   <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-xl bg-zinc-950 text-white text-xs font-black flex items-center justify-center">
-                      3
+                    <span className="w-6 h-6 bg-[#1E1E1E] text-[#E4E2DD] text-xs font-mono font-bold flex items-center justify-center">
+                      03
                     </span>
-                    <h2 className="text-base font-extrabold text-zinc-950">
-                      Payment Options
+                    <h2 className="font-clash text-lg font-bold uppercase tracking-tight text-[#1E1E1E]">
+                      SETTLEMENT PROTOCOL
                     </h2>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>256-Bit SSL Encryption</span>
+                  <div className="flex items-center gap-1 font-mono text-[10px] text-[#1E1E1E] font-bold uppercase">
+                    <Lock className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                    <span>256-BIT TLS VAULT</span>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {/* Method 1: Credit / Debit / UPI (Online Instant Payment) */}
+                <div className="space-y-3 font-mono text-xs">
+                  {/* Method 1: Credit / Debit / UPI */}
                   <div
-                    className={`p-4 rounded-2xl border transition-all ${
+                    className={`p-4 border transition-all ${
                       paymentMethod === 'card_upi' || paymentMethod === 'card' || paymentMethod === 'upi'
-                        ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/30'
+                        : 'border border-[#1E1E1E]/20 bg-[#FFFFFF]'
                     }`}
                   >
                     <label className="flex items-center justify-between cursor-pointer">
@@ -954,83 +898,82 @@ export const CheckoutPage: React.FC = () => {
                           value="card_upi"
                           checked={paymentMethod === 'card_upi' || paymentMethod === 'card' || paymentMethod === 'upi'}
                           onChange={() => setPaymentMethod('card_upi')}
-                          className="w-4 h-4 text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                          className="w-4 h-4 accent-[#1E1E1E]"
                         />
                         <div>
-                          <div className="text-xs font-extrabold text-zinc-950 flex items-center gap-2">
-                            <span>Credit / Debit Card & UPI</span>
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                              Instant Approval
+                          <div className="font-bold text-[#1E1E1E] uppercase flex items-center gap-2">
+                            <span>ONLINE PAYMENT &bull; CARD & UPI</span>
+                            <span className="px-1.5 py-0.2 bg-[#1E1E1E] text-[#E4E2DD] text-[9px] font-bold">
+                              INSTANT APPROVAL
                             </span>
                           </div>
-                          <div className="text-[11px] text-zinc-500">
-                            Visa, MasterCard, RuPay, Google Pay, PhonePe, Paytm, BHIM UPI
+                          <div className="text-[10px] text-[#444444]">
+                            VISA, MASTERCARD, RUPAY, GPAY, PHONEPE, BHIM UPI
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-zinc-700">
+                      <div className="flex items-center gap-2 text-[#1E1E1E]">
                         <CreditCard className="w-4 h-4" />
-                        <QrCode className="w-4 h-4 text-indigo-600" />
+                        <QrCode className="w-4 h-4 text-[#DB4A2B]" />
                       </div>
                     </label>
 
                     {(paymentMethod === 'card_upi' || paymentMethod === 'card' || paymentMethod === 'upi') && (
-                      <div className="mt-4 pt-4 border-t border-zinc-200/80 space-y-4 animate-in fade-in">
-                        {/* Sub-Tabs: Card vs UPI */}
-                        <div className="flex items-center gap-2 bg-zinc-200/60 p-1 rounded-xl">
+                      <div className="mt-4 pt-4 border-t border-[#1E1E1E]/15 space-y-3 animate-in fade-in">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setOnlineSubTab('card')}
-                            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+                            className={`flex-1 py-2 px-3 text-xs font-bold uppercase tracking-wider transition ${
                               onlineSubTab === 'card'
-                                ? 'bg-white text-zinc-950 shadow-xs'
-                                : 'text-zinc-600 hover:text-zinc-950'
+                                ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                                : 'bg-[#FFFFFF] border border-[#1E1E1E]/30 text-[#1E1E1E]'
                             }`}
                           >
-                            Credit / Debit Card
+                            CREDIT / DEBIT CARD
                           </button>
                           <button
                             type="button"
                             onClick={() => setOnlineSubTab('upi')}
-                            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            className={`flex-1 py-2 px-3 text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5 ${
                               onlineSubTab === 'upi'
-                                ? 'bg-white text-zinc-950 shadow-xs'
-                                : 'text-zinc-600 hover:text-zinc-950'
+                                ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                                : 'bg-[#FFFFFF] border border-[#1E1E1E]/30 text-[#1E1E1E]'
                             }`}
                           >
-                            <QrCode className="w-3.5 h-3.5 text-indigo-600" />
-                            <span>UPI (GPay / PhonePe / Paytm)</span>
+                            <QrCode className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                            <span>BHIM / UPI APPS</span>
                           </button>
                         </div>
 
                         {onlineSubTab === 'card' ? (
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-3 pt-1">
                             <div className="col-span-2 space-y-1">
-                              <label className="block text-[10px] font-bold text-zinc-600 uppercase">
-                                Card Number
+                              <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase">
+                                CARD NUMBER
                               </label>
                               <input
                                 type="text"
                                 value={cardNumber}
                                 onChange={(e) => setCardNumber(e.target.value)}
                                 placeholder="4242 •••• •••• 4242"
-                                className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-xs font-mono text-zinc-900 focus:outline-none focus:border-zinc-950"
+                                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="block text-[10px] font-bold text-zinc-600 uppercase">
-                                Expiry (MM / YY)
+                              <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase">
+                                EXPIRY (MM / YY)
                               </label>
                               <input
                                 type="text"
                                 value={cardExpiry}
                                 onChange={(e) => setCardExpiry(e.target.value)}
                                 placeholder="12 / 28"
-                                className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-xs font-mono text-zinc-900 focus:outline-none focus:border-zinc-950"
+                                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="block text-[10px] font-bold text-zinc-600 uppercase">
+                              <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase">
                                 CVC / CVV
                               </label>
                               <input
@@ -1038,46 +981,44 @@ export const CheckoutPage: React.FC = () => {
                                 value={cardCvc}
                                 onChange={(e) => setCardCvc(e.target.value)}
                                 placeholder="•••"
-                                className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-xs font-mono text-zinc-900 focus:outline-none focus:border-zinc-950"
+                                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                               />
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-3">
-                            <div className="space-y-1">
-                              <label className="block text-[10px] font-bold text-zinc-600 uppercase">
-                                Virtual Payment Address (UPI ID)
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={upiId}
-                                  onChange={(e) => {
-                                    setUpiId(e.target.value);
-                                    setUpiVerified(false);
-                                  }}
-                                  placeholder="e.g. yourname@okhdfcbank / mobile@paytm"
-                                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-xs font-mono text-zinc-900 focus:outline-none focus:border-zinc-950"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (upiId.includes('@')) {
-                                      setUpiVerified(true);
-                                    } else {
-                                      alert('Please enter a valid UPI ID format (e.g. name@upi)');
-                                    }
-                                  }}
-                                  className="px-3 py-2 rounded-lg bg-zinc-950 text-white text-xs font-bold shrink-0 hover:bg-zinc-800"
-                                >
-                                  {upiVerified ? 'Verified' : 'Verify'}
-                                </button>
-                              </div>
+                          <div className="space-y-2 pt-1">
+                            <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase">
+                              UPI IDENTIFIER (VPA)
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={upiId}
+                                onChange={(e) => {
+                                  setUpiId(e.target.value);
+                                  setUpiVerified(false);
+                                }}
+                                placeholder="user@okhdfcbank / mobile@paytm"
+                                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (upiId.includes('@')) {
+                                    setUpiVerified(true);
+                                  } else {
+                                    alert('Enter a valid UPI VPA format (e.g. name@upi)');
+                                  }
+                                }}
+                                className="px-4 py-2 bg-[#1E1E1E] text-[#E4E2DD] text-xs font-bold uppercase tracking-wider shrink-0"
+                              >
+                                {upiVerified ? 'VERIFIED' : 'VERIFY'}
+                              </button>
                             </div>
                             {upiVerified && (
-                              <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                              <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
                                 <Check className="w-3.5 h-3.5" />
-                                UPI ID Verified. Payment request will trigger upon placing order.
+                                UPI ID AUTHENTICATED. APPROVAL TRIGGERED UPON ORDER DISPATCH.
                               </p>
                             )}
                           </div>
@@ -1086,12 +1027,12 @@ export const CheckoutPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Method 2: Cash on Delivery (COD) */}
+                  {/* Method 2: Cash on Delivery */}
                   <label
-                    className={`block p-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`block p-4 border cursor-pointer transition-all ${
                       paymentMethod === 'cod'
-                        ? 'border-zinc-950 bg-zinc-50/90 shadow-2xs'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/30'
+                        : 'border border-[#1E1E1E]/20 bg-[#FFFFFF]'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1102,19 +1043,19 @@ export const CheckoutPage: React.FC = () => {
                           value="cod"
                           checked={paymentMethod === 'cod'}
                           onChange={() => setPaymentMethod('cod')}
-                          className="w-4 h-4 text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                          className="w-4 h-4 accent-[#1E1E1E]"
                         />
                         <div>
-                          <div className="text-xs font-extrabold text-zinc-950">
-                            Cash on Delivery (COD)
+                          <div className="font-bold text-[#1E1E1E] uppercase">
+                            CASH ON DELIVERY (COD)
                           </div>
-                          <div className="text-[11px] text-zinc-500">
-                            Pay with cash or card upon physical package handover
+                          <div className="text-[10px] text-[#444444]">
+                            SETTLE IN PERSON UPON DIRECT PHYSICAL COURIER HANDOVER
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold uppercase bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded">
-                        Pay on delivery
+                      <span className="text-[9px] font-bold uppercase bg-[#D9D6D0] text-[#1E1E1E] px-2 py-0.5">
+                        DOORSTEP
                       </span>
                     </div>
                   </label>
@@ -1122,47 +1063,43 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: Order Summary & Coupon Promotion Center (5 Cols) */}
-            <div className="lg:col-span-5 sticky top-20 space-y-4">
-              <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-                  <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider">
-                    Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
+            {/* Right Column: Order Summary & Coupon Privileges (5 cols) */}
+            <div className="lg:col-span-5 sticky top-20 space-y-4 font-mono">
+              <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
+                  <h3 className="font-clash text-base font-bold uppercase tracking-tight text-[#1E1E1E]">
+                    ORDER MANIFEST ({items.length} {items.length === 1 ? 'ITEM' : 'ITEMS'})
                   </h3>
                   <Link
                     to="/"
-                    className="text-xs text-indigo-600 hover:underline font-semibold"
+                    className="text-[10px] font-bold text-[#DB4A2B] uppercase hover:underline"
                   >
-                    Edit Cart
+                    EDIT BAG
                   </Link>
                 </div>
 
                 {/* Items Mini List */}
-                <div className="max-h-56 overflow-y-auto divide-y divide-zinc-100 pr-1 space-y-2">
+                <div className="max-h-56 overflow-y-auto divide-y divide-[#1E1E1E]/10 pr-1 space-y-2">
                   {items.map((item) => (
                     <div
                       key={item.productId}
                       className="pt-2 first:pt-0 flex items-center gap-3"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-200/80 shrink-0 overflow-hidden p-1 flex items-center justify-center">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <Package className="w-5 h-5 text-zinc-400" />
-                        )}
+                      <div className="w-12 h-14 bg-[#E4E2DD]/40 border border-[#1E1E1E]/20 shrink-0 p-1 flex items-center justify-center">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-contain"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-bold text-zinc-900 truncate">
+                        <h4 className="font-clash text-xs font-bold uppercase text-[#1E1E1E] truncate">
                           {item.title}
                         </h4>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-2">
-                          <span>Qty: {item.quantity}</span>
-                          <span>•</span>
-                          <span className="text-zinc-700 font-semibold font-mono">
+                        <div className="text-[10px] text-[#444444] flex items-center gap-2">
+                          <span>QTY: {item.quantity}</span>
+                          <span>&bull;</span>
+                          <span className="text-[#1E1E1E] font-bold">
                             ${(item.price * item.quantity).toFixed(2)}
                           </span>
                         </div>
@@ -1171,162 +1108,109 @@ export const CheckoutPage: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Promo Coupon Center */}
-                <div className="pt-2 border-t border-zinc-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-zinc-900" />
-                      <span>Promotions & Coupons</span>
+                {/* Promo Voucher Center */}
+                <div className="pt-2 border-t border-[#1E1E1E]/15 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                      <span>PROMOTIONS & VOUCHERS</span>
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowCouponDrawer(!showCouponDrawer)}
-                      className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                      className="text-[10px] font-bold text-[#DB4A2B] uppercase hover:underline cursor-pointer"
                     >
-                      {showCouponDrawer ? 'Hide Offers' : 'View Offers'}
+                      {showCouponDrawer ? 'HIDE OFFERS' : 'VIEW OFFERS'}
                     </button>
                   </div>
 
-                  {/* Input Box */}
                   <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Promo code (e.g. NOVA10)"
-                        className="w-full pl-8 pr-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs uppercase font-mono placeholder:normal-case placeholder:font-sans focus:outline-none focus:bg-white focus:border-zinc-900"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="VOUCHER (E.G. NOVA10)"
+                      className="w-full px-3 py-2 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-mono uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                    />
                     <button
                       type="button"
                       onClick={handleApplyCoupon}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer shrink-0"
+                      className="px-4 py-2 bg-[#1E1E1E] hover:bg-[#DB4A2B] text-[#E4E2DD] text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shrink-0"
                     >
-                      Apply
+                      APPLY
                     </button>
                   </div>
 
                   {appliedCoupon && (
-                    <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 flex items-center justify-between">
+                    <div className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 border border-emerald-200 flex items-center justify-between uppercase">
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Code '{appliedCoupon.code}' applied (-${discountAmount.toFixed(2)})
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        CODE &lsquo;{appliedCoupon.code}&rsquo; APPLIED (-${discountAmount.toFixed(2)})
                       </span>
                       <button
                         type="button"
                         onClick={handleRemoveCoupon}
-                        className="text-[10px] text-rose-600 hover:underline font-bold"
+                        className="text-[#DB4A2B] hover:underline"
                       >
-                        Remove
+                        REMOVE
                       </button>
                     </div>
                   )}
 
                   {couponError && (
-                    <p className="text-[11px] text-rose-600 font-medium">
+                    <p className="text-[10px] text-[#DB4A2B] font-bold uppercase">
                       {couponError}
                     </p>
                   )}
 
-                  {/* Expandable Available Coupons List */}
+                  {/* Expandable Coupons Drawer */}
                   {showCouponDrawer && (
-                    <div className="space-y-2 pt-2 border-t border-zinc-100 animate-in fade-in max-h-60 overflow-y-auto pr-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                        Available Coupon Discounts
-                      </span>
-                      {dynamicCoupons.length > 0 ? (
-                        dynamicCoupons.map((cp) => (
-                          <div
-                            key={cp._id || cp.code}
-                            className="p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/70 flex items-center justify-between gap-2"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-mono text-xs font-black text-zinc-950 bg-zinc-200 px-1.5 py-0.5 rounded">
-                                  {cp.code}
-                                </span>
-                                <span className="text-xs font-bold text-emerald-800">
-                                  {cp.discountType === 'percentage'
-                                    ? `${cp.discountValue}% OFF`
-                                    : `$${cp.discountValue.toFixed(2)} OFF`}
-                                </span>
-                                {cp.companyName && (
-                                  <span className="text-[9px] text-zinc-500 font-medium">
-                                    • {cp.companyName}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-zinc-600 mt-0.5 line-clamp-1">
-                                {cp.description}
-                              </p>
-                              {cp.minPurchaseAmount > 0 && (
-                                <p className="text-[9px] text-zinc-400 font-mono">
-                                  Min. order: ${cp.minPurchaseAmount.toFixed(2)}
-                                </p>
-                              )}
+                    <div className="space-y-2 pt-2 border-t border-[#1E1E1E]/10 animate-in fade-in max-h-56 overflow-y-auto pr-1">
+                      {AVAILABLE_COUPONS.map((cp) => (
+                        <div
+                          key={cp.code}
+                          className="p-2.5 border border-[#1E1E1E]/20 bg-[#E4E2DD]/30 flex items-center justify-between gap-2"
+                        >
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs text-[#1E1E1E] bg-[#FFFFFF] px-1.5 py-0.5 border border-[#1E1E1E]/20">
+                                {cp.code}
+                              </span>
+                              <span className="text-[11px] font-bold text-[#DB4A2B]">
+                                {cp.title}
+                              </span>
                             </div>
-                            <button
-                              type="button"
-                              disabled={validatingCoupon}
-                              onClick={() => applySpecificCoupon(cp.code)}
-                              className="px-2.5 py-1 rounded-lg bg-zinc-950 text-white text-[10px] font-bold shrink-0 hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-                            >
-                              Apply
-                            </button>
+                            <p className="text-[9px] text-[#444444] mt-0.5 normal-case">
+                              {cp.description}
+                            </p>
                           </div>
-                        ))
-                      ) : (
-                        AVAILABLE_COUPONS.map((cp) => (
-                          <div
-                            key={cp.code}
-                            className="p-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/50 flex items-center justify-between gap-2"
+                          <button
+                            type="button"
+                            onClick={() => applySpecificCoupon(cp.code)}
+                            className="px-2.5 py-1 bg-[#1E1E1E] hover:bg-[#DB4A2B] text-[#E4E2DD] text-[10px] font-bold uppercase shrink-0 cursor-pointer"
                           >
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs font-black text-zinc-950 bg-zinc-200 px-1.5 py-0.5 rounded">
-                                  {cp.code}
-                                </span>
-                                <span className="text-xs font-bold text-zinc-800">
-                                  {cp.title}
-                                </span>
-                              </div>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">
-                                {cp.description}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              disabled={validatingCoupon}
-                              onClick={() => applySpecificCoupon(cp.code)}
-                              className="px-2.5 py-1 rounded-lg bg-zinc-950 text-white text-[10px] font-bold shrink-0 hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        ))
-                      )}
+                            APPLY
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* Calculations */}
-                <div className="pt-2 border-t border-zinc-100 space-y-2 text-xs text-zinc-600">
+                {/* Calculations Breakdown */}
+                <div className="pt-2 border-t border-[#1E1E1E]/15 space-y-1.5 text-xs text-[#444444] uppercase">
                   <div className="flex items-center justify-between">
-                    <span>Items Subtotal</span>
-                    <span className="font-semibold text-zinc-900 font-mono">
+                    <span>ITEMS SUBTOTAL</span>
+                    <span className="font-bold text-[#1E1E1E]">
                       ${rawItemsPrice.toFixed(2)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span>Shipping & Handling</span>
-                    <span className="font-semibold text-zinc-900 font-mono">
+                    <span>FREIGHT & DISPATCH</span>
+                    <span className="font-bold text-[#1E1E1E]">
                       {shippingPrice === 0 ? (
-                        <span className="text-emerald-700 uppercase font-bold text-[10px]">
-                          Free
-                        </span>
+                        <span className="text-emerald-700 font-bold">COMPLIMENTARY</span>
                       ) : (
                         `$${shippingPrice.toFixed(2)}`
                       )}
@@ -1334,22 +1218,22 @@ export const CheckoutPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span>Estimated Sales Tax (8%)</span>
-                    <span className="font-semibold text-zinc-900 font-mono">
+                    <span>SALES TAX (8%)</span>
+                    <span className="font-bold text-[#1E1E1E]">
                       ${taxPrice.toFixed(2)}
                     </span>
                   </div>
 
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-between text-emerald-700 font-semibold">
-                      <span>Promotional Discount</span>
-                      <span className="font-mono">-${discountAmount.toFixed(2)}</span>
+                    <div className="flex items-center justify-between text-[#DB4A2B] font-bold">
+                      <span>VOUCHER DEDUCTION</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
                     </div>
                   )}
 
-                  <div className="pt-3 border-t border-zinc-200 flex items-center justify-between text-sm font-extrabold text-zinc-950">
-                    <span>Order Total</span>
-                    <span className="text-lg font-black font-mono">
+                  <div className="pt-3 border-t-2 border-[#1E1E1E] flex items-center justify-between text-base font-clash font-bold text-[#1E1E1E]">
+                    <span>FINAL SETTLEMENT</span>
+                    <span className="text-xl">
                       ${finalTotal.toFixed(2)}
                     </span>
                   </div>
@@ -1360,29 +1244,30 @@ export const CheckoutPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-xs font-black text-white bg-zinc-950 hover:bg-zinc-800 shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full raw-btn py-4 px-6 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest cursor-pointer group flex items-center justify-center gap-2 disabled:opacity-40"
                   >
                     {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Authorizing & Placing Order...</span>
-                      </>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-[#E4E2DD] border-t-transparent animate-spin" />
+                        <span>AUTHORIZING TRANSACTIONS...</span>
+                      </div>
                     ) : (
                       <>
-                        <Lock className="w-4 h-4 text-emerald-400" />
-                        <span>Place Order (${finalTotal.toFixed(2)})</span>
+                        <Lock className="w-4 h-4" />
+                        <span>EXECUTE ORDER (${finalTotal.toFixed(2)})</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </button>
 
-                  <div className="grid grid-cols-2 gap-2 text-center text-[10px] text-zinc-400 pt-1">
+                  <div className="grid grid-cols-2 gap-2 text-center text-[10px] text-[#444444] pt-1 uppercase">
                     <div className="flex items-center justify-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>30-Day Guarantee</span>
+                      <span>30-DAY SAGA REFUND</span>
                     </div>
                     <div className="flex items-center justify-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Fast Dispatch</span>
+                      <Clock className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                      <span>EXPRESS COURIER</span>
                     </div>
                   </div>
                 </div>
@@ -1392,27 +1277,27 @@ export const CheckoutPage: React.FC = () => {
         </form>
       </div>
 
-      {/* Live Distributed Order Progress Visualizer Modal */}
+      {/* Live Distributed Saga Order Visualizer Modal */}
       {(submitting || sagaStep > 0) && (
-        <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-zinc-200 rounded-2xl p-6 sm:p-8 max-w-lg w-full text-zinc-900 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 bg-[#1E1E1E]/85 backdrop-blur-xs flex items-center justify-center p-4 font-satoshi animate-in fade-in duration-200">
+          <div className="bg-[#E4E2DD] border-2 border-[#1E1E1E] p-6 sm:p-8 max-w-lg w-full text-[#1E1E1E] shadow-2xl space-y-6">
             <div className="text-center space-y-2">
-              <div className="w-14 h-14 rounded-2xl bg-zinc-100 border border-zinc-200 text-zinc-900 flex items-center justify-center mx-auto text-xl">
-                <Shield className="w-6 h-6" />
+              <div className="w-12 h-12 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center mx-auto">
+                <Shield className="w-6 h-6 text-[#DB4A2B]" />
               </div>
-              <h3 className="text-xl font-black text-zinc-950 tracking-tight">
-                Securing Your Order
+              <h3 className="font-clash text-xl font-bold uppercase tracking-tight text-[#1E1E1E]">
+                COORDINATING DISTRIBUTED SAGA
               </h3>
-              <p className="text-xs text-zinc-500">
-                Please wait while we confirm your items and process your payment safely.
+              <p className="text-xs text-[#444444] font-mono uppercase">
+                TWO-PHASE INVENTORY HOLD & IDEMPOTENT TRANSACTION AUTHORIZATION
               </p>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-zinc-100 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-[#FFFFFF] border border-[#1E1E1E]/30 h-2 overflow-hidden">
               <div
                 className={`h-full transition-all duration-500 ${
-                  sagaFailed ? 'bg-rose-500' : 'bg-zinc-950'
+                  sagaFailed ? 'bg-[#DB4A2B]' : 'bg-[#1E1E1E]'
                 }`}
                 style={{
                   width: sagaFailed ? '100%' : `${Math.min(100, Math.max(10, sagaStep * 20))}%`,
@@ -1421,40 +1306,38 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Step list */}
-            <div className="space-y-2.5 text-xs">
+            <div className="space-y-2 font-mono text-xs uppercase">
               {[
-                { step: 1, title: 'Step 1: Staging Order Details', desc: 'Validating items and delivery destination' },
-                { step: 2, title: 'Step 2: Reserving Inventory', desc: 'Holding items from merchant warehouse' },
-                { step: 3, title: 'Step 3: Processing Payment', desc: 'Authorizing secure transaction' },
-                { step: 4, title: 'Step 4: Allocating Stock', desc: 'Confirming warehouse fulfillment slot' },
-                { step: 5, title: 'Step 5: Order Confirmed', desc: 'Generating confirmation and dispatching tracking' },
+                { step: 1, title: 'PHASE 1: STAGING ORDER DETAILS', desc: 'Validating inventory & shipping destination' },
+                { step: 2, title: 'PHASE 2: RESERVING INVENTORY', desc: 'Holding items in merchant distribution vault' },
+                { step: 3, title: 'PHASE 3: AUTHORIZING PAYMENT', desc: 'Generating cryptographic idempotency hash' },
+                { step: 4, title: 'PHASE 4: ALLOCATING WAREHOUSE SLOT', desc: 'Confirming logistics fulfillment manifest' },
+                { step: 5, title: 'PHASE 5: SAGA COMMITTED & DISPATCHED', desc: 'Transactional outbox event successfully emitted' },
               ].map((s) => {
                 const isCompleted = sagaStep > s.step;
                 const isCurrent = sagaStep === s.step;
                 return (
                   <div
                     key={s.step}
-                    className={`p-3 rounded-2xl border flex items-center justify-between transition ${
+                    className={`p-3 border flex items-center justify-between transition ${
                       isCompleted
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                        ? 'bg-[#FFFFFF] border-[#1E1E1E] text-emerald-700'
                         : isCurrent
-                        ? 'bg-zinc-50 border-zinc-900 text-zinc-950 shadow-xs ring-1 ring-zinc-900'
-                        : 'bg-zinc-50/50 border-zinc-200/60 text-zinc-400'
+                        ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                        : 'bg-[#E4E2DD]/40 border-[#1E1E1E]/20 text-[#444444]'
                     }`}
                   >
                     <div className="space-y-0.5">
-                      <div className="font-bold flex items-center gap-1.5">
-                        <span>{s.title}</span>
-                      </div>
-                      <div className="text-[10px] text-zinc-500">{s.desc}</div>
+                      <div className="font-bold">{s.title}</div>
+                      <div className="text-[9px] opacity-80 normal-case font-satoshi">{s.desc}</div>
                     </div>
                     <div className="shrink-0 ml-3">
                       {isCompleted ? (
-                        <span className="text-emerald-700 font-bold text-xs">Done</span>
+                        <span className="font-bold text-xs text-emerald-600">DONE</span>
                       ) : isCurrent ? (
-                        <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin" />
                       ) : (
-                        <span className="text-zinc-400 text-xs">Pending</span>
+                        <span className="text-[10px] opacity-40">WAITING</span>
                       )}
                     </div>
                   </div>
@@ -1463,8 +1346,8 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Status Footer */}
-            <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-center font-mono text-xs text-zinc-700">
-              {sagaMessage || 'Coordinating distributed transactions...'}
+            <div className="p-3 bg-[#FFFFFF] border border-[#1E1E1E]/20 text-center font-mono text-[11px] font-bold text-[#1E1E1E] uppercase">
+              {sagaMessage || 'COORDINATING DISTRIBUTED TRANSACTIONS...'}
             </div>
           </div>
         </div>
@@ -1472,3 +1355,5 @@ export const CheckoutPage: React.FC = () => {
     </div>
   );
 };
+
+export default CheckoutPage;
