@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Check, ExternalLink } from 'lucide-react';
+import { Save, Check, ExternalLink, Store } from 'lucide-react';
 import { getStorefrontSettingsApi, updateStorefrontSettingsApi } from '../../services/productService';
 import { useAuth } from '../../context/AuthContext';
+import { BrutalistButton } from '../../components/BrutalistButton';
 
 export const BusinessStorefrontPage: React.FC = () => {
   const { user } = useAuth();
@@ -44,11 +45,16 @@ export const BusinessStorefrontPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-[#1E1E1E] pb-4">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-zinc-900">Storefront Customizer</h2>
-          <p className="text-xs text-zinc-500 mt-1">
-            Customize how customers perceive your merchant brand, banner graphics, and store policies.
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 bg-[#1E1E1E] text-white">
+            PUBLIC IDENTITY
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-clash font-bold uppercase tracking-tight text-[#1E1E1E] mt-1">
+            Storefront Customizer
+          </h2>
+          <p className="text-xs font-mono text-[#444444] uppercase tracking-wider">
+            Curate store branding, hero promotional banners, and customer service guarantee.
           </p>
         </div>
 
@@ -56,75 +62,83 @@ export const BusinessStorefrontPage: React.FC = () => {
           href={`/store/${user?._id || ''}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 font-bold text-xs border border-zinc-200 shadow-2xs transition"
+          className="inline-flex items-center gap-2 px-4 py-2 border-2 border-[#1E1E1E] bg-white hover:bg-[#1E1E1E] hover:text-white text-[#1E1E1E] font-mono font-bold text-xs uppercase shadow-[3px_3px_0px_#1E1E1E] transition"
         >
           <span>Preview Live Storefront</span>
-          <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+          <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
 
-      <form onSubmit={handleSave} className="bg-white border border-zinc-200/80 rounded-2xl p-6 sm:p-8 space-y-5 text-xs shadow-xs">
+      <form onSubmit={handleSave} className="border-2 border-[#1E1E1E] bg-white p-6 sm:p-8 space-y-6 text-xs font-mono shadow-[6px_6px_0px_#1E1E1E]">
         <div>
-          <label className="block font-bold text-zinc-900 mb-1.5">Store Display Name</label>
+          <label className="block font-bold uppercase text-[#1E1E1E] mb-1.5">
+            STORE DISPLAY NAME
+          </label>
           <input
             type="text"
             disabled
             value={storeName}
-            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-500 cursor-not-allowed"
+            className="w-full bg-[#E4E2DD] border-2 border-zinc-400 px-4 py-2.5 text-[#444444] font-bold cursor-not-allowed uppercase"
           />
         </div>
 
         <div>
-          <label className="block font-bold text-zinc-900 mb-1.5">Brand Tagline</label>
+          <label className="block font-bold uppercase text-[#1E1E1E] mb-1.5">
+            STORE TAGLINE
+          </label>
           <input
             type="text"
-            placeholder="e.g. Official flagship audio gear and studio headphones"
+            placeholder="e.g. Official flagship audio gear and premium headphones"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
+            className="w-full bg-white border-2 border-[#1E1E1E] px-4 py-2.5 text-[#1E1E1E] font-satoshi placeholder-[#444444] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block font-bold text-zinc-900 mb-1.5">Hero Banner Image URL</label>
+          <label className="block font-bold uppercase text-[#1E1E1E] mb-1.5">
+            HERO BANNER IMAGE URL
+          </label>
           <input
             type="url"
             placeholder="https://images.unsplash.com/..."
             value={bannerUrl}
             onChange={(e) => setBannerUrl(e.target.value)}
-            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
+            className="w-full bg-white border-2 border-[#1E1E1E] px-4 py-2.5 text-[#1E1E1E] font-mono placeholder-[#444444] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block font-bold text-zinc-900 mb-1.5">Store Narrative & Customer Guarantee</label>
+          <label className="block font-bold uppercase text-[#1E1E1E] mb-1.5">
+            STORE STORY & CUSTOMER GUARANTEE
+          </label>
           <textarea
             rows={4}
-            placeholder="Share your brand story, manufacturing standards, and direct warranty details..."
+            placeholder="Share your brand story, authentic product guarantee, and return policies..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900"
+            className="w-full bg-white border-2 border-[#1E1E1E] px-4 py-2.5 text-[#1E1E1E] font-satoshi placeholder-[#444444] focus:outline-none resize-none"
           />
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
+        <div className="flex items-center justify-between pt-4 border-t-2 border-[#1E1E1E]">
           <div>
             {saved && (
-              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
+              <span className="inline-flex items-center gap-1.5 text-[#DB4A2B] font-bold uppercase">
                 <Check className="w-4 h-4" />
-                <span>Storefront updated successfully!</span>
+                <span>Storefront settings saved successfully!</span>
               </span>
             )}
           </div>
 
-          <button
+          <BrutalistButton
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 disabled:opacity-50 text-white font-bold transition cursor-pointer shadow-xs"
+            loading={saving}
+            variant="primary"
           >
-            <Save className="w-4 h-4" />
-            <span>{saving ? 'Saving...' : 'Save Settings'}</span>
-          </button>
+            <span>Save Storefront Settings</span>
+          </BrutalistButton>
         </div>
       </form>
     </div>
