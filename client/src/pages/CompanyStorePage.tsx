@@ -24,6 +24,7 @@ import { getAvailableCouponsApi } from '../services/couponService';
 import { ProductCard } from '../components/ProductCard';
 import type { Product, CompanyStorefrontResponse } from '../types/product';
 import type { Coupon } from '../types/coupon';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 export const CompanyStorePage: React.FC = () => {
   const { companyIdentifier } = useParams<{ companyIdentifier: string }>();
@@ -173,26 +174,26 @@ export const CompanyStorePage: React.FC = () => {
   const companyName = storeData?.companyName || decodeURIComponent(companyIdentifier || 'Merchant Store');
 
   return (
-    <div className="min-h-screen bg-zinc-50/60 text-zinc-900 flex flex-col font-sans pb-20">
+    <div className="min-h-screen bg-[#E4E2DD] text-[#1E1E1E] flex flex-col pb-24">
       {/* Optional Merchant Announcement Ribbon */}
       {storeData?.announcement && (
-        <div className="bg-amber-400 text-zinc-950 text-xs font-black py-2 px-4 text-center shadow-xs flex items-center justify-center gap-2 animate-in fade-in">
-          <Megaphone className="w-3.5 h-3.5" />
-          <span>{storeData.announcement}</span>
+        <div className="bg-[#F8A348] text-[#1E1E1E] text-xs font-mono font-bold py-2.5 px-4 text-center border-b-2 border-[#1E1E1E] flex items-center justify-center gap-2">
+          <Megaphone className="w-4 h-4" />
+          <span className="uppercase tracking-wider">{storeData.announcement}</span>
         </div>
       )}
 
       {/* Breadcrumb Navigation Bar */}
-      <div className="bg-white border-b border-zinc-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between text-xs text-zinc-500">
-          <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
-            <Link to="/" className="hover:text-zinc-900 transition-colors">
+      <div className="bg-[#D9D6D0] border-b-2 border-[#1E1E1E]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between text-xs font-mono">
+          <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap uppercase">
+            <Link to="/" className="text-[#444444] hover:text-[#1E1E1E] font-bold transition-colors">
               Marketplace
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            <span className="text-zinc-600">Stores</span>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            <span className="font-bold text-zinc-900 truncate max-w-[200px] sm:max-w-xs">
+            <ChevronRight className="w-3.5 h-3.5 text-[#1E1E1E] shrink-0" />
+            <span className="text-[#444444]">Stores</span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#1E1E1E] shrink-0" />
+            <span className="font-bold text-[#DB4A2B] truncate max-w-[200px] sm:max-w-xs">
               {companyName}
             </span>
           </nav>
@@ -200,13 +201,13 @@ export const CompanyStorePage: React.FC = () => {
           <button
             type="button"
             onClick={handleShareStore}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1 border border-[#1E1E1E] bg-white hover:bg-[#1E1E1E] hover:text-[#E4E2DD] text-xs font-mono font-bold uppercase transition-colors cursor-pointer shrink-0"
             title="Share Storefront"
           >
             {copiedLink ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">Link Copied</span>
+                <Check className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                <span className="text-[#DB4A2B]">URL Copied</span>
               </>
             ) : (
               <>
@@ -219,69 +220,69 @@ export const CompanyStorePage: React.FC = () => {
       </div>
 
       {/* Merchant Hero Banner */}
-      <div className="bg-white border-b border-zinc-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+      <div className="bg-white border-b-2 border-[#1E1E1E]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex items-start sm:items-center gap-5 sm:gap-6">
               {/* Store Avatar */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-900 shadow-2xs shrink-0">
-                <Store className="w-7 h-7 sm:w-8 sm:h-8 text-zinc-700" />
+              <div className="w-20 h-20 border-2 border-[#1E1E1E] bg-[#E4E2DD] flex items-center justify-center text-[#1E1E1E] shadow-[4px_4px_0px_#1E1E1E] shrink-0">
+                <Store className="w-10 h-10 text-[#1E1E1E]" />
               </div>
 
               {/* Store Titles & Info */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200 inline-flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    Verified Merchant
+                  <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase bg-[#1E1E1E] text-[#E4E2DD] inline-flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#FF89A9]" />
+                    VERIFIED MERCHANT STORE
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-50 text-zinc-500 border border-zinc-200">
-                    {storeData?.tagline || 'Official Storefront'}
+                  <span className="px-2.5 py-0.5 text-[10px] font-mono uppercase bg-[#D9D6D0] text-[#1E1E1E] border border-[#1E1E1E]">
+                    {storeData?.tagline || 'OFFICIAL CATALOG'}
                   </span>
                 </div>
 
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
+                <h1 className="text-3xl sm:text-4xl font-clash font-bold tracking-tight text-[#1E1E1E] uppercase">
                   {companyName}
                 </h1>
 
-                <p className="text-xs text-zinc-500 max-w-xl line-clamp-2">
+                <p className="text-xs font-satoshi text-[#444444] max-w-xl line-clamp-2 leading-relaxed">
                   {storeData?.description ||
-                    `Browse authentic products and verified inventory fulfilled directly by ${companyName}.`}
+                    `Explore verified authentic product inventory dispatched and guaranteed directly by ${companyName}.`}
                 </p>
               </div>
             </div>
 
             {/* Merchant Metrics Card */}
             {storeData && (
-              <div className="flex items-center gap-3 sm:gap-4 bg-zinc-50/70 p-3.5 rounded-2xl border border-zinc-200/60 self-start md:self-auto">
-                <div className="text-center px-2 sm:px-3">
-                  <div className="text-base sm:text-lg font-bold text-zinc-950">
+              <div className="flex items-center gap-4 bg-[#E4E2DD] p-4 border-2 border-[#1E1E1E] shadow-[4px_4px_0px_#1E1E1E] self-start md:self-auto">
+                <div className="text-center px-3">
+                  <div className="text-xl font-clash font-bold text-[#1E1E1E]">
                     {storeData.totalProducts}
                   </div>
-                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[9px] font-mono font-bold text-[#444444] uppercase tracking-wider">
                     Listed Items
                   </div>
                 </div>
 
-                <div className="h-7 w-px bg-zinc-200" />
+                <div className="h-8 w-0.5 bg-[#1E1E1E]" />
 
-                <div className="text-center px-2 sm:px-3">
-                  <div className="text-base sm:text-lg font-bold text-zinc-950 flex items-center justify-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <div className="text-center px-3">
+                  <div className="text-xl font-clash font-bold text-[#1E1E1E] flex items-center justify-center gap-1">
+                    <Star className="w-4 h-4 fill-[#DB4A2B] text-[#DB4A2B]" />
                     <span>{storeData.numReviews > 0 && storeData.rating > 0 ? storeData.rating.toFixed(1) : '0.0'}</span>
                   </div>
-                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    {storeData.numReviews > 0 ? `${storeData.numReviews} Reviews` : 'No reviews'}
+                  <div className="text-[9px] font-mono font-bold text-[#444444] uppercase tracking-wider">
+                    {storeData.numReviews > 0 ? `${storeData.numReviews} Reviews` : '0 Reviews'}
                   </div>
                 </div>
 
-                <div className="h-7 w-px bg-zinc-200" />
+                <div className="h-8 w-0.5 bg-[#1E1E1E]" />
 
-                <div className="text-center px-2 sm:px-3">
-                  <div className="text-base sm:text-lg font-bold text-zinc-950">
+                <div className="text-center px-3">
+                  <div className="text-xl font-clash font-bold text-[#1E1E1E]">
                     {storeData.categories.length}
                   </div>
-                  <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[9px] font-mono font-bold text-[#444444] uppercase tracking-wider">
                     Categories
                   </div>
                 </div>
@@ -290,42 +291,39 @@ export const CompanyStorePage: React.FC = () => {
           </div>
 
           {/* Quick Trust Highlights */}
-          <div className="mt-6 pt-5 border-t border-zinc-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-zinc-500">
+          <div className="mt-8 pt-6 border-t-2 border-[#1E1E1E] grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono uppercase text-[#1E1E1E]">
             <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-zinc-700 shrink-0" />
-              <span className="text-[11px] sm:text-xs">Direct Merchant Dispatch</span>
+              <Truck className="w-4 h-4 text-[#DB4A2B] shrink-0" />
+              <span>Direct Store Dispatch</span>
             </div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-zinc-700 shrink-0" />
-              <span className="text-[11px] sm:text-xs">100% Authentic Guarantee</span>
+              <ShieldCheck className="w-4 h-4 text-[#DB4A2B] shrink-0" />
+              <span>100% Authenticity Guarantee</span>
             </div>
             <div className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-zinc-700 shrink-0" />
-              <span className="text-[11px] sm:text-xs">30-Day Returns</span>
+              <RotateCcw className="w-4 h-4 text-[#DB4A2B] shrink-0" />
+              <span>30-Day Return Window</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-zinc-700 shrink-0" />
-              <span className="text-[11px] sm:text-xs">Verified Top Merchant</span>
+              <Sparkles className="w-4 h-4 text-[#DB4A2B] shrink-0" />
+              <span>Buyer Protection Guarantee</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Catalog Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex-1 w-full space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 flex-1 w-full space-y-10">
         {error && (
-          <div className="p-6 my-4 rounded-2xl bg-rose-50 border border-rose-200 text-center space-y-3">
-            <h3 className="text-sm font-bold text-rose-900">{error}</h3>
-            <p className="text-xs text-rose-700">
-              The merchant store you are looking for may have no published products or does not exist.
+          <div className="p-8 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-center space-y-4 shadow-[6px_6px_0px_#DB4A2B]">
+            <h3 className="text-lg font-clash font-bold uppercase text-[#1E1E1E]">{error}</h3>
+            <p className="text-xs font-satoshi text-[#444444]">
+              The merchant storefront you are inspecting has no public listings or has been suspended.
             </p>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Marketplace</span>
-            </Link>
+            <BrutalistButton to="/" variant="primary">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              <span>Return to Main Marketplace</span>
+            </BrutalistButton>
           </div>
         )}
 
@@ -333,63 +331,63 @@ export const CompanyStorePage: React.FC = () => {
           <>
             {/* Active Flash Sale Showcase Banner */}
             {storeData?.flashSale?.isActive && (
-              <div className="rounded-2xl bg-zinc-950 text-white p-6 sm:p-8 shadow-xs">
+              <div className="border-2 border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] p-6 sm:p-8 shadow-[8px_8px_0px_#DB4A2B]">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <div className="space-y-2 max-w-xl">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-zinc-200 text-xs font-semibold">
-                      <Flame className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Limited Store Promotion</span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DB4A2B] text-white text-[10px] font-mono font-bold uppercase">
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>LIMITED TIME PROMOTION</span>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
+                    <h2 className="text-2xl sm:text-3xl font-clash font-bold uppercase tracking-tight text-white">
                       {storeData.flashSale.title}
                     </h2>
-                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                    <p className="text-xs font-satoshi text-zinc-300 leading-relaxed">
                       {storeData.flashSale.description ||
-                        `Special limited-time promotions up to ${storeData.flashSale.discountPercentage}% OFF on verified collections.`}
+                        `Curated store markdown up to ${storeData.flashSale.discountPercentage}% OFF on verified seasonal collections.`}
                     </p>
                   </div>
 
                   {/* Countdown Clock */}
                   {timeLeft && (
                     <div className="flex flex-col sm:items-end gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-200">
+                      <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#F8A348]">
                         <Clock className="w-4 h-4" />
-                        <span>Flash Deals Expire In</span>
+                        <span>WINDOW CLOSING IN</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-black/40 backdrop-blur-md border border-white/20 px-3 py-2 rounded-2xl text-center min-w-[52px]">
-                          <div className="text-xl sm:text-2xl font-black font-mono leading-none">
+                      <div className="flex items-center gap-2 font-mono">
+                        <div className="border border-white/40 bg-black/40 px-3 py-2 text-center min-w-[56px]">
+                          <div className="text-2xl font-bold leading-none text-white">
                             {String(timeLeft.days).padStart(2, '0')}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-white/70 mt-1">
-                            Days
+                          <div className="text-[9px] uppercase tracking-wider text-zinc-400 mt-1">
+                            DAYS
                           </div>
                         </div>
-                        <span className="text-xl font-bold">:</span>
-                        <div className="bg-black/40 backdrop-blur-md border border-white/20 px-3 py-2 rounded-2xl text-center min-w-[52px]">
-                          <div className="text-xl sm:text-2xl font-black font-mono leading-none">
+                        <span className="text-xl font-bold text-white">:</span>
+                        <div className="border border-white/40 bg-black/40 px-3 py-2 text-center min-w-[56px]">
+                          <div className="text-2xl font-bold leading-none text-white">
                             {String(timeLeft.hours).padStart(2, '0')}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-white/70 mt-1">
-                            Hours
+                          <div className="text-[9px] uppercase tracking-wider text-zinc-400 mt-1">
+                            HOURS
                           </div>
                         </div>
-                        <span className="text-xl font-bold">:</span>
-                        <div className="bg-black/40 backdrop-blur-md border border-white/20 px-3 py-2 rounded-2xl text-center min-w-[52px]">
-                          <div className="text-xl sm:text-2xl font-black font-mono leading-none">
+                        <span className="text-xl font-bold text-white">:</span>
+                        <div className="border border-white/40 bg-black/40 px-3 py-2 text-center min-w-[56px]">
+                          <div className="text-2xl font-bold leading-none text-white">
                             {String(timeLeft.minutes).padStart(2, '0')}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-white/70 mt-1">
-                            Mins
+                          <div className="text-[9px] uppercase tracking-wider text-zinc-400 mt-1">
+                            MINS
                           </div>
                         </div>
-                        <span className="text-xl font-bold">:</span>
-                        <div className="bg-black/40 backdrop-blur-md border border-white/20 px-3 py-2 rounded-2xl text-center min-w-[52px]">
-                          <div className="text-xl sm:text-2xl font-black font-mono leading-none">
+                        <span className="text-xl font-bold text-white">:</span>
+                        <div className="border border-white/40 bg-black/40 px-3 py-2 text-center min-w-[56px]">
+                          <div className="text-2xl font-bold leading-none text-white">
                             {String(timeLeft.seconds).padStart(2, '0')}
                           </div>
-                          <div className="text-[9px] font-bold uppercase tracking-wider text-white/70 mt-1">
-                            Secs
+                          <div className="text-[9px] uppercase tracking-wider text-zinc-400 mt-1">
+                            SECS
                           </div>
                         </div>
                       </div>
@@ -401,41 +399,41 @@ export const CompanyStorePage: React.FC = () => {
 
             {/* Active Store Coupons & Discounts Ribbon */}
             {storeCoupons.length > 0 && (
-              <div className="bg-white border border-zinc-200/90 rounded-2xl p-5 shadow-xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-zinc-950">
-                    <Ticket className="w-4 h-4 text-emerald-600" />
-                    <span>Store Coupons & Promo Deals</span>
+              <div className="border-2 border-[#1E1E1E] bg-white p-6 shadow-[6px_6px_0px_#1E1E1E] space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E1E1E]">
+                  <div className="flex items-center gap-2 text-xs font-clash font-bold uppercase tracking-wider text-[#1E1E1E]">
+                    <Ticket className="w-4 h-4 text-[#DB4A2B]" />
+                    <span>MERCHANT VOUCHER TOKENS</span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    {storeCoupons.length} Active {storeCoupons.length === 1 ? 'Voucher' : 'Vouchers'}
+                  <span className="text-[10px] font-mono font-bold bg-[#1E1E1E] text-white px-2 py-0.5 uppercase">
+                    {storeCoupons.length} AVAILABLE
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {storeCoupons.map((cp) => (
                     <div
                       key={cp._id || cp.code}
-                      className="bg-emerald-50/40 border border-emerald-200/80 rounded-2xl p-3.5 flex flex-col justify-between space-y-2 hover:bg-emerald-50/80 transition-colors"
+                      className="border-2 border-[#1E1E1E] bg-[#E4E2DD] p-4 flex flex-col justify-between space-y-3 hover:shadow-[4px_4px_0px_#1E1E1E] transition-all"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-white shadow-2xs">
+                        <span className="font-mono font-bold text-xs px-2 py-1 bg-[#1E1E1E] text-[#E4E2DD]">
                           {cp.code}
                         </span>
-                        <span className="text-xs font-black text-emerald-800">
+                        <span className="text-xs font-clash font-bold text-[#DB4A2B]">
                           {cp.discountType === 'percentage'
                             ? `${cp.discountValue}% OFF`
                             : `$${cp.discountValue.toFixed(2)} OFF`}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-600 line-clamp-1">
+                      <p className="text-xs font-satoshi text-[#444444] line-clamp-1">
                         {cp.description}
                       </p>
-                      <div className="flex items-center justify-between pt-1 border-t border-emerald-100 text-[10px]">
-                        <span className="text-zinc-500 font-mono">
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-300 text-[10px] font-mono">
+                        <span className="text-[#444444]">
                           {cp.minPurchaseAmount > 0
-                            ? `Min $${cp.minPurchaseAmount.toFixed(2)}`
-                            : 'No minimum'}
+                            ? `MIN: $${cp.minPurchaseAmount.toFixed(2)}`
+                            : 'ZERO THRESHOLD'}
                         </span>
                         <button
                           type="button"
@@ -444,9 +442,9 @@ export const CompanyStorePage: React.FC = () => {
                             setCopiedCouponCode(cp.code);
                             setTimeout(() => setCopiedCouponCode(null), 2000);
                           }}
-                          className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
+                          className="text-[#1E1E1E] hover:text-[#DB4A2B] font-bold uppercase underline cursor-pointer"
                         >
-                          {copiedCouponCode === cp.code ? 'Copied' : 'Copy Code'}
+                          {copiedCouponCode === cp.code ? 'COPIED' : 'COPY VOUCHER'}
                         </button>
                       </div>
                     </div>
@@ -456,43 +454,43 @@ export const CompanyStorePage: React.FC = () => {
             )}
 
             {/* Filter & Search Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-200/80">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b-2 border-[#1E1E1E]">
               {/* In-Store Search Bar */}
               <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
                 <input
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder={`Search in ${companyName}'s store...`}
-                  className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-zinc-200 bg-white text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 transition-all shadow-2xs"
+                  placeholder={`Search inside ${companyName}'s catalogue...`}
+                  className="w-full pl-10 pr-24 py-2.5 border-2 border-[#1E1E1E] bg-white text-xs font-satoshi text-[#1E1E1E] placeholder:text-[#444444] focus:outline-none"
                 />
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#1E1E1E]" />
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#1E1E1E] hover:bg-[#DB4A2B] text-white text-[10px] font-mono font-bold uppercase transition-colors cursor-pointer"
                 >
-                  Search
+                  Filter
                 </button>
               </form>
 
               {/* Sort selector */}
-              <div className="flex items-center gap-3 self-end md:self-auto">
-                <span className="text-xs text-zinc-500 font-medium whitespace-nowrap">
-                  {totalCount} {totalCount === 1 ? 'product' : 'products'} available
+              <div className="flex items-center gap-4 self-end md:self-auto font-mono text-xs">
+                <span className="text-[#444444] uppercase whitespace-nowrap">
+                  {totalCount} {totalCount === 1 ? 'ITEM' : 'ITEMS'} RECORDED
                 </span>
 
                 <div className="relative">
                   <select
                     value={sort}
                     onChange={(e) => handleSortChange(e.target.value)}
-                    className="appearance-none pl-8 pr-8 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-800 shadow-2xs focus:outline-none focus:border-zinc-950 cursor-pointer"
+                    className="appearance-none pl-8 pr-8 py-2 border-2 border-[#1E1E1E] bg-white text-xs font-mono font-bold text-[#1E1E1E] focus:outline-none cursor-pointer uppercase"
                   >
-                    <option value="newest">Sort: Newest Arrivals</option>
-                    <option value="price_asc">Sort: Price (Low to High)</option>
-                    <option value="price_desc">Sort: Price (High to Low)</option>
-                    <option value="rating">Sort: Top Customer Rated</option>
+                    <option value="newest">Sort: Newest First</option>
+                    <option value="price_asc">Sort: Price (Ascending)</option>
+                    <option value="price_desc">Sort: Price (Descending)</option>
+                    <option value="rating">Sort: Highest Rated</option>
                   </select>
-                  <ArrowUpDown className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                  <ArrowUpDown className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#1E1E1E] pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -503,13 +501,13 @@ export const CompanyStorePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleCategorySelect('all')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-4 py-2 border-2 border-[#1E1E1E] text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                     activeCategory === 'all'
-                      ? 'bg-zinc-950 text-white shadow-xs'
-                      : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
+                      ? 'bg-[#1E1E1E] text-white shadow-[3px_3px_0px_#DB4A2B]'
+                      : 'bg-white hover:bg-[#D9D6D0] text-[#1E1E1E]'
                   }`}
                 >
-                  All Store Products ({storeData.totalProducts})
+                  ALL ITEMS ({storeData.totalProducts})
                 </button>
 
                 {storeData.categories.map((cat) => {
@@ -519,10 +517,10 @@ export const CompanyStorePage: React.FC = () => {
                       key={cat}
                       type="button"
                       onClick={() => handleCategorySelect(cat)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold capitalize whitespace-nowrap transition-all cursor-pointer ${
+                      className={`px-4 py-2 border-2 border-[#1E1E1E] text-xs font-mono font-bold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-zinc-950 text-white shadow-xs'
-                          : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
+                          ? 'bg-[#1E1E1E] text-white shadow-[3px_3px_0px_#DB4A2B]'
+                          : 'bg-white hover:bg-[#D9D6D0] text-[#1E1E1E]'
                       }`}
                     >
                       {cat}
@@ -534,24 +532,24 @@ export const CompanyStorePage: React.FC = () => {
 
             {/* Active filters notice */}
             {(search || activeCategory !== 'all') && (
-              <div className="flex items-center gap-2 text-xs text-zinc-600">
-                <span className="font-semibold">Filtering by:</span>
+              <div className="flex items-center gap-3 text-xs font-mono">
+                <span className="font-bold uppercase text-[#444444]">ACTIVE CRITERIA:</span>
                 {search && (
-                  <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-800 font-medium">
-                    Search: &ldquo;{search}&rdquo;
+                  <span className="px-2 py-0.5 border border-[#1E1E1E] bg-white text-[#1E1E1E]">
+                    SEARCH: &ldquo;{search}&rdquo;
                   </span>
                 )}
                 {activeCategory !== 'all' && (
-                  <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-800 font-medium capitalize">
-                    Category: {activeCategory}
+                  <span className="px-2 py-0.5 border border-[#1E1E1E] bg-white text-[#1E1E1E] uppercase">
+                    CATEGORY: {activeCategory}
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="text-rose-600 hover:underline font-bold ml-2 cursor-pointer"
+                  className="text-[#DB4A2B] font-bold uppercase underline cursor-pointer ml-2"
                 >
-                  Clear all
+                  Reset Filters
                 </button>
               </div>
             )}
@@ -562,36 +560,28 @@ export const CompanyStorePage: React.FC = () => {
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3 animate-pulse"
+                    className="border-2 border-[#1E1E1E] bg-white p-4 space-y-4 animate-pulse shadow-[4px_4px_0px_#1E1E1E]"
                   >
-                    <div className="w-full aspect-square bg-zinc-100 rounded-xl" />
-                    <div className="h-4 bg-zinc-100 rounded-md w-3/4" />
-                    <div className="h-3 bg-zinc-100 rounded-md w-1/2" />
-                    <div className="flex justify-between items-center pt-2">
-                      <div className="h-5 bg-zinc-100 rounded-md w-16" />
-                      <div className="h-8 bg-zinc-100 rounded-lg w-20" />
-                    </div>
+                    <div className="w-full aspect-[3/4] bg-[#E4E2DD]" />
+                    <div className="h-4 bg-[#E4E2DD] w-3/4" />
+                    <div className="h-3 bg-[#E4E2DD] w-1/2" />
                   </div>
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="py-16 text-center bg-white rounded-2xl border border-zinc-200/80 p-8 space-y-4 max-w-md mx-auto my-6 shadow-xs">
-                <div className="w-14 h-14 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
-                  <Package className="w-7 h-7" />
+              <div className="py-20 text-center border-2 border-[#1E1E1E] bg-white p-8 space-y-4 max-w-lg mx-auto my-6 shadow-[6px_6px_0px_#1E1E1E]">
+                <div className="w-16 h-16 border-2 border-[#1E1E1E] bg-[#E4E2DD] text-[#1E1E1E] flex items-center justify-center mx-auto">
+                  <Package className="w-8 h-8" />
                 </div>
-                <h3 className="text-base font-bold text-zinc-950">
-                  No products found in this store
+                <h3 className="text-lg font-clash font-bold text-[#1E1E1E] uppercase">
+                  No Catalog Artifacts Located
                 </h3>
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  No matching products were found for the selected category or search term in {companyName}&apos;s catalog.
+                <p className="text-xs font-satoshi text-[#444444] leading-relaxed">
+                  No matching items correspond to the selected criteria in {companyName}&apos;s verified archives.
                 </p>
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="px-4 py-2 text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
-                >
-                  Reset Store Filters
-                </button>
+                <BrutalistButton onClick={handleClearFilters} variant="primary">
+                  <span>Reset Store Filters</span>
+                </BrutalistButton>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-2">
@@ -606,3 +596,5 @@ export const CompanyStorePage: React.FC = () => {
     </div>
   );
 };
+
+export default CompanyStorePage;
