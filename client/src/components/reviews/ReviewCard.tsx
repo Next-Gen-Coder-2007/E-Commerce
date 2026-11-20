@@ -104,29 +104,29 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
   });
 
   return (
-    <div className="p-6 rounded-2xl bg-white border border-zinc-200/80 shadow-2xs space-y-4 hover:border-zinc-300 transition-colors">
-      {/* Product Reference Glance (if available from business reviews feed) */}
+    <div className="p-6 border-2 border-[#1E1E1E] bg-white shadow-[4px_4px_0px_#1E1E1E] space-y-4">
+      {/* Product Reference Glance */}
       {review.product && (
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-100 gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-200 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {review.product.image && (
               <img
                 src={review.product.image}
                 alt={review.product.title}
-                className="w-9 h-9 rounded-lg object-contain bg-zinc-50 border border-zinc-200 shrink-0 p-0.5"
+                className="w-10 h-10 border border-[#1E1E1E] object-contain bg-[#E4E2DD] shrink-0 p-1"
               />
             )}
             <div className="min-w-0">
-              <span className="text-xs font-bold text-zinc-950 truncate block">
+              <span className="text-xs font-clash font-bold text-[#1E1E1E] truncate block">
                 {review.product.title}
               </span>
-              <span className="text-[10px] text-zinc-400 font-mono capitalize">
+              <span className="text-[10px] text-[#444444] font-mono uppercase">
                 {review.product.category}
               </span>
             </div>
           </div>
-          <span className="text-[10px] font-mono font-bold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-md shrink-0">
-            PID: {review.productId.slice(-6)}
+          <span className="text-[10px] font-mono font-bold text-[#1E1E1E] bg-[#D9D6D0] border border-[#1E1E1E] px-2 py-0.5 shrink-0">
+            PID: {review.productId.slice(-6).toUpperCase()}
           </span>
         </div>
       )}
@@ -134,23 +134,23 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
       {/* Review Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase">
+          <div className="w-10 h-10 border-2 border-[#1E1E1E] bg-[#1E1E1E] text-[#E4E2DD] font-clash font-bold flex items-center justify-center text-sm uppercase">
             {review.userName.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-950">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-clash font-bold text-[#1E1E1E] uppercase">
                 {review.userName}
               </span>
               {review.isVerifiedPurchase && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  <span>Verified Purchase</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#1E1E1E] bg-[#FF89A9]/20 border border-[#1E1E1E] px-2 py-0.5">
+                  <ShieldCheck className="w-3 h-3 text-[#DB4A2B]" />
+                  <span>VERIFIED BUYER</span>
                 </span>
               )}
             </div>
-            <span className="text-[11px] text-zinc-400">
-              Reviewed on {formattedDate}
+            <span className="text-[10px] font-mono text-[#444444] block mt-0.5">
+              FILED: {formattedDate}
             </span>
           </div>
         </div>
@@ -162,7 +162,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
               <button
                 type="button"
                 onClick={() => onEdit(review)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                className="p-1.5 border border-[#1E1E1E] bg-white hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
                 title="Edit review"
               >
                 <Edit2 className="w-3.5 h-3.5" />
@@ -171,7 +171,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
             <button
               type="button"
               onClick={handleDelete}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="p-1.5 border border-[#DB4A2B] bg-white text-[#DB4A2B] hover:bg-[#DB4A2B] hover:text-white transition-colors cursor-pointer"
               title="Delete review"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -189,20 +189,20 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                 key={starVal}
                 className={`w-3.5 h-3.5 ${
                   starVal <= review.rating
-                    ? 'fill-amber-400 text-amber-400'
-                    : 'text-zinc-200'
+                    ? 'fill-[#DB4A2B] text-[#DB4A2B]'
+                    : 'text-zinc-300'
                 }`}
               />
             ))}
           </div>
-          <h4 className="text-xs font-bold text-zinc-950 truncate">
+          <h4 className="text-xs font-clash font-bold text-[#1E1E1E] uppercase truncate">
             {review.title}
           </h4>
         </div>
       </div>
 
       {/* Review Comment Body */}
-      <p className="text-xs text-zinc-700 leading-relaxed whitespace-pre-line">
+      <p className="text-xs font-satoshi text-[#444444] leading-relaxed whitespace-pre-line">
         {review.comment}
       </p>
 
@@ -215,12 +215,12 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                 key={pIdx}
                 type="button"
                 onClick={() => setSelectedPhoto(photoUrl)}
-                className="relative w-16 h-16 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 hover:border-zinc-950 transition-all cursor-pointer shadow-2xs group"
+                className="relative w-16 h-16 border-2 border-[#1E1E1E] bg-[#E4E2DD] overflow-hidden shrink-0 hover:scale-105 transition-all cursor-pointer shadow-[2px_2px_0px_#1E1E1E] group"
               >
                 <img
                   src={photoUrl}
                   alt={`Review Photo ${pIdx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  className="w-full h-full object-cover"
                 />
               </button>
             ))}
@@ -228,27 +228,27 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         </div>
       )}
 
-      {/* Lightbox Modal for Photo expansion */}
+      {/* Lightbox Modal */}
       {selectedPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1E1E]/80 backdrop-blur-xs animate-in fade-in"
           onClick={() => setSelectedPhoto(null)}
         >
           <div
-            className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl p-2 border border-zinc-200"
+            className="relative max-w-2xl w-full bg-[#E4E2DD] border-2 border-[#1E1E1E] shadow-[8px_8px_0px_#1E1E1E] p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setSelectedPhoto(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-zinc-950/80 text-white hover:bg-zinc-950 transition-colors z-10 cursor-pointer"
+              className="absolute top-4 right-4 p-2 bg-[#1E1E1E] text-white hover:bg-[#DB4A2B] transition-colors z-10 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
             <img
               src={selectedPhoto}
               alt="Customer Attachment View"
-              className="w-full max-h-[80vh] object-contain rounded-2xl"
+              className="w-full max-h-[80vh] object-contain border border-[#1E1E1E] bg-white"
             />
           </div>
         </div>
@@ -256,17 +256,17 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
 
       {/* Merchant Response Callout Box */}
       {review.merchantReply && (
-        <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-1.5 font-bold text-zinc-900">
-              <Store className="w-3.5 h-3.5 text-indigo-600" />
-              <span>
-                Response from {review.merchantReply.companyName || 'Verified Merchant'}
+        <div className="p-4 border-2 border-[#1E1E1E] bg-[#D9D6D0] space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-1.5 font-bold text-[#1E1E1E]">
+              <Store className="w-3.5 h-3.5 text-[#DB4A2B]" />
+              <span className="uppercase">
+                STATEMENT // {review.merchantReply.companyName || 'VERIFIED MERCHANT'}
               </span>
             </div>
             <div className="flex items-center gap-2">
               {review.merchantReply.repliedAt && (
-                <span className="text-zinc-400 text-[10px]">
+                <span className="text-[#444444] text-[10px]">
                   {new Date(review.merchantReply.repliedAt).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -281,7 +281,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                       setReplyText(review.merchantReply?.comment || '');
                       setShowReplyForm(true);
                     }}
-                    className="p-1 text-zinc-400 hover:text-indigo-600 rounded-md hover:bg-zinc-200/60 transition-colors"
+                    className="p-1 border border-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-white transition-colors"
                     title="Edit Merchant Response"
                   >
                     <Edit2 className="w-3 h-3" />
@@ -302,7 +302,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                         alert(err.message || 'Failed to remove response');
                       }
                     }}
-                    className="p-1 text-zinc-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition-colors"
+                    className="p-1 border border-[#DB4A2B] text-[#DB4A2B] hover:bg-[#DB4A2B] hover:text-white transition-colors"
                     title="Delete Merchant Response"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -311,15 +311,15 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
               )}
             </div>
           </div>
-          <p className="text-xs text-zinc-600 leading-relaxed whitespace-pre-line pl-5">
+          <p className="text-xs font-satoshi text-[#1E1E1E] leading-relaxed whitespace-pre-line pl-5 border-l-2 border-[#1E1E1E]">
             {review.merchantReply.comment}
           </p>
         </div>
       )}
 
-      {/* Merchant Reply Form (if merchant owner & wanting to respond / edit) */}
+      {/* Merchant Reply Form */}
       {isMerchantOwner && (!review.merchantReply || showReplyForm) && (
-        <div>
+        <div className="pt-2">
           {!showReplyForm && !review.merchantReply ? (
             <button
               type="button"
@@ -327,44 +327,44 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                 setReplyText('');
                 setShowReplyForm(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/60 text-xs font-bold text-indigo-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#1E1E1E] bg-[#D9D6D0] hover:bg-[#1E1E1E] hover:text-white text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E] transition-colors cursor-pointer"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Post Official Merchant Response</span>
+              <span>Broadcast Official Merchant Response</span>
             </button>
           ) : showReplyForm ? (
-            <form onSubmit={handleSaveReply} className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 space-y-3">
+            <form onSubmit={handleSaveReply} className="p-4 border-2 border-[#1E1E1E] bg-[#D9D6D0] space-y-3">
               {replyError && (
-                <div className="text-xs text-rose-600 font-medium">
+                <div className="text-xs font-mono text-[#DB4A2B] font-bold">
                   {replyError}
                 </div>
               )}
-              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950">
-                <Store className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{review.merchantReply ? 'Edit Official Merchant Response' : 'Write Official Merchant Response'}</span>
+              <div className="flex items-center gap-1.5 text-xs font-clash font-bold uppercase text-[#1E1E1E]">
+                <Store className="w-3.5 h-3.5 text-[#DB4A2B]" />
+                <span>{review.merchantReply ? 'Edit Merchant Response' : 'Draft Official Merchant Response'}</span>
               </div>
               <textarea
                 required
                 rows={3}
-                placeholder="Thank the customer for their review, answer any questions, or provide support..."
+                placeholder="Submit official merchant statement or support resolution..."
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-indigo-200 bg-white text-xs text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-600 resize-none shadow-2xs"
+                className="w-full px-3 py-2 border-2 border-[#1E1E1E] bg-white text-xs font-satoshi text-[#1E1E1E] focus:outline-none resize-none"
               />
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowReplyForm(false)}
-                  className="px-3 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-white transition-colors"
+                  className="px-3 py-1.5 border border-[#1E1E1E] text-xs font-mono font-bold text-[#444444] hover:bg-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingReply}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-1.5 border-2 border-[#1E1E1E] bg-[#1E1E1E] text-white text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#DB4A2B] transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {submittingReply ? 'Posting...' : 'Post Response'}
+                  {submittingReply ? 'Posting...' : 'Post Statement'}
                 </button>
               </div>
             </form>
@@ -373,24 +373,26 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
       )}
 
       {/* Footer: Helpful Upvote */}
-      <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
+      <div className="pt-2 border-t border-zinc-200 flex items-center justify-between text-xs font-mono text-[#444444]">
         <div className="flex items-center gap-2">
-          <span>Was this review helpful?</span>
+          <span>WAS THIS REVIEW HELPFUL?</span>
           <button
             type="button"
             onClick={handleVoteHelpful}
             disabled={voting}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold transition-all cursor-pointer shadow-2xs ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 border-2 text-[10px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
               isHelpfulByMe
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+                ? 'bg-[#1E1E1E] border-[#1E1E1E] text-white'
+                : 'bg-white border-[#1E1E1E] text-[#1E1E1E] hover:bg-[#D9D6D0]'
             }`}
           >
-            <ThumbsUp className={`w-3 h-3 ${isHelpfulByMe ? 'fill-indigo-600 text-indigo-600' : ''}`} />
-            <span>Helpful ({helpfulCount})</span>
+            <ThumbsUp className={`w-3 h-3 ${isHelpfulByMe ? 'fill-white text-white' : ''}`} />
+            <span>HELPFUL ({helpfulCount})</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+export default ReviewCard;
