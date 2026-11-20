@@ -17,28 +17,31 @@ import {
   Check,
   AlertCircle,
   X,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SavedAddress } from '../types/auth';
+import { RawAtmosphere } from '../components/RawAtmosphere';
+import { BrutalistButton } from '../components/BrutalistButton';
 
 const AVAILABLE_PROMOS = [
   {
     code: 'NOVA10',
-    title: '10% Off Everything',
+    title: '10% OFF SITEWIDE',
     description: 'Instant 10% markdown applied on all store categories.',
-    badge: 'Sitewide',
+    badge: 'SITEWIDE',
   },
   {
     code: 'SPRING20',
-    title: '20% Mega Season Sale',
-    description: 'Save 20% on all orders during the current promotional period.',
-    badge: 'Seasonal',
+    title: '20% MEGA SEASON SALE',
+    description: 'Save 20% on all orders over $150 during the promotional drop.',
+    badge: 'SEASONAL',
   },
   {
     code: 'FREESHIP',
-    title: '100% Free Shipping',
+    title: '100% FREE SHIPPING',
     description: 'Waives all courier and express delivery fees at checkout.',
-    badge: 'Free Shipping',
+    badge: 'FREIGHT',
   },
 ];
 
@@ -90,12 +93,12 @@ export const ProfilePage: React.FC = () => {
     try {
       const ok = await updateProfile({ name, phone: phone.trim() });
       if (ok) {
-        setProfileMsg({ text: 'Account details updated successfully!', type: 'success' });
+        setProfileMsg({ text: 'ACCOUNT DETAILS UPDATED SUCCESSFULLY', type: 'success' });
       } else {
-        setProfileMsg({ text: 'Failed to update account details.', type: 'error' });
+        setProfileMsg({ text: 'FAILED TO UPDATE ACCOUNT DETAILS', type: 'error' });
       }
     } catch (err: any) {
-      setProfileMsg({ text: err.message || 'Error updating profile', type: 'error' });
+      setProfileMsg({ text: err.message || 'ERROR UPDATING PROFILE', type: 'error' });
     } finally {
       setSavingProfile(false);
       setTimeout(() => setProfileMsg(null), 4000);
@@ -143,7 +146,6 @@ export const ProfilePage: React.FC = () => {
     e.preventDefault();
     setAddressError(null);
 
-    // Mandatory phone validation
     if (!addressForm.phone || !addressForm.phone.trim()) {
       setAddressError('Contact phone number is required for courier delivery updates.');
       return;
@@ -178,52 +180,57 @@ export const ProfilePage: React.FC = () => {
   const savedAddresses = user?.savedAddresses || [];
 
   return (
-    <div className="min-h-screen bg-zinc-50/70 pb-20 pt-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Header Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200">
+    <div className="min-h-screen bg-[#E4E2DD] text-[#1E1E1E] font-satoshi py-10 px-4 sm:px-6 lg:px-10 relative select-none">
+      <RawAtmosphere variant="subtle" />
+
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header Title Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b-2 border-[#1E1E1E]">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-zinc-950">
-              Customer Account & Address Book
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#DB4A2B] block">
+              IDENTITY & DESTINATION DIRECTORY
+            </span>
+            <h1 className="font-clash text-3xl sm:text-5xl font-bold uppercase tracking-tight text-[#1E1E1E] mt-0.5">
+              CUSTOMER ACCOUNT
             </h1>
-            <p className="text-xs text-zinc-500 mt-1">
-              Manage your personal shopper information, saved delivery destinations, and active coupon perks.
+            <p className="text-xs text-[#444444] font-mono uppercase mt-1">
+              MANAGE DELIVERY DESTINATIONS &bull; ACTIVE VOUCHERS &bull; CREDENTIALS
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               to="/orders"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-900 bg-white border border-zinc-200 hover:bg-zinc-100 transition-colors shadow-2xs"
+              className="px-5 py-2.5 bg-[#FFFFFF] border-2 border-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-[#E4E2DD] text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center gap-2"
             >
-              <Package className="w-4 h-4 text-zinc-700" />
-              <span>My Orders</span>
+              <Package className="w-4 h-4" />
+              <span>ORDER DISPATCHES</span>
             </Link>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-colors shadow-xs"
+              className="raw-btn px-6 py-2.5 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest"
             >
-              <span>Explore Store</span>
+              CATALOG
             </Link>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Account Details & Address Book (8 Cols) */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-8">
             {/* 1. Account Details Form */}
-            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+            <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center font-bold text-xs">
                     <UserIcon className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-zinc-950">
-                      Personal Account Details
+                    <h2 className="font-clash text-base font-bold uppercase tracking-tight text-[#1E1E1E]">
+                      PRIMARY CREDENTIALS
                     </h2>
-                    <p className="text-[11px] text-zinc-500">
-                      Primary contact information associated with your orders
+                    <p className="text-[10px] font-mono text-[#444444] uppercase">
+                      NAME & DISPATCH CONTACT NUMBER
                     </p>
                   </div>
                 </div>
@@ -231,16 +238,16 @@ export const ProfilePage: React.FC = () => {
 
               {profileMsg && (
                 <div
-                  className={`p-3.5 rounded-xl text-xs font-medium flex items-center gap-2 animate-in fade-in ${
+                  className={`p-3.5 border text-xs font-mono font-bold uppercase flex items-center gap-2 ${
                     profileMsg.type === 'success'
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                      : 'border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B]'
                   }`}
                 >
                   {profileMsg.type === 'success' ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-[#DB4A2B] shrink-0" />
                   )}
                   <span>{profileMsg.text}</span>
                 </div>
@@ -248,79 +255,67 @@ export const ProfilePage: React.FC = () => {
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Full Name
+                  <div className="space-y-1 font-mono text-left">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      FULL NAME
                     </label>
-                    <div className="relative">
-                      <UserIcon className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Jane Doe"
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-satoshi uppercase text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                    />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Contact Phone (Mandatory for Couriers) *
+                  <div className="space-y-1 font-mono text-left">
+                    <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                      PHONE NUMBER (FOR COURIER ALERTS)
                     </label>
-                    <div className="relative">
-                      <Phone className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000 / 9876543210"
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:bg-white focus:border-zinc-950"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="block text-[11px] font-bold text-zinc-700 uppercase tracking-wider">
-                      Email Address (Account ID)
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="email"
-                        disabled
-                        value={user?.email || ''}
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-zinc-200 bg-zinc-100 text-xs text-zinc-500 cursor-not-allowed font-mono"
-                      />
-                    </div>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full px-3.5 py-2.5 bg-[#E4E2DD]/30 border border-[#1E1E1E]/30 text-xs font-mono text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                    />
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    disabled={savingProfile}
-                    className="px-5 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                  >
-                    {savingProfile ? 'Saving...' : 'Update Account Info'}
-                  </button>
+                <div className="space-y-1 font-mono text-left">
+                  <label className="block text-[10px] font-bold text-[#1E1E1E] uppercase tracking-wider">
+                    AUTHENTICATED EMAIL
+                  </label>
+                  <input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="w-full px-3.5 py-2.5 bg-[#D9D6D0]/50 border border-[#1E1E1E]/20 text-xs font-mono text-[#444444] cursor-not-allowed"
+                  />
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="raw-btn px-6 py-3 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest cursor-pointer"
+                >
+                  {savingProfile ? 'UPDATING...' : 'SAVE DETAILS'}
+                </button>
               </form>
             </div>
 
-            {/* 2. Saved Address Book */}
-            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+            {/* 2. Saved Addresses Directory */}
+            <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1E1E1E]/15">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-xs">
-                    <MapPin className="w-4 h-4" />
+                  <div className="w-8 h-8 bg-[#1E1E1E] text-[#E4E2DD] flex items-center justify-center font-bold text-xs">
+                    <MapPin className="w-4 h-4 text-[#DB4A2B]" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-zinc-950">
-                      Saved Delivery Addresses ({savedAddresses.length})
+                    <h2 className="font-clash text-base font-bold uppercase tracking-tight text-[#1E1E1E]">
+                      DESTINATION BOOK ({savedAddresses.length})
                     </h2>
-                    <p className="text-[11px] text-zinc-500">
-                      All addresses have required contact phone numbers attached for instant checkout
+                    <p className="text-[10px] font-mono text-[#444444] uppercase">
+                      SHIPPING & DISPATCH RECEPTACLES
                     </p>
                   </div>
                 </div>
@@ -328,94 +323,84 @@ export const ProfilePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={openNewAddressModal}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition-colors shadow-2xs cursor-pointer"
+                  className="px-4 py-2 bg-[#1E1E1E] hover:bg-[#DB4A2B] text-[#E4E2DD] text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Address</span>
+                  <span>ADD ADDRESS</span>
                 </button>
               </div>
 
               {savedAddresses.length === 0 ? (
-                <div className="text-center py-10 border-2 border-dashed border-zinc-200 rounded-2xl space-y-3">
-                  <MapPin className="w-8 h-8 text-zinc-300 mx-auto" />
-                  <p className="text-xs font-medium text-zinc-500">
-                    No delivery addresses saved yet. Add one to accelerate your checkout process!
-                  </p>
-                  <button
-                    type="button"
-                    onClick={openNewAddressModal}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-zinc-950 hover:underline"
-                  >
-                    + Add your first address
-                  </button>
+                <div className="py-12 text-center border border-dashed border-[#1E1E1E]/30 p-6 space-y-2">
+                  <MapPin className="w-8 h-8 text-[#444444] mx-auto" />
+                  <p className="text-xs font-mono uppercase font-bold text-[#1E1E1E]">NO SAVED DESTINATIONS</p>
+                  <p className="text-xs text-[#444444]">Add a delivery destination for one-click checkout.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {savedAddresses.map((addr) => (
                     <div
                       key={addr._id}
-                      className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 hover:border-zinc-300 transition-all space-y-3 relative group"
+                      className={`p-4 border transition-all relative flex flex-col justify-between ${
+                        addr.isDefault
+                          ? 'border-2 border-[#1E1E1E] bg-[#E4E2DD]/30'
+                          : 'border border-[#1E1E1E]/20 bg-[#FFFFFF]'
+                      }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-zinc-950 flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-zinc-700" />
-                          <span>{addr.label || 'Home'}</span>
-                          {addr.isDefault && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                              Default
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-bold uppercase bg-[#1E1E1E] text-[#E4E2DD] px-2 py-0.5">
+                            {addr.label || 'DESTINATION'}
+                          </span>
+                          {addr.isDefault ? (
+                            <span className="text-[10px] font-mono font-bold text-[#DB4A2B] uppercase">
+                              PRIMARY
                             </span>
-                          )}
-                        </span>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => openEditAddressModal(addr)}
-                            className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
-                            title="Edit Address"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          {addr._id && (
+                          ) : (
                             <button
                               type="button"
-                              onClick={() => {
-                                if (confirm('Are you sure you want to remove this address?')) {
-                                  deleteSavedAddress(addr._id!);
-                                }
-                              }}
-                              className="p-1 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
-                              title="Delete Address"
+                              onClick={() => addr._id && setDefaultAddress(addr._id)}
+                              className="text-[10px] font-mono text-[#444444] hover:text-[#1E1E1E] uppercase underline cursor-pointer"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              SET PRIMARY
                             </button>
                           )}
                         </div>
-                      </div>
 
-                      <div className="text-xs space-y-0.5">
-                        <p className="font-bold text-zinc-900">{addr.fullName}</p>
-                        <p className="text-zinc-600 font-mono text-[11px] font-semibold">
-                          Tel: {addr.phone}
-                        </p>
-                        <p className="text-zinc-500">
+                        <div className="font-clash text-sm font-bold uppercase text-[#1E1E1E] pt-1">
+                          {addr.fullName}
+                        </div>
+                        <div className="text-xs text-[#444444] leading-relaxed">
                           {addr.addressLine1}
-                          {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
-                        </p>
-                        <p className="text-zinc-500">
+                          {addr.addressLine2 && `, ${addr.addressLine2}`}
+                          <br />
                           {addr.city}, {addr.state} {addr.postalCode}
-                        </p>
+                          <br />
+                          {addr.country}
+                        </div>
+                        <div className="font-mono text-[10px] text-[#444444]">
+                          TEL: {addr.phone}
+                        </div>
                       </div>
 
-                      {!addr.isDefault && addr._id && (
+                      <div className="pt-4 border-t border-[#1E1E1E]/10 flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setDefaultAddress(addr._id!)}
-                          className="text-[10px] font-bold text-zinc-700 hover:text-zinc-950 underline cursor-pointer"
+                          onClick={() => openEditAddressModal(addr)}
+                          className="p-1.5 text-[#444444] hover:text-[#1E1E1E] transition cursor-pointer"
+                          title="Edit destination"
                         >
-                          Set as Default
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => addr._id && deleteSavedAddress(addr._id)}
+                          className="p-1.5 text-[#444444] hover:text-[#DB4A2B] transition cursor-pointer"
+                          title="Delete destination"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -423,256 +408,181 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Active Promo Coupons & Platform Perks (4 Cols) */}
-          <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 pb-3 border-b border-zinc-100">
-                <Tag className="w-4 h-4 text-zinc-950" />
-                <h3 className="text-sm font-black text-zinc-950 uppercase tracking-wider">
-                  Active Coupons
+          {/* Right Column: Vouchers & Security (4 Cols) */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Active Voucher Codes */}
+            <div className="bg-[#FFFFFF] border-2 border-[#1E1E1E] p-6 space-y-4">
+              <div className="flex items-center gap-2 border-b border-[#1E1E1E]/15 pb-3">
+                <Tag className="w-4 h-4 text-[#DB4A2B]" />
+                <h3 className="font-clash text-sm font-bold uppercase tracking-tight text-[#1E1E1E]">
+                  PROMOTIONAL PRIVILEGES
                 </h3>
               </div>
 
-              <div className="space-y-3">
-                {AVAILABLE_PROMOS.map((promo) => {
-                  const isCopied = copiedCode === promo.code;
-                  return (
-                    <div
-                      key={promo.code}
-                      className="p-3.5 rounded-2xl border border-zinc-200 bg-zinc-50/60 hover:bg-zinc-50 transition-all space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-200/80 text-zinc-800 px-2 py-0.5 rounded-full">
-                          {promo.badge}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyCoupon(promo.code)}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer"
-                        >
-                          {isCopied ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-600" />
-                              <span className="text-emerald-700 font-black">Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>Copy Code</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="space-y-0.5">
-                        <div className="font-mono text-xs font-black text-zinc-950">
-                          {promo.code}
-                        </div>
-                        <p className="text-xs font-bold text-zinc-900">
-                          {promo.title}
-                        </p>
-                        <p className="text-[11px] text-zinc-500 leading-snug">
-                          {promo.description}
-                        </p>
-                      </div>
+              <div className="space-y-3 font-mono">
+                {AVAILABLE_PROMOS.map((promo) => (
+                  <div
+                    key={promo.code}
+                    className="p-3.5 bg-[#E4E2DD]/40 border border-[#1E1E1E]/20 space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-[#1E1E1E]">{promo.code}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCoupon(promo.code)}
+                        className="text-[10px] font-bold uppercase text-[#DB4A2B] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedCode === promo.code ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedCode === promo.code ? 'COPIED' : 'COPY'}</span>
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-
-              <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Applied at checkout</span>
-                </span>
-                <Link
-                  to="/"
-                  className="font-bold text-zinc-900 hover:underline"
-                >
-                  Shop Now →
-                </Link>
+                    <div className="text-[11px] font-bold text-[#1E1E1E] uppercase">{promo.title}</div>
+                    <p className="text-[10px] text-[#444444] normal-case">{promo.description}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Security Guarantee Box */}
-            <div className="bg-zinc-900 text-white rounded-2xl p-6 space-y-3 shadow-xs border border-zinc-800">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h4 className="text-xs font-black uppercase tracking-wider">
-                  Secure Customer Vault
-                </h4>
+            {/* Microservice Security Badge */}
+            <div className="p-5 bg-[#1E1E1E] text-[#E4E2DD] border-2 border-[#1E1E1E] space-y-2 font-mono text-xs">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase">
+                <span className="w-2 h-2 bg-emerald-500 animate-pulse" />
+                <span>PCI-DSS ENCRYPTED</span>
               </div>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                All saved contact numbers, address credentials, and profile settings are stored with high-grade 256-bit encryption.
+              <p className="text-[11px] text-[#E4E2DD]/70 leading-relaxed normal-case">
+                Your payment cards and address credentials are bound to authenticated sessions using modern JWT HTTP-only cryptography.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Address Add / Edit Modal */}
+      {/* Address Edit/Create Modal */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-zinc-200 animate-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-              <h3 className="text-base font-black text-zinc-950">
-                {editingAddressId ? 'Edit Delivery Address' : 'Add New Delivery Address'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1E1E]/75 backdrop-blur-xs font-satoshi">
+          <div className="relative w-full max-w-lg bg-[#E4E2DD] border-2 border-[#1E1E1E] shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b-2 border-[#1E1E1E]">
+              <h3 className="font-clash text-lg font-bold uppercase text-[#1E1E1E]">
+                {editingAddressId ? 'MODIFY DESTINATION' : 'ADD NEW DESTINATION'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsAddressModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-900 cursor-pointer"
+                className="p-1 text-[#1E1E1E] hover:text-[#DB4A2B] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {addressError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <div className="p-3 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B] text-xs font-mono font-bold uppercase flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{addressError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveAddress} className="space-y-4">
+            <form onSubmit={handleSaveAddress} className="space-y-3.5 font-mono text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                    Address Label
-                  </label>
+                  <label className="font-bold text-[#1E1E1E] uppercase">LABEL</label>
                   <input
                     type="text"
                     value={addressForm.label}
                     onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
-                    placeholder="Home, Office, Warehouse"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                    placeholder="Home / Studio"
+                    className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                   />
                 </div>
-
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                    Contact Phone *
-                  </label>
+                  <label className="font-bold text-[#1E1E1E] uppercase">RECIPIENT NAME</label>
                   <input
-                    type="tel"
-                    required
-                    value={addressForm.phone}
-                    onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                    type="text"
+                    value={addressForm.fullName}
+                    onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                  Recipient Full Name *
-                </label>
+                <label className="font-bold text-[#1E1E1E] uppercase">PHONE (REQUIRED)</label>
                 <input
-                  type="text"
-                  required
-                  value={addressForm.fullName}
-                  onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
-                  placeholder="Jane Doe"
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                  type="tel"
+                  value={addressForm.phone}
+                  onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                  placeholder="+1 (555) 000-0000"
+                  className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                  Street Address *
-                </label>
+                <label className="font-bold text-[#1E1E1E] uppercase">STREET ADDRESS</label>
                 <input
                   type="text"
-                  required
                   value={addressForm.addressLine1}
                   onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })}
-                  placeholder="123 Main Street"
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                  placeholder="Street number and name"
+                  className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                  Apartment, suite, unit (optional)
-                </label>
-                <input
-                  type="text"
-                  value={addressForm.addressLine2 || ''}
-                  onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
-                  placeholder="Suite 400"
-                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                    City *
-                  </label>
+                  <label className="font-bold text-[#1E1E1E] uppercase">CITY</label>
                   <input
                     type="text"
-                    required
                     value={addressForm.city}
                     onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                    placeholder="San Francisco"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                    className="w-full px-2.5 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                    State *
-                  </label>
+                  <label className="font-bold text-[#1E1E1E] uppercase">STATE</label>
                   <input
                     type="text"
-                    required
                     value={addressForm.state}
                     onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
-                    placeholder="CA"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                    className="w-full px-2.5 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">
-                    Postal Code *
-                  </label>
+                  <label className="font-bold text-[#1E1E1E] uppercase">POSTAL CODE</label>
                   <input
                     type="text"
-                    required
                     value={addressForm.postalCode}
                     onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
-                    placeholder="94103"
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 focus:outline-none focus:border-zinc-950"
+                    className="w-full px-2.5 py-2 bg-[#FFFFFF] border border-[#1E1E1E]/30 focus:outline-none focus:border-[#1E1E1E]"
                   />
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer pt-1">
+              <div className="flex items-center gap-2 pt-2">
                 <input
                   type="checkbox"
-                  checked={addressForm.isDefault || false}
+                  id="isDefaultAddr"
+                  checked={addressForm.isDefault}
                   onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                  className="w-4 h-4 rounded text-zinc-950 border-zinc-300 focus:ring-zinc-950"
+                  className="w-4 h-4 accent-[#1E1E1E]"
                 />
-                <span className="text-xs font-bold text-zinc-800">
-                  Set as default delivery address
-                </span>
-              </label>
+                <label htmlFor="isDefaultAddr" className="text-xs uppercase font-bold text-[#1E1E1E] cursor-pointer">
+                  SET AS PRIMARY DISPATCH DESTINATION
+                </label>
+              </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100">
+              <div className="pt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddressModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-700 hover:bg-zinc-100 cursor-pointer"
+                  className="px-4 py-2.5 border border-[#1E1E1E]/30 text-xs font-bold uppercase hover:bg-[#FFFFFF]"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={addressSubmitting}
-                  className="px-5 py-2 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 shadow-xs cursor-pointer disabled:opacity-50"
+                  className="raw-btn px-6 py-2.5 bg-[#1E1E1E] text-[#E4E2DD] border border-[#1E1E1E] text-xs font-bold uppercase tracking-widest cursor-pointer"
                 >
-                  {addressSubmitting ? 'Saving...' : 'Save Address'}
+                  {addressSubmitting ? 'SAVING...' : 'SAVE DESTINATION'}
                 </button>
               </div>
             </form>
@@ -682,3 +592,5 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 };
+
+export default ProfilePage;
