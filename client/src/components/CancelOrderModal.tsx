@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Order } from '../types/order';
 import { cancelOrderApi } from '../services/orderService';
+import { BrutalistButton } from './BrutalistButton';
 
 interface CancelOrderModalProps {
   order: Order | null;
@@ -28,37 +29,37 @@ const CANCEL_REASONS = [
   {
     id: 'better_price',
     label: 'Found a better price elsewhere',
-    desc: 'Discovered a cheaper alternative on another store or marketplace',
+    desc: 'Discovered a lower price on another store or website',
     icon: Tag,
   },
   {
     id: 'mistake',
     label: 'Ordered by mistake / Changed mind',
-    desc: 'No longer need this product or purchased the wrong item',
+    desc: 'No longer require this item or ordered the incorrect size/color',
     icon: RotateCcw,
   },
   {
     id: 'slow_shipping',
-    label: 'Estimated delivery is too slow',
-    desc: 'Delivery timeframe does not meet my schedule or urgency',
+    label: 'Estimated delivery is too late',
+    desc: 'Shipping timeline takes longer than required',
     icon: Clock,
   },
   {
     id: 'address_issue',
-    label: 'Incorrect address or contact info',
-    desc: 'Need to update shipping destination or recipient phone number',
+    label: 'Incorrect shipping address',
+    desc: 'Need to change delivery address or phone number',
     icon: MapPin,
   },
   {
     id: 'payment_issue',
-    label: 'Need to change payment method',
-    desc: 'Want to switch between Credit Card, UPI, or Cash on Delivery',
+    label: 'Change payment method',
+    desc: 'Want to switch payment method for this order',
     icon: CreditCard,
   },
   {
     id: 'other',
-    label: 'Other reasons',
-    desc: 'Specify a custom reason for cancellation',
+    label: 'Other reason',
+    desc: 'Specify another reason for cancelling this order',
     icon: HelpCircle,
   },
 ];
@@ -149,25 +150,25 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1E1E]/80 backdrop-blur-xs animate-in fade-in duration-200"
       onClick={handleClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        className="w-full max-w-lg bg-[#E4E2DD] border-2 border-[#1E1E1E] shadow-[8px_8px_0px_#1E1E1E] overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Modal Top Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200 shadow-2xs">
+        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-[#1E1E1E] bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#DB4A2B] flex items-center justify-center font-bold">
               <AlertTriangle className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold text-zinc-950">
-                Cancel Order {order.orderNumber}
+              <h2 className="text-sm font-clash font-bold text-[#1E1E1E] uppercase tracking-tight">
+                CANCEL ORDER // #{order.orderNumber}
               </h2>
-              <span className="text-[11px] font-semibold text-zinc-400">
-                Step {step} of 2 • Multi-step verification
+              <span className="text-[10px] font-mono text-[#444444] uppercase tracking-wider block">
+                STEP {step} OF 2 • ORDER CANCELLATION
               </span>
             </div>
           </div>
@@ -175,39 +176,39 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             type="button"
             onClick={handleClose}
             disabled={submitting}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            className="p-1.5 border border-[#1E1E1E] hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Step Indicator Bar */}
-        <div className="grid grid-cols-2 bg-zinc-100/70 p-1 text-[11px] font-bold text-center gap-1">
+        <div className="grid grid-cols-2 border-b-2 border-[#1E1E1E] bg-[#D9D6D0] text-xs font-mono font-bold text-center">
           <div
-            className={`py-1.5 rounded-lg transition-all ${
+            className={`py-2 transition-all border-r border-[#1E1E1E] ${
               step === 1
-                ? 'bg-white text-zinc-950 shadow-2xs'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                : 'text-[#444444]'
             }`}
           >
-            1. Select Reason
+            01. SELECT REASON
           </div>
           <div
-            className={`py-1.5 rounded-lg transition-all ${
+            className={`py-2 transition-all ${
               step >= 2
-                ? 'bg-white text-zinc-950 shadow-2xs'
-                : 'text-zinc-400'
+                ? 'bg-[#1E1E1E] text-[#E4E2DD]'
+                : 'text-[#444444]'
             }`}
           >
-            2. Review & Refund
+            02. REVIEW & REFUND SUMMARY
           </div>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-4">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <div className="p-3 border-2 border-[#DB4A2B] bg-[#DB4A2B]/10 text-[#1E1E1E] text-xs font-mono flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#DB4A2B] shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
@@ -216,11 +217,11 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
           {step === 1 && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-zinc-900">
-                  Why would you like to cancel this order?
+                <p className="text-xs font-clash font-bold text-[#1E1E1E] uppercase tracking-wider">
+                  REASON FOR CANCELLATION
                 </p>
-                <p className="text-[11px] text-zinc-500">
-                  Please let us know the reason so we can improve your shopping experience.
+                <p className="text-[11px] font-satoshi text-[#444444]">
+                  Please specify why you would like to cancel your order:
                 </p>
               </div>
 
@@ -235,25 +236,25 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                         setSelectedReasonId(r.id);
                         setError(null);
                       }}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      className={`p-3 border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
                         isSelected
-                          ? 'border-zinc-950 bg-zinc-50 ring-2 ring-zinc-950/5 shadow-2xs'
-                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50 bg-white'
+                          ? 'border-[#1E1E1E] bg-white shadow-[3px_3px_0px_#1E1E1E]'
+                          : 'border-zinc-300 hover:border-[#1E1E1E] bg-white/70'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          className={`w-7 h-7 border flex items-center justify-center shrink-0 ${
                             isSelected
-                              ? 'bg-zinc-950 text-white'
-                              : 'bg-zinc-100 text-zinc-600'
+                              ? 'border-[#1E1E1E] bg-[#1E1E1E] text-white'
+                              : 'border-zinc-300 bg-[#E4E2DD] text-[#444444]'
                           }`}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-zinc-900">{r.label}</p>
-                          <p className="text-[10px] text-zinc-500">{r.desc}</p>
+                          <p className="text-xs font-clash font-bold text-[#1E1E1E] uppercase">{r.label}</p>
+                          <p className="text-[10px] font-satoshi text-[#444444]">{r.desc}</p>
                         </div>
                       </div>
                       <input
@@ -264,7 +265,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                           setSelectedReasonId(r.id);
                           setError(null);
                         }}
-                        className="w-4 h-4 text-zinc-950 cursor-pointer"
+                        className="w-4 h-4 accent-[#DB4A2B] cursor-pointer"
                       />
                     </div>
                   );
@@ -273,15 +274,15 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
               {/* Optional comments box */}
               <div className="space-y-1.5 pt-1">
-                <label className="block text-[11px] font-bold text-zinc-700">
-                  Additional Details or Feedback (Optional)
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#1E1E1E]">
+                  ADDITIONAL COMMENTS (OPTIONAL)
                 </label>
                 <textarea
                   rows={2}
                   value={customComment}
                   onChange={(e) => setCustomComment(e.target.value)}
-                  placeholder="Tell us more about why you are cancelling..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-950/10 focus:border-zinc-950 transition-all resize-none"
+                  placeholder="Provide any additional comments or reason..."
+                  className="w-full px-3 py-2 text-xs font-satoshi border-2 border-[#1E1E1E] bg-white text-[#1E1E1E] focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -291,20 +292,20 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
           {step === 2 && (
             <div className="space-y-4">
               {/* Order summary pill */}
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 text-xs">
-                  <span className="font-semibold text-zinc-500">Order Number:</span>
-                  <span className="font-mono font-bold text-zinc-950">{order.orderNumber}</span>
+              <div className="p-4 border-2 border-[#1E1E1E] bg-white space-y-2 text-xs font-mono">
+                <div className="flex items-center justify-between pb-1.5 border-b border-zinc-200">
+                  <span className="text-[#444444] uppercase">ORDER ID:</span>
+                  <span className="font-bold text-[#1E1E1E]">{order.orderNumber}</span>
                 </div>
-                <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 text-xs">
-                  <span className="font-semibold text-zinc-500">Items Count:</span>
-                  <span className="font-bold text-zinc-900">
-                    {order.orderItems.reduce((acc, item) => acc + item.quantity, 0)} items ({order.orderItems.length} products)
+                <div className="flex items-center justify-between pb-1.5 border-b border-zinc-200">
+                  <span className="text-[#444444] uppercase">ITEMS QUANTITY:</span>
+                  <span className="font-bold text-[#1E1E1E]">
+                    {order.orderItems.reduce((acc, item) => acc + item.quantity, 0)} UNITS ({order.orderItems.length} ITEMS)
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-zinc-500">Total Order Value:</span>
-                  <span className="text-sm font-black text-zinc-950">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#444444] uppercase">TOTAL VALUE:</span>
+                  <span className="text-sm font-clash font-bold text-[#DB4A2B]">
                     ${order.pricing.totalPrice.toFixed(2)}
                   </span>
                 </div>
@@ -312,38 +313,38 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
               {/* Refund Info Box */}
               {isPaid ? (
-                <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-950 space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Automatic Refund Guaranteed</span>
+                <div className="p-4 border-2 border-[#1E1E1E] bg-[#D9D6D0] text-[#1E1E1E] space-y-2">
+                  <div className="flex items-center gap-2 font-clash font-bold text-xs uppercase text-[#DB4A2B]">
+                    <ShieldCheck className="w-4 h-4 text-[#DB4A2B]" />
+                    <span>AUTOMATIC REFUND GUARANTEED</span>
                   </div>
-                  <p className="text-xs leading-relaxed text-emerald-900">
-                    A full refund of <strong>${refundAmount.toFixed(2)}</strong> will be credited back to your <strong>{paymentMethodLabel}</strong>.
+                  <p className="text-xs font-satoshi leading-relaxed">
+                    A full refund of <strong className="font-mono">${refundAmount.toFixed(2)}</strong> will be credited back via <strong>{paymentMethodLabel}</strong>.
                   </p>
-                  <p className="text-[11px] text-emerald-700">
-                    Processing Timeline: Typically reflects within <strong>3 to 5 business days</strong>.
+                  <p className="text-[10px] font-mono text-[#444444]">
+                    PROCESSING TIMELINE: Typically reflects within 3 to 5 business days.
                   </p>
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 text-blue-950 space-y-2">
-                  <div className="flex items-center gap-2 text-blue-800 font-bold text-xs">
-                    <Package className="w-4 h-4 text-blue-600" />
-                    <span>No Payment Collected ({paymentMethodLabel})</span>
+                <div className="p-4 border-2 border-[#1E1E1E] bg-[#D9D6D0] text-[#1E1E1E] space-y-2">
+                  <div className="flex items-center gap-2 font-clash font-bold text-xs uppercase text-[#1E1E1E]">
+                    <Package className="w-4 h-4" />
+                    <span>NO PAYMENT CHARGED ({paymentMethodLabel})</span>
                   </div>
-                  <p className="text-xs leading-relaxed text-blue-900">
-                    Because this order was placed under <strong>{paymentMethodLabel}</strong>, no charges were processed. Your order will be halted immediately with zero fees.
+                  <p className="text-xs font-satoshi leading-relaxed">
+                    Because this shipment was placed under <strong>{paymentMethodLabel}</strong>, no payment was charged. The order will be cancelled without any fees.
                   </p>
                 </div>
               )}
 
               {/* Reason Confirmation */}
-              <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80 text-xs">
-                <span className="text-zinc-500 font-medium">Selected Reason: </span>
-                <span className="font-semibold text-zinc-800">{getFullReasonText()}</span>
+              <div className="p-3 border border-[#1E1E1E] bg-white text-xs font-mono">
+                <span className="text-[#444444] uppercase">RECORDED REASON: </span>
+                <span className="font-bold text-[#1E1E1E]">{getFullReasonText()}</span>
               </div>
 
               {/* User Acknowledgement Checkbox */}
-              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-zinc-200 hover:border-zinc-300 bg-white cursor-pointer transition-colors select-none">
+              <label className="flex items-start gap-3 p-3 border-2 border-[#1E1E1E] bg-white cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={acknowledged}
@@ -351,10 +352,10 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                     setAcknowledged(e.target.checked);
                     if (e.target.checked) setError(null);
                   }}
-                  className="w-4 h-4 mt-0.5 text-rose-600 rounded border-zinc-300 focus:ring-rose-500 cursor-pointer"
+                  className="w-4 h-4 mt-0.5 accent-[#DB4A2B] cursor-pointer shrink-0"
                 />
-                <span className="text-xs text-zinc-700 leading-snug">
-                  I understand that this action is irreversible and this order will be permanently marked as <strong>Cancelled</strong>.
+                <span className="text-xs font-satoshi text-[#1E1E1E] leading-snug">
+                  I understand that this cancellation is final and cannot be reversed.
                 </span>
               </label>
             </div>
@@ -362,16 +363,16 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
           {/* STEP 3: Successful Cancellation Animation */}
           {step === 3 && (
-            <div className="py-8 text-center space-y-4 animate-in fade-in zoom-in-95">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto border-2 border-emerald-300 shadow-sm">
+            <div className="py-8 text-center space-y-4 animate-in fade-in">
+              <div className="w-14 h-14 border-2 border-[#1E1E1E] bg-[#DB4A2B] text-white flex items-center justify-center mx-auto shadow-[4px_4px_0px_#1E1E1E]">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-zinc-950">
-                  Order Successfully Cancelled
+                <h3 className="text-base font-clash font-bold text-[#1E1E1E] uppercase">
+                  ORDER CANCELLED SUCCESSFULLY
                 </h3>
-                <p className="text-xs text-zinc-500 max-w-xs mx-auto">
-                  Your cancellation request has been confirmed. The order status is now updated.
+                <p className="text-xs font-mono text-[#444444] max-w-xs mx-auto">
+                  Your order has been cancelled and inventory released.
                 </p>
               </div>
             </div>
@@ -380,24 +381,23 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
         {/* Modal Action Buttons Footer */}
         {step !== 3 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50">
+          <div className="flex items-center justify-between px-6 py-4 border-t-2 border-[#1E1E1E] bg-white">
             {step === 1 ? (
               <>
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider text-[#444444] hover:text-[#1E1E1E] cursor-pointer"
                 >
                   Keep Order
                 </button>
-                <button
-                  type="button"
+                <BrutalistButton
                   onClick={handleProceedToReview}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-xs active:scale-[0.98] cursor-pointer"
+                  variant="primary"
                 >
                   <span>Continue to Review</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </BrutalistButton>
               </>
             ) : (
               <>
@@ -408,7 +408,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                     setError(null);
                     setStep(1);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border-2 border-[#1E1E1E] bg-white text-xs font-mono font-bold uppercase tracking-wider text-[#1E1E1E] hover:bg-[#D9D6D0] transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back</span>
@@ -417,12 +417,12 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                   type="button"
                   disabled={submitting || !acknowledged}
                   onClick={handleConfirmCancellation}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-all shadow-xs active:scale-[0.98] cursor-pointer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 border-2 border-[#1E1E1E] bg-[#DB4A2B] hover:bg-[#1E1E1E] text-white text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 transition-all shadow-[3px_3px_0px_#1E1E1E] cursor-pointer"
                 >
                   {submitting ? (
-                    <span>Processing Cancellation...</span>
+                    <span>CANCELLING ORDER...</span>
                   ) : (
-                    <span>Confirm & Cancel Order</span>
+                    <span>CONFIRM & CANCEL ORDER</span>
                   )}
                 </button>
               </>
@@ -433,3 +433,5 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
     </div>
   );
 };
+
+export default CancelOrderModal;
