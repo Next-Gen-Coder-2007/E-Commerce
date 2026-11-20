@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Plus, Minus, Trash2, Check, Star, ShoppingBag } from 'lucide-react';
+import { Heart, Plus, Minus, Trash2, Check, Star, ShoppingBag, ArrowUpRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import type { Product } from '../types/product';
@@ -67,30 +67,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <div
+    <article
       onClick={handleCardClick}
-      className={`group relative bg-white rounded-2xl border border-zinc-200/80 hover:border-zinc-300/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between p-3 sm:p-4 cursor-pointer ${className}`}
-      style={{ transitionDelay: `${(index % 4) * 40}ms` }}
+      className={`group relative bg-[#FFFFFF] border border-[#1E1E1E]/20 hover:border-[#1E1E1E] transition-all duration-300 flex flex-col justify-between cursor-pointer font-satoshi select-none ${className}`}
+      style={{ transitionDelay: `${(index % 4) * 35}ms` }}
     >
       <div>
-        {/* Top Product Image Showcase */}
-        <div className="relative w-full aspect-square bg-zinc-50/80 rounded-xl overflow-hidden p-4 flex items-center justify-center border border-zinc-100">
+        {/* Top Product Image Showcase: Strict 3:4 Aspect Ratio */}
+        <div className="relative w-full aspect-[3/4] bg-[#E4E2DD]/40 overflow-hidden flex items-center justify-center p-6 border-b border-[#1E1E1E]/15">
           <img
             src={product.image}
             alt={product.title}
-            className="max-h-full max-w-full object-contain group-hover:scale-106 transition-transform duration-500 drop-shadow-2xs select-none"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none"
             loading="lazy"
           />
 
-          {/* Badges on Top-Left: Discount or Subcategory */}
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start z-10">
+          {/* Badges on Top-Left: Raw Brutalist Cutouts */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1 items-start z-10 pointer-events-none">
             {hasDiscount && discountPercent > 0 && (
-              <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-extrabold tracking-tight shadow-2xs">
+              <span className="px-2 py-0.5 bg-[#DB4A2B] text-[#FFFFFF] text-[10px] font-mono font-bold uppercase tracking-wider">
                 -{discountPercent}%
               </span>
             )}
             {product.subcategory ? (
-              <span className="px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-zinc-700 text-[10px] font-semibold border border-zinc-200/80 shadow-2xs">
+              <span className="px-2 py-0.5 bg-[#1E1E1E] text-[#E4E2DD] text-[9px] font-mono font-semibold uppercase tracking-widest">
                 {product.subcategory}
               </span>
             ) : null}
@@ -103,67 +103,76 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               e.stopPropagation();
               toggleWishlist(product);
             }}
-            className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+            className={`absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center transition-all duration-200 cursor-pointer ${
               inWish
-                ? 'bg-zinc-950 text-white shadow-xs scale-105'
-                : 'bg-white/90 backdrop-blur-xs text-zinc-400 hover:text-zinc-950 hover:bg-white border border-zinc-200/80 shadow-2xs'
+                ? 'bg-[#1E1E1E] text-[#FF89A9] shadow-sm'
+                : 'bg-[#FFFFFF]/90 hover:bg-[#1E1E1E] text-[#1E1E1E] hover:text-[#FFFFFF] border border-[#1E1E1E]/20'
             }`}
             title={inWish ? 'Remove from wishlist' : 'Save to wishlist'}
           >
-            <Heart className={`w-3.5 h-3.5 ${inWish ? 'fill-white text-white' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${inWish ? 'fill-[#FF89A9] text-[#FF89A9]' : ''}`} />
           </button>
+
+          {/* Subtle Hover Reveal: Arrow */}
+          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="w-7 h-7 bg-[#1E1E1E] text-[#FFFFFF] flex items-center justify-center">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
         </div>
 
         {/* Product Information Body */}
-        <div className="pt-3.5 space-y-1.5 text-left">
+        <div className="p-4 space-y-2 text-left">
           {/* Brand & Stock Row */}
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-zinc-400 uppercase tracking-wider truncate max-w-[140px]">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider">
+            <span className="text-[#444444] font-bold truncate max-w-[140px]">
               {brandOrMerchant}
             </span>
             {product.stock <= 5 && product.stock > 0 ? (
-              <span className="text-amber-600 font-bold text-[10px] bg-amber-50 px-1.5 py-0.5 rounded">
-                Only {product.stock} left
+              <span className="text-[#DB4A2B] font-bold">
+                ONLY {product.stock} LEFT
               </span>
             ) : product.stock > 0 ? (
-              <span className="text-emerald-600 font-semibold text-[10px]">In Stock</span>
+              <span className="text-[#1E1E1E] font-medium">IN STOCK</span>
             ) : (
-              <span className="text-rose-600 font-semibold text-[10px]">Out of Stock</span>
+              <span className="text-[#DB4A2B] font-bold">SOLD OUT</span>
             )}
           </div>
 
-          {/* Title */}
-          <h3 className="font-bold text-zinc-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+          {/* Title: Transitions to Soft Pink on Hover */}
+          <h3 className="font-clash text-sm font-bold uppercase tracking-tight text-[#1E1E1E] line-clamp-2 leading-snug group-hover:text-[#FF89A9] transition-colors duration-200">
             {product.title}
           </h3>
 
           {/* Ratings or Attribute Options Tag */}
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 pt-0.5">
+          <div className="flex items-center gap-2 text-xs text-[#444444]">
             {(product.numReviews || 0) > 0 ? (
-              <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-zinc-900 text-[11px]">{product.rating}</span>
-                <span className="text-zinc-400 text-[10px]">({product.numReviews})</span>
+              <div className="flex items-center gap-1 font-mono text-[10px]">
+                <Star className="w-3 h-3 fill-[#F8A348] text-[#F8A348]" />
+                <span className="font-bold text-[#1E1E1E]">{product.rating}</span>
+                <span className="text-[#444444]">({product.numReviews})</span>
               </div>
             ) : product.attributes && Object.keys(product.attributes).length > 0 ? (
-              <span className="text-[10px] text-zinc-500 font-medium bg-zinc-100 px-2 py-0.5 rounded-md">
-                {Object.keys(product.attributes).slice(0, 2).join(' • ')} Options
+              <span className="text-[10px] text-[#444444] font-mono uppercase">
+                {Object.keys(product.attributes).slice(0, 2).join(' / ')}
               </span>
             ) : (
-              <span className="text-[10px] text-zinc-400 font-medium">Verified Merchant</span>
+              <span className="text-[10px] text-[#444444] font-mono uppercase">
+                VERIFIED DROP
+              </span>
             )}
           </div>
         </div>
       </div>
 
       {/* Price & Cart Action Footer */}
-      <div className="pt-3 mt-3 border-t border-zinc-100 flex items-center justify-between">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-base sm:text-lg font-black text-zinc-950 font-sans tracking-tight">
+      <div className="p-4 pt-3 border-t border-[#1E1E1E]/15 flex items-center justify-between bg-[#E4E2DD]/20">
+        <div className="flex items-baseline gap-2">
+          <span className="text-base sm:text-lg font-clash font-bold text-[#1E1E1E] tracking-tight">
             ${product.price % 1 === 0 ? product.price.toFixed(0) : product.price.toFixed(2)}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-zinc-400 line-through font-normal">
+            <span className="text-xs text-[#444444] line-through font-mono">
               ${product.originalPrice!.toFixed(0)}
             </span>
           )}
@@ -172,7 +181,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Cart Action */}
         <div onClick={(e) => e.stopPropagation()}>
           {cartItem ? (
-            <div className="inline-flex items-center rounded-xl bg-zinc-950 text-white p-0.5 shadow-2xs">
+            <div className="inline-flex items-center bg-[#1E1E1E] text-[#E4E2DD] p-0.5">
               <button
                 type="button"
                 onClick={async (e) => {
@@ -183,16 +192,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     await updateQuantity(product._id, cartItem.quantity - 1);
                   }
                 }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="w-6 h-6 flex items-center justify-center text-[#E4E2DD] hover:bg-[#FFFFFF] hover:text-[#DB4A2B] transition-colors cursor-pointer"
                 title="Decrease"
               >
                 {cartItem.quantity === 1 ? (
-                  <Trash2 className="w-3 h-3 text-zinc-300" />
+                  <Trash2 className="w-3 h-3" />
                 ) : (
                   <Minus className="w-3 h-3" />
                 )}
               </button>
-              <span className="px-1.5 text-xs font-bold text-white min-w-[18px] text-center font-mono">
+              <span className="px-2 text-xs font-mono font-bold text-[#E4E2DD] min-w-[20px] text-center">
                 {cartItem.quantity}
               </span>
               <button
@@ -202,7 +211,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   e.stopPropagation();
                   await updateQuantity(product._id, cartItem.quantity + 1);
                 }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-zinc-800 disabled:opacity-30 transition-colors cursor-pointer"
+                className="w-6 h-6 flex items-center justify-center text-[#E4E2DD] hover:bg-[#FFFFFF] hover:text-[#DB4A2B] disabled:opacity-20 transition-colors cursor-pointer"
                 title="Increase"
               >
                 <Plus className="w-3 h-3" />
@@ -213,25 +222,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               type="button"
               disabled={product.stock <= 0}
               onClick={handleAddToCart}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-bold transition shadow-2xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              title="Add to cart"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1E1E1E] hover:bg-[#DB4A2B] text-[#E4E2DD] text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              title="Add to Cart"
             >
               {adding ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Added</span>
+                  <span className="hidden sm:inline">ADDED</span>
                 </>
               ) : (
                 <>
                   <ShoppingBag className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Add</span>
+                  <span className="hidden sm:inline">ADD</span>
                 </>
               )}
             </button>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
