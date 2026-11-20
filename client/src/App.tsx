@@ -54,7 +54,7 @@ const AppContent: React.FC = () => {
   const isBusinessAuth = location.pathname === '/business/login' || location.pathname === '/business/register';
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50/60 text-zinc-900">
+    <div className="min-h-screen flex flex-col bg-[#E4E2DD] text-[#1E1E1E] font-satoshi selection:bg-[#DB4A2B] selection:text-white">
       {!isBusiness && !isAdmin && <Navbar />}
       {isBusinessAuth && <BusinessNavbar />}
       <CartDrawer />
