@@ -95,16 +95,25 @@ const corsOptions = {
     'Content-Type',
     'Authorization',
     'x-idempotency-key',
+    'Idempotency-Key',
     'traceparent',
     'x-correlation-id',
     'x-user-id',
     'x-user-role',
+    'x-guest-cart-id',
+    'X-Guest-Cart-Id',
+    'x-cart-id',
+    'X-Cart-Id',
+    'x-session-id',
+    'x-visitor-id',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
   ],
-  exposedHeaders: ['traceparent', 'x-correlation-id'],
+  exposedHeaders: ['traceparent', 'x-correlation-id', 'x-guest-cart-id'],
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 app.use(cookieParser());
 app.use(gatewayTracer);

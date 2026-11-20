@@ -42,5 +42,8 @@
     "mongoose": "^9.9.4",
     "morgan": "^1.12.0",
     "multer": "^2.3.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
   }
 }

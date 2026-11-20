@@ -94,8 +94,17 @@ const corsOptions = {
     'x-correlation-id',
     'x-user-id',
     'x-user-role',
+    'x-guest-cart-id',
+    'X-Guest-Cart-Id',
+    'x-cart-id',
+    'X-Cart-Id',
+    'x-session-id',
+    'x-visitor-id',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
   ],
-  exposedHeaders: ['traceparent', 'x-correlation-id'],
+  exposedHeaders: ['traceparent', 'x-correlation-id', 'x-guest-cart-id'],
 };
 
 app.use(cors(corsOptions));
@@ -107,47 +116,112 @@ app.use(correlationIdMiddleware);
 app.use(attachAuthContext);
 
 // ==========================================
-// Cached MongoDB Connection for Serverless
+// Cached MongoDB Connection for Serverless & Local Fallback
 // ==========================================
+// Attempt to load services-scoped Mongoose if separate instance exists in services/node_modules
+let servicesMongoose = null;
+try {
+  const sm = await import('../services/node_modules/mongoose/index.js');
+  servicesMongoose = sm.default || sm;
+} catch {
+  // Hoisted or shared node_modules environment
+}
+
 let cachedPromise = null;
+let lastConnectAttempt = 0;
+const RETRY_THROTTLE_MS = 15000;
+
+const getDatabaseURI = () => {
+  // 1. Online / Environment Variable priority (Vercel Serverless / Atlas)
+  if (process.env.MONGO_URI && process.env.MONGO_URI.trim()) {
+    return process.env.MONGO_URI.trim();
+  }
+  if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim()) {
+    return process.env.MONGODB_URI.trim();
+  }
+
+  // 2. Local development fallback (localhost / 127.0.0.1)
+  const isServerless = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  if (!isServerless) {
+    const localHost = process.env.MONGO_HOST || '127.0.0.1';
+    const localPort = process.env.MONGO_PORT || '27017';
+    const localDb = process.env.MONGO_DB_NAME || 'novacommerce';
+    return `mongodb://${localHost}:${localPort}/${localDb}`;
+  }
+
+  return null;
+};
+
+const connectInstance = async (mInstance, uri, opts) => {
+  if (mInstance && mInstance.connection && mInstance.connection.readyState < 1) {
+    return await mInstance.connect(uri, opts);
+  }
+  return mInstance ? mInstance.connection : null;
+};
 
 const connectToDatabase = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  const rootReady = mongoose.connection.readyState >= 1;
+  const servicesReady = !servicesMongoose || servicesMongoose.connection.readyState >= 1;
+  if (rootReady && servicesReady) {
     return mongoose.connection;
   }
 
-  const mongoURI = process.env.MONGO_URI;
+  const now = Date.now();
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+  if (now - lastConnectAttempt < RETRY_THROTTLE_MS) {
+    return null;
+  }
+  lastConnectAttempt = now;
+
+  let mongoURI = getDatabaseURI();
   if (!mongoURI) {
-    console.warn('[Vercel Serverless] Warning: MONGO_URI is not set in environment variables');
+    console.warn('[NovaCommerce Database] Warning: No database connection URI configured. Please set MONGO_URI in .env');
     return null;
   }
 
-  if (!cachedPromise) {
-    cachedPromise = mongoose
-      .connect(mongoURI, {
-        bufferCommands: false,
-        serverSelectionTimeoutMS: 5000,
-        maxPoolSize: 10,
-      })
-      .then((conn) => {
-        console.log(`[Vercel Serverless] MongoDB connected to host: ${conn.connection.host}`);
-        return conn;
-      })
-      .catch((err) => {
-        cachedPromise = null;
-        console.error(`[Vercel Serverless] MongoDB Connection Error: ${err.message}`);
-        throw err;
-      });
-  }
+  let isLocal = mongoURI.includes('localhost') || mongoURI.includes('127.0.0.1');
+  let targetLabel = isLocal ? 'Localhost MongoDB (Development)' : 'Online MongoDB Cluster (Serverless / Atlas)';
 
-  return cachedPromise;
+  const connOpts = {
+    bufferCommands: false,
+    serverSelectionTimeoutMS: 5000,
+    maxPoolSize: isLocal ? 5 : 10,
+  };
+
+  const doConnect = async (uri, label) => {
+    const conn = await connectInstance(mongoose, uri, connOpts);
+    if (servicesMongoose && servicesMongoose !== mongoose) {
+      await connectInstance(servicesMongoose, uri, connOpts);
+    }
+    console.log(`[NovaCommerce Database] Connected to ${label} on host: ${conn?.host || 'remote'}`);
+    return conn;
+  };
+
+  try {
+    cachedPromise = (async () => {
+      try {
+        return await doConnect(mongoURI, targetLabel);
+      } catch (err) {
+        console.error(`[NovaCommerce Database] Connection Error (${targetLabel}): ${err.message}`);
+        throw err;
+      }
+    })();
+
+    const result = await cachedPromise;
+    return result;
+  } catch (err) {
+    cachedPromise = null;
+    throw err;
+  }
 };
 
 app.use(async (req, res, next) => {
   try {
     await connectToDatabase();
   } catch (err) {
-    console.warn('[Vercel Serverless] DB connection attempt:', err.message);
+    // Non-blocking per-request handler, throttled logging
   }
   next();
 });
@@ -239,8 +313,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (process.argv[1] && (process.argv[1].endsWith('api/index.js') || process.argv[1].endsWith('api\\index.js'))) {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`[API Server] Running on http://localhost:${PORT}`);
+    try {
+      await connectToDatabase();
+    } catch {
+      // Non-blocking initial connection attempt
+    }
   });
 }
 
