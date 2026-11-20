@@ -2,21 +2,27 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI;
-
-    if (!mongoURI) {
-      console.error('[Wishlist Service] Error: MONGO_URI is not defined in environment variables');
-      process.exit(1);
-    }
-
+    const onlineURI = process.env.MONGO_URI || process.env.MONGODB_URI;
     const dbName = process.env.MONGO_DB_NAME || 'wishlist';
+    const mongoURI = onlineURI && onlineURI.trim() 
+      ? onlineURI.trim() 
+      : `mongodb://127.0.0.1:27017/${dbName}`;
+
+    const isLocal = mongoURI.includes('localhost') || mongoURI.includes('127.0.0.1');
+    const targetLabel = isLocal ? 'Localhost MongoDB (Development)' : 'Online MongoDB (Production/Atlas)';
+
     const conn = await mongoose.connect(mongoURI, {
       dbName,
+      serverSelectionTimeoutMS: 5000,
     });
-    console.log(`[Wishlist Service] MongoDB Connected to database "${conn.connection.name}" on host: ${conn.connection.host}`);
+    console.log(`[Wishlist Service] Connected to ${targetLabel} database "${conn.connection.name}" on host: ${conn.connection.host}`);
   } catch (error) {
     console.error(`[Wishlist Service] MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    } else {
+      console.warn('[Wishlist Service] Running in local offline mode. Ensure MongoDB is running on 127.0.0.1:27017 for persistent local storage.');
+    }
   }
 };
 

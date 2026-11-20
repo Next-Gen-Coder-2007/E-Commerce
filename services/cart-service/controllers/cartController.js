@@ -112,7 +112,7 @@ export const addToCart = async (req, res, next) => {
         message: 'Business accounts cannot make customer purchases. Please log out or sign in with a customer account to add items to cart.',
       });
     }
-    const {
+    let {
       productId,
       title,
       price,
@@ -123,6 +123,42 @@ export const addToCart = async (req, res, next) => {
       quantity = 1,
       stock,
     } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID is required to add to cart',
+      });
+    }
+
+    // Auto-lookup product details if missing
+    if (!title || price === undefined) {
+      try {
+        let objectIdQuery;
+        try {
+          objectIdQuery = new mongoose.Types.ObjectId(productId);
+        } catch {
+          objectIdQuery = null;
+        }
+
+        const query = objectIdQuery
+          ? { $or: [{ _id: objectIdQuery }, { _id: productId }] }
+          : { _id: productId };
+
+        const productDoc = await mongoose.connection.collection('products').findOne(query);
+        if (productDoc) {
+          title = title || productDoc.title;
+          price = price !== undefined ? price : productDoc.price;
+          image = image || productDoc.image;
+          category = category || productDoc.category;
+          companyId = companyId || productDoc.companyId?.toString();
+          companyName = companyName || productDoc.companyName || productDoc.brand;
+          stock = stock !== undefined ? stock : productDoc.stock;
+        }
+      } catch (lookupErr) {
+        // Fallback to strict validation if lookup fails
+      }
+    }
 
     if (!productId || !title || price === undefined) {
       return res.status(400).json({
